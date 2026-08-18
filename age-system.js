@@ -6,6 +6,24 @@ import ageSystemSheetCharStatBlock from "./modules/sheets/ageSystemSheetCharStat
 import ageSystemSheetVehicle from "./modules/sheets/ageSystemSheetVehicle.js";
 import ageSystemSheetSpaceship from "./modules/sheets/ageSystemSheetSpaceship.js";
 import ageSystemSheetOrg from "./modules/sheets/ageSystemSheetOrg.js";
+import ageSystemSheetCharacterV2, {
+    ageSystemSheetCharStatBlockV2,
+    ageSystemSheetVehicleV2,
+    ageSystemSheetSpaceshipV2,
+    ageSystemSheetOrgV2
+} from "./modules/sheets/ageSystemSheetCharacterV2.js";
+import {
+    ageSystemSheetEquipmentV2,
+    ageSystemSheetFocusV2,
+    ageSystemSheetHonorificsV2,
+    ageSystemSheetMembershipV2,
+    ageSystemSheetPowerV2,
+    ageSystemSheetRelationshipV2,
+    ageSystemSheetShipFeaturesV2,
+    ageSystemSheetStuntsV2,
+    ageSystemSheetTalentV2,
+    ageSystemSheetWeaponV2
+} from "./modules/sheets/ageSystemSheetItemV2.js";
 import ageActiveEffectConfig from "./modules/sheets/ageActiveEffectConfig.js";
 import {ageSystemActor} from "./modules/ageSystemActor.js";
 import {ageTokenDocument} from "./modules/ageToken.js";
@@ -17,6 +35,7 @@ import { AgeTracker } from "./modules/age-tracker.js";
 import { applyBreather } from "./modules/breather.js";
 import AgeImporter from "./modules/age-importer.js";
 import ConditionsWorkshop from "./modules/conditions-workshop.js";
+import {registerNativeEditorHelper} from "./modules/sheets/native-editor.js";
 
 import * as Dice from "./modules/dice.js";
 import * as Settings from "./modules/settings.js";
@@ -86,6 +105,21 @@ Hooks.once("init", function() {
             ageSystemSheetSpaceship,
             ageSystemSheetOrg,
             ageSystemSheetItem,
+            ageSystemSheetCharacterV2,
+            ageSystemSheetCharStatBlockV2,
+            ageSystemSheetVehicleV2,
+            ageSystemSheetSpaceshipV2,
+            ageSystemSheetOrgV2,
+            ageSystemSheetEquipmentV2,
+            ageSystemSheetFocusV2,
+            ageSystemSheetHonorificsV2,
+            ageSystemSheetMembershipV2,
+            ageSystemSheetPowerV2,
+            ageSystemSheetRelationshipV2,
+            ageSystemSheetShipFeaturesV2,
+            ageSystemSheetStuntsV2,
+            ageSystemSheetTalentV2,
+            ageSystemSheetWeaponV2,
             AgeRoller,
             AgeTracker
         },
@@ -127,6 +161,16 @@ Hooks.once("init", function() {
         makeDefault: true,
         label: "age-system.SHEETS.orgStandard"
     });
+    const appV2ActorSheets = [
+        [["char"], ageSystemSheetCharacterV2, "AGE Character (AppV2)"],
+        [["char"], ageSystemSheetCharStatBlockV2, "AGE Character Stat Block (AppV2)"],
+        [["vehicle"], ageSystemSheetVehicleV2, "AGE Vehicle (AppV2)"],
+        [["spaceship"], ageSystemSheetSpaceshipV2, "AGE Spaceship (AppV2)"],
+        [["organization"], ageSystemSheetOrgV2, "AGE Organization (AppV2)"]
+    ];
+    for (const [types, sheetClass, label] of appV2ActorSheets) {
+        Actors.registerSheet("age-system", sheetClass, {types, makeDefault: false, label});
+    }
     
     const Items = foundry.documents.collections.Items;
     Items.unregisterSheet("core", globalThis.ItemSheet);
@@ -147,6 +191,25 @@ Hooks.once("init", function() {
         makeDefault: true,
         label: "age-system.SHEETS.itemStandard"
     });
+    const appV2ItemSheets = [
+        ["equipment", ageSystemSheetEquipmentV2],
+        ["focus", ageSystemSheetFocusV2],
+        ["honorifics", ageSystemSheetHonorificsV2],
+        ["membership", ageSystemSheetMembershipV2],
+        ["power", ageSystemSheetPowerV2],
+        ["relationship", ageSystemSheetRelationshipV2],
+        ["shipfeatures", ageSystemSheetShipFeaturesV2],
+        ["stunts", ageSystemSheetStuntsV2],
+        ["talent", ageSystemSheetTalentV2],
+        ["weapon", ageSystemSheetWeaponV2]
+    ];
+    for (const [type, sheetClass] of appV2ItemSheets) {
+        Items.registerSheet("age-system", sheetClass, {
+            types: [type],
+            makeDefault: false,
+            label: "AGE Item (AppV2)"
+        });
+    }
 
     game.ageSystem.ageTracker = new AgeTracker({
         popOut: false,
@@ -158,6 +221,7 @@ Hooks.once("init", function() {
     CONFIG.Actor.documentClass = ageSystemActor;
     CONFIG.Item.documentClass = ageSystemItem;
     CONFIG.ageSystem = ageSystem;
+    registerNativeEditorHelper();
 
     // Load partials for Handlebars
     preloadHandlebarsTemplates(); // Find correct v13 conidition

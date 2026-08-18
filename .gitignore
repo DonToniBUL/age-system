@@ -3,3 +3,15 @@
 
 # Node Modules
 age-system.lock
+node_modules/
+
+# Generated output and local tooling
+coverage/
+dist/
+tmp/
+*.log
+
+# Operating system and editor metadata
+.DS_Store
+Thumbs.db
+.idea/

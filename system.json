@@ -5,8 +5,8 @@
     "version": "5.0.0",
     "download": "https://github.com/vkdolea/age-system/archive/5.0.0.zip",
     "compatibility": {
-        "minimum": "14.363",
-        "verified": "14"
+        "minimum": "14.365",
+        "verified": "14.366"
     },
     "url": "https://github.com/vkdolea/age-system",
     "manifest": "https://raw.githubusercontent.com/vkdolea/age-system/prep-release/system.json",
@@ -23,7 +23,10 @@
         }
     ],
     "scripts": [],
-    "styles": ["styles/age-system.css"],
+    "styles": [
+        "styles/age-system.css",
+        "styles/age-design-system.css"
+    ],
     "esmodules": ["age-system.js"],
     "packs": [],
     "languages": [
@@ -49,6 +52,27 @@
         }
     ],
     "socket": false,
+    "documentTypes": {
+        "Actor": {
+            "char": {"htmlFields": ["features", "traits", "goals", "secretNote", "gmNotes"]},
+            "vehicle": {"htmlFields": ["description", "gmNotes"]},
+            "spaceship": {"htmlFields": ["description", "gmNotes"]},
+            "organization": {"htmlFields": ["description", "notes", "gmNotes"]}
+        },
+        "Item": {
+            "equipment": {"htmlFields": ["longDesc"]},
+            "focus": {"htmlFields": ["longDesc"]},
+            "weapon": {"htmlFields": ["longDesc"]},
+            "power": {"htmlFields": ["longDesc"]},
+            "talent": {"htmlFields": ["longDesc", "degree0.desc", "degree1.desc", "degree2.desc", "degree3.desc", "degree4.desc"]},
+            "stunts": {"htmlFields": ["longDesc"]},
+            "relationship": {"htmlFields": ["longDesc"]},
+            "honorifics": {"htmlFields": ["longDesc"]},
+            "membership": {"htmlFields": ["longDesc"]},
+            "shipfeatures": {"htmlFields": ["longDesc"]},
+            "class": {"htmlFields": ["description"]}
+        }
+    },
     "grid": {
         "distance": 2,
         "units": "yd"

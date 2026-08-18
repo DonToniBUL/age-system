@@ -11,6 +11,7 @@ Take a look at [AGE System (unofficial) wiki](https://github.com/vkdolea/age-sys
 ## Features
 - [Dice so Nice](https://foundryvtt.com/packages/dice-so-nice) compatible
 - Two possible Character sheet - one Complete and another condensed, ideal for NPCs and quick character overview
+- Optional native ApplicationV2 sheets for Characters, Vehicles, Spaceships, Organizations, and non-Class Items; the established ApplicationV1 sheets remain the defaults
 - Different color schemes
 - Checkboxes to identify primary and secondary abilities
 - Checkbox to select last ability leveled up
