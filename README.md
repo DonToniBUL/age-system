@@ -13,6 +13,7 @@ Take a look at [AGE System (unofficial) wiki](https://github.com/vkdolea/age-sys
 - Two possible Character sheet - one Complete and another condensed, ideal for NPCs and quick character overview
 - Optional native ApplicationV2 sheets for Characters, Vehicles, Spaceships, Organizations, and non-Class Items; the established ApplicationV1 sheets remain the defaults
 - Compatibility-first Foundry v14 data models preserve existing world data while isolating prepared values from persisted source
+- Token bars can select AGE health and resource fields directly in Foundry's Token configuration
 - Different color schemes
 - Checkboxes to identify primary and secondary abilities
 - Checkbox to select last ability leveled up

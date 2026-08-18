@@ -1,5 +1,6 @@
 import * as Dice from "../dice.js";
 import {ageSystem} from "../config.js";
+import {toggleItemModifierUpdate} from "../data/item-modifier-updates.js";
 import { sortObjArrayByName } from "../setup.js";
 import {newItemData} from "./helper.js";
 
@@ -405,9 +406,8 @@ export default class ageSystemSheetCharacter extends ActorSheet {
         const itemId = data.itemId;
         const key = data.key;
         const item = this.actor.items.get(itemId);
-        const active = item.system.modifiers[key].isActive;
-        const dataPath = `system.modifiers.${key}.isActive`;
-        return item.update({[dataPath]: !active});
+        const update = toggleItemModifierUpdate(item, key);
+        return update ? item.update(update) : false;
     }
 
     _onChangeCondition(event) {

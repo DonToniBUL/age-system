@@ -2,10 +2,16 @@ import {ageSystem} from "../config.js";
 import { modifiersList, sortObjArrayByName } from "../setup.js";
 import { focusList } from "../settings.js";
 import {AdvancementAdd, AdvancementSetup} from "../advancement.js";
+import {removeItemModifierUpdate, toggleItemModifierUpdate} from "../data/item-modifier-updates.js";
+import {
+    legacyCanonicalFieldsForItem,
+    preserveLegacyItemSubmitData
+} from "./legacy-item-form.js";
 
 export default class ageSystemItemSheet extends ItemSheet {
     constructor(...args) {
         super(...args);
+        this._ageExplicitLegacyItemEdits = new Set();
     
         // Expand the default size of different item sheet
         const itemType = this.object.type;
@@ -58,6 +64,26 @@ export default class ageSystemItemSheet extends ItemSheet {
                 break;
         };
     };
+
+    _getSubmitData(updateData = {}) {
+        const submitData = super._getSubmitData(updateData);
+        const explicitEdits = new Set(this._ageExplicitLegacyItemEdits);
+        for (const path of legacyCanonicalFieldsForItem(this.item)) {
+            const field = path.slice("system.".length);
+            if (Object.hasOwn(updateData ?? {}, path) || Object.hasOwn(updateData?.system ?? {}, field)) {
+                explicitEdits.add(path);
+            }
+        }
+        return preserveLegacyItemSubmitData(this.item, submitData, explicitEdits);
+    }
+
+    async _updateObject(event, formData) {
+        try {
+            return await super._updateObject(event, formData);
+        } finally {
+            this._ageExplicitLegacyItemEdits.clear();
+        }
+    }
    
     static get defaultOptions() {        
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -163,6 +189,12 @@ export default class ageSystemItemSheet extends ItemSheet {
     };    
     
     activateListeners(html) {
+        html[0]?.addEventListener?.("change", event => {
+            const path = event.target?.name;
+            if (legacyCanonicalFieldsForItem(this.item).includes(path)) {
+                this._ageExplicitLegacyItemEdits.add(path);
+            }
+        }, {capture: true});
         if (this.isEditable) {
             html.find("a.add-bonus").click(this._onAddModifier.bind(this));
             html.find(".add-modifier").click(this._onAddModifier.bind(this));
@@ -250,18 +282,17 @@ export default class ageSystemItemSheet extends ItemSheet {
     }
 
     _onRemoveModifier(e) {
-        const i = e.currentTarget.closest(".feature-controls").dataset.modIndex;
-        const path = `system.modifiers.-=${i}`;
-        return this.item.update({[path]: null})
+        const i = e.currentTarget.closest(".feature-controls")?.dataset.modIndex;
+        if (!i) return false;
+        const update = removeItemModifierUpdate(this.item, i);
+        return update ? this.item.update(update) : false;
     }
 
     _onToggleModifier(event) {
         const item = this.item;
-        const itemData = item.system;
         const i = event.currentTarget.closest(".feature-controls").dataset.modIndex;
-        const modifiers = foundry.utils.deepClone(itemData.modifiers);
-        modifiers[i].isActive = !modifiers[i].isActive;
-        return item.update({"system.modifiers": modifiers});
+        const update = toggleItemModifierUpdate(item, i);
+        return update ? item.update(update) : false;
     }
 
     _onTraitGroupToggle(event) {
