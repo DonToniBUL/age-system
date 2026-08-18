@@ -1,6 +1,7 @@
 import { AdvancementSetup, AgeLevel, AgeProgUI } from "./advancement.js";
 import {ageSystem} from "./config.js";
 import * as Dice from "./dice.js";
+import {mutateAtomicSystemUpdate, normalizeAtomicSystemUpdate} from "./data/atomic-system-updates.js";
 
 export class ageSystemItem extends Item {
 
@@ -27,23 +28,30 @@ export class ageSystemItem extends Item {
 
     /** @override */
     async _preCreate(data, options, userId) {
-        await super._preCreate(data, options, userId);
+        const allowed = await super._preCreate(data, options, userId);
+        if (allowed === false) return false;
         const updates = {};
         if (!data.img || data.img === `icons/svg/item-bag.svg`) updates.img = ageSystem.itemIcons[this.type];
-        switch (data.type) {
-            case "class":
-                this._preCreateClass(data, options, userId, updates);
-                break;
-        
-            default:
-                break;
+        const type = data.type ?? this.type;
+        const requestedSystem = data.system && typeof data.system === "object"
+            ? foundry.utils.deepClone(data.system)
+            : {};
+        if (type === "class") requestedSystem.level = 0;
+        if (Object.keys(requestedSystem).length > 0) {
+            const templateSystem = game.model?.Item?.[type] ?? this._source?.system ?? {};
+            updates.system = normalizeAtomicSystemUpdate(
+                {system: requestedSystem},
+                {system: templateSystem}
+            ).system;
         }
         this.updateSource(updates);
+        return true;
     }
 
-    // Ensure all new Class items created are reset to Level 0
-    _preCreateClass(data, options, userId, updates) {
-        updates["system.level"] = 0;
+    /** @override */
+    async _preUpdate(changed, options, userId) {
+        mutateAtomicSystemUpdate(changed, this._source, {recursive: options?.recursive});
+        return super._preUpdate(changed, options, userId);
     }
     
     /** @override */

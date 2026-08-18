@@ -1,5 +1,10 @@
 import { ageSystem } from "./config.js";
 import * as Dice from "./dice.js";
+import {characterControlUpdatePreservesSource} from "./data/source-guard.js";
+import {
+    mutateAtomicSystemUpdate,
+    normalizeCharacterAtomicSystemUpdate
+} from "./data/atomic-system-updates.js";
 
 export class ageSystemActor extends Actor {
 
@@ -35,10 +40,38 @@ export class ageSystemActor extends Actor {
 
     /** @override */
     async _preCreate(data, options, userId) {
-        await super._preCreate(data, options, userId);
+        const allowed = await super._preCreate(data, options, userId);
+        if (allowed === false) return false;
         const updates = {};
         if (!data.img || data.img === CONST.DEFAULT_TOKEN) updates.img = ageSystem.actorIcons[this.type];
-        this.updateSource(updates);        
+
+        const requestedSystem = data.system && typeof data.system === "object"
+            ? foundry.utils.deepClone(data.system)
+            : null;
+        if (requestedSystem && Object.keys(requestedSystem).length > 0) {
+            const templateSystem = game.model?.Actor?.[this.type] ?? this._source?.system ?? {};
+            updates.system = normalizeCharacterAtomicSystemUpdate(
+                {system: requestedSystem},
+                {system: templateSystem}
+            ).system;
+        }
+        this.updateSource(updates);
+        return true;
+    }
+
+    /** @override */
+    async _preUpdate(changed, options, userId) {
+        mutateAtomicSystemUpdate(changed, this._source, {recursive: options?.recursive});
+        const allowed = await super._preUpdate(changed, options, userId);
+        if (allowed === false || this.type !== "char") return allowed;
+        if (Array.isArray(options?.ageSystemCharacterPaths) && !characterControlUpdatePreservesSource(
+            changed,
+            this._source,
+            options.ageSystemCharacterPaths
+        )) {
+            throw new Error("AGE System blocked a Character edit which would change unrelated stored data.");
+        }
+        return allowed;
     }
 
     prepareBaseData() {

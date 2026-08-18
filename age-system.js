@@ -36,6 +36,7 @@ import { applyBreather } from "./modules/breather.js";
 import AgeImporter from "./modules/age-importer.js";
 import ConditionsWorkshop from "./modules/conditions-workshop.js";
 import {registerNativeEditorHelper} from "./modules/sheets/native-editor.js";
+import {AGE_DATA_MODEL_STATUS, registerAgeDataModels} from "./modules/data/models.js";
 
 import * as Dice from "./modules/dice.js";
 import * as Settings from "./modules/settings.js";
@@ -96,6 +97,8 @@ Hooks.once("init", function() {
     console.log("AGE System | Entering a new AGE...");
     console.log(ageSystemText);
 
+    registerAgeDataModels();
+
     // Create a namespace within the game global
     game.ageSystem = {
         applications: {
@@ -132,7 +135,8 @@ Hooks.once("init", function() {
             ageSystemActor,
             // ageToken,
             ageSystemItem
-        }
+        },
+        dataModels: AGE_DATA_MODEL_STATUS
     };
 
     const Actors = foundry.documents.collections.Actors;
