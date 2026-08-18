@@ -174,6 +174,8 @@
             "traits": "",
             "goals": "",
             "age": "",
+            "height": "",
+            "weight": "",
             "language": "",
             "background": "",
             "secretNote": "",
@@ -471,7 +473,8 @@
             "isActive": true
         },
         "equipment": {
-            "templates": ["description", "hardItem", "bonuses"]
+            "templates": ["description", "hardItem", "bonuses"],
+            "activate": false
         },
         "focus": {
             "templates": ["description", "activation"],
@@ -482,6 +485,7 @@
         "weapon": {
             "templates": ["activation", "damage", "itemReq", "hardItem", "description", "bonuses"],
             "reload": "minor",
+            "reloadable": false,
             "capacity": 5,
             "range": 2,
             "rangeMax": 2,
@@ -520,6 +524,7 @@
             "degree": "",
             "type": "talent",
             "activate": false,
+            "equiped": false,
             "degree0": {
                 "desc": "",
                 "isActive": true
@@ -546,7 +551,9 @@
             "stuntPoints": 1,
             "stuntPointsMax": 1,
             "costType": "fixed",
-            "type": ""
+            "type": "",
+            "equiped": false,
+            "activate": false
         },
         "relationship": {
             "templates": ["description"],
