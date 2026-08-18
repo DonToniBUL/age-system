@@ -15,7 +15,7 @@ export function ageEditor(rawValue, enrichedValue, options) {
     const enriched = String(enrichedValue ?? "").trim() || String(rawValue ?? "");
     const disabled = enabled ? "" : " disabled";
     return new Handlebars.SafeString(
-        `<prose-mirror class="editor values" name="${name}" value="${value}" toggled data-document-uuid="${uuid}"${disabled}>${enriched}</prose-mirror>`
+        `<prose-mirror class="editor values" name="${name}" value="${value}" toggled="true" data-document-uuid="${uuid}"${disabled}>${enriched}</prose-mirror>`
     );
 }
 

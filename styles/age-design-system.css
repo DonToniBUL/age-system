@@ -91,6 +91,16 @@
 
 /* AppV2 sheets retain the established visual language while moving document
    lifecycle, forms, tabs, and drag/drop onto the AppV2 framework. */
+.application.age-system.age-appv2-sheet {
+    --age-editor-surface: #f7f9fb;
+    --age-editor-surface-active: #ffffff;
+    --age-editor-ink: #18212a;
+    --age-editor-muted: #52606d;
+    --age-editor-line: #52606d;
+    --age-editor-focus: #007da7;
+    --age-editor-toolbar: #e7edf1;
+}
+
 .application.age-system.age-appv2-sheet .window-content {
     min-width: 0;
     min-height: 0;
@@ -120,6 +130,38 @@
     max-width: 100%;
 }
 
+/* Form controls are deliberately neutral surfaces. Their surrounding panels
+   retain the selected AGE palette, while values and edit boundaries stay
+   legible in every light and dark colour scheme. */
+.application.age-system.age-appv2-sheet :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not(.colorset-first-tier),
+    select,
+    textarea
+) {
+    color: var(--age-editor-ink) !important;
+    background-color: rgb(255 255 255 / 76%) !important;
+    border-color: rgb(51 65 75 / 68%) !important;
+}
+
+.application.age-system.age-appv2-sheet :is(input, select, textarea)::placeholder {
+    color: var(--age-editor-muted);
+    opacity: 1;
+}
+
+.application.age-system.age-appv2-sheet :is(input, select, textarea):focus-visible {
+    border-color: var(--age-editor-focus) !important;
+    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 55%, transparent);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 85%) !important;
+}
+
+.application.age-system.age-appv2-sheet :is(input, select, textarea):disabled,
+.application.age-system.age-appv2-sheet :is(input, textarea)[readonly] {
+    color: #34414c !important;
+    background-color: rgb(235 239 242 / 82%) !important;
+    opacity: 1;
+}
+
 /* Foundry's shared flexrow utility centers children on the cross axis. AppV1
    applied a legacy reset which made the sheet's main column stretch; AppV2
    does not. Restore that contract so the banner and tabs start at the top. */
@@ -144,20 +186,136 @@
 
 /* V14's form-associated editor replaces AppV1's activated editor container. */
 .application.age-system.age-appv2-sheet prose-mirror.editor {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     width: 100%;
     min-width: 0;
-    min-height: 0;
-    color: inherit;
+    min-height: 2.5rem;
+    overflow: hidden;
+    color: var(--age-editor-ink);
+    color-scheme: light;
+    background: var(--age-editor-surface);
+    border: 1px solid var(--age-editor-line);
+    border-radius: 5px;
+    box-shadow: inset 0 1px 2px rgb(15 23 42 / 8%);
 }
 
 .application.age-system.age-appv2-sheet prose-mirror.editor > .editor-content {
     flex: 1 1 auto;
     min-height: 2.5rem;
-    color: inherit;
+    padding: 0.5rem 0.65rem;
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface);
     line-height: 1.35;
     overflow-wrap: anywhere;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor.inactive:not([disabled]) > .editor-content {
+    padding-right: 2.75rem;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin: 0.25rem;
+    color: #ffffff;
+    background: #334e5c;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    opacity: 0.9;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:hover,
+.application.age-system.age-appv2-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:focus-visible {
+    color: #ffffff;
+    background: var(--age-editor-focus);
+    opacity: 1;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor.active {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface-active);
+    border-color: var(--age-editor-focus);
+    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 45%, transparent);
+    outline-offset: 1px;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor :is(.ProseMirror, .source-editor) {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface-active);
+    caret-color: var(--age-editor-ink);
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor .ProseMirror {
+    box-sizing: border-box;
+    min-height: 4rem;
+    padding: 0.55rem 0.65rem;
+    border-top: 1px solid #c1cad1;
+    outline: 0;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor menu {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-toolbar);
+    border-bottom: 1px solid #aeb9c2;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor menu :is(button, select, input) {
+    color: var(--age-editor-ink) !important;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor :is(a.content-link, a.inline-roll) {
+    color: #004f78;
+    background: #dcecf5;
+    border-color: #7aa9bf;
+}
+
+.application.age-system.age-appv2-sheet prose-mirror.editor[disabled] {
+    color: var(--age-editor-ink);
+    background: #edf1f4;
+    border-style: dashed;
+}
+
+/* AppV2 palette contrast. Each semantic surface keeps its established AGE
+   background while receiving an ink colour with at least 4.5:1 contrast. */
+.application.age-system.age-appv2-sheet.colorset-modern-blue { --age-ink-first: #ffffff; --age-ink-second: #00516f; --age-ink-third: #231f20; }
+.application.age-system.age-appv2-sheet.colorset-fantasy-blue { --age-ink-first: #ffffff; --age-ink-second: #083b43; --age-ink-third: #dbdada; }
+.application.age-system.age-appv2-sheet.colorset-dragon-red { --age-ink-first: #ffffff; --age-ink-second: #83272a; --age-ink-third: #000000; }
+.application.age-system.age-appv2-sheet.colorset-ronin-green { --age-ink-first: #ffffff; --age-ink-second: #155f0e; --age-ink-third: #000000; }
+.application.age-system.age-appv2-sheet.colorset-expanded-blue { --age-ink-first: #dde2e2; --age-ink-second: #005971; --age-ink-third: #dde2e2; }
+.application.age-system.age-appv2-sheet.colorset-folded-purple { --age-ink-first: #ffffff; --age-ink-second: #565183; --age-ink-third: #ffffff; }
+.application.age-system.age-appv2-sheet.colorset-select-one { --age-ink-first: #e7ccc3; --age-ink-second: #172033; --age-ink-third: #ffffff; }
+.application.age-system.age-appv2-sheet.colorset-the-grey { --age-ink-first: #ccc9c9; --age-ink-second: #3d3e3f; --age-ink-third: #ffffff; }
+.application.age-system.age-appv2-sheet.colorset-red-warrior { --age-ink-first: #f7b755; --age-ink-second: #1a0000; --age-ink-third: #ffffff; }
+.application.age-system.age-appv2-sheet.colorset-never-dead { --age-ink-first: #ffffff; --age-ink-second: #663322; --age-ink-third: #ffffff; }
+
+.application.age-system.age-appv2-sheet .colorset-first-tier,
+.application.age-system.age-appv2-sheet .colorset-second-tier.resource .values,
+.application.age-system.age-appv2-sheet .colorset-third-tier.resource .list-sub-header,
+.application.age-system.age-appv2-sheet input.colorset-first-tier,
+.application.age-system.age-appv2-sheet .sheet-main-content nav a.active,
+.application.age-system.age-appv2-sheet .stunt-points.stunted {
+    color: var(--age-ink-first) !important;
+}
+
+.application.age-system.age-appv2-sheet .colorset-second-tier,
+.application.age-system.age-appv2-sheet .colorset-first-tier.resource .list-sub-header,
+.application.age-system.age-appv2-sheet .colorset-third-tier.resource .values,
+.application.age-system.age-appv2-sheet .colorset-first-tier :is(a.content-link, a.inline-roll),
+.application.age-system.age-appv2-sheet .char-sheet input.colorset-second-tier {
+    color: var(--age-ink-second) !important;
+}
+
+.application.age-system.age-appv2-sheet .colorset-third-tier,
+.application.age-system.age-appv2-sheet .colorset-first-tier.resource .values,
+.application.age-system.age-appv2-sheet .colorset-second-tier.resource .list-sub-header,
+.application.age-system.age-appv2-sheet .colorset-second-tier :is(a.content-link, a.inline-roll),
+.application.age-system.age-appv2-sheet .item-summary label,
+.application.age-system.age-appv2-sheet .sheet-main-content nav a:not(.active) {
+    color: var(--age-ink-third) !important;
 }
 
 .application.age-system.age-appv2-sheet.item {
@@ -214,12 +372,24 @@
     line-height: 1;
 }
 
+/* Keep the full Character header and sidebar in place while the selected tab
+   scrolls inside the existing AppV2 window. The compact stat block uses its
+   own scroll region and is intentionally unaffected. */
+.application.age-system.age-appv2-sheet.char-sheet-alt .sheet-main-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
 .application.age-system.age-appv2-sheet.item .sheet-main-content {
     overflow: auto;
     scrollbar-gutter: stable;
 }
 
 .application.age-system.age-appv2-sheet.item .sheet-main-content prose-mirror.editor {
+    min-height: 6rem;
     padding: 4px;
 }
 
@@ -262,9 +432,24 @@
 
 .application.age-system.age-appv2-sheet.stat-block .organization-sheet > prose-mirror.editor {
     flex: 1 1 8rem;
+    min-height: 10rem;
     padding: 6px;
-    background: rgb(255 255 255 / 10%);
+    background: var(--age-editor-surface);
     border-radius: 5px;
+}
+
+.application.age-system.age-appv2-sheet.vehicle .image-description .editor-container,
+.application.age-system.age-appv2-sheet.spaceship .image-description .ship-desc {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.application.age-system.age-appv2-sheet.vehicle .image-description prose-mirror.editor,
+.application.age-system.age-appv2-sheet.spaceship .image-description prose-mirror.editor {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 7rem;
 }
 
 /* Vehicle and spaceship roots are the AppV2 scroll regions. Their legacy

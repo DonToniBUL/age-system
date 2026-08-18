@@ -137,29 +137,37 @@ export function prepAdvSetup (html) {
 /**
  * Add customization to Actor Sheet
  * @param {object} sheet Sheet configuration data
- * @param {jQuery Object} html jQuery object whithin sheet
+ * @param {jQuery|HTMLElement} html Sheet content or AppV2 root element
  * @param {object} data data used to render sheet
  */
 export async function prepSheet (sheet, html, data) {
     // Add color customization
-    const base = html.closest(`.age-system.sheet`);
+    const base = sheetRootElement(html);
     const classes = [];
     const colors = [];
-    for (let i = 0; i < base[0].classList.length; i++) {
-        classes.push(base[0].classList[i]);
+    for (let i = 0; i < base.classList.length; i++) {
+        classes.push(base.classList[i]);
     };
     for (let k = 0; k < classes.length; k++) {
         const c = classes[k];
         if (c.indexOf(`colorset-`) > -1) colors.push(c)
     }
-    if (colors.length > 0) colors.map(c => base[0].classList.remove(c))
-    base[0].classList.add(`colorset-${ageSystem.colorScheme}`);
+    if (colors.length > 0) colors.map(c => base.classList.remove(c))
+    base.classList.add(`colorset-${ageSystem.colorScheme}`);
     
     // Add minimum width for Vehicle and Spaceship sheets
-    if(['vehicle', 'spaceship'].includes(sheet.object.type)) base.css("min-width", "665px");
+    if(['vehicle', 'spaceship'].includes(sheet.object.type)) base.style.minWidth = "665px";
 
     // Enrich HMTL text
     enrichTinyMCE(`div.editor-content`);
+}
+
+export function sheetRootElement(html) {
+    const element = html?.[0]?.closest ? html[0] : html;
+    if (!element?.closest || !element?.classList || !element?.style) {
+        throw new TypeError("AGE System | Sheet rendering requires a DOM root element.");
+    }
+    return element.closest(".age-system.sheet") ?? element;
 }
 
 /**

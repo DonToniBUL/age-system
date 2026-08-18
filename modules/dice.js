@@ -111,7 +111,7 @@ export async function ageRollCheck({event = null, actor = null, abl = null, item
                     default: "normal",
                     close: () => resolve({cancelled: true}),
                 }
-                new Dialog(data, null).render(true);
+                new Dialog(data).render(true);
             });
             if (!castAnyway.roll) return false;
         }

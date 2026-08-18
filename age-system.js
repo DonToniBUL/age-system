@@ -35,6 +35,7 @@ import { AgeTracker } from "./modules/age-tracker.js";
 import { applyBreather } from "./modules/breather.js";
 import AgeImporter from "./modules/age-importer.js";
 import ConditionsWorkshop from "./modules/conditions-workshop.js";
+import {registerLegacySelectHelper} from "./modules/handlebars-helpers.js";
 import {registerNativeEditorHelper} from "./modules/sheets/native-editor.js";
 import {AGE_DATA_MODEL_STATUS, registerAgeDataModels} from "./modules/data/models.js";
 import {registerAgeTokenTrackableAttributes} from "./modules/token-attributes.js";
@@ -81,6 +82,8 @@ async function preloadHandlebarsTemplates() {
         `${pathRedux}sheets/char-block/column1.hbs`,
         `${pathRedux}sheets/char-block/injury-bar.hbs`,
         `${pathRedux}sheets/char-block/play-aid-bar.hbs`,
+        `${pathRedux}sheets/v2/parity/partials/char-block-column1.hbs`,
+        `${pathRedux}sheets/v2/parity/partials/char-persona.hbs`,
     ];
 
     return foundry.applications.handlebars.loadTemplates(templatePaths);
@@ -227,6 +230,7 @@ Hooks.once("init", function() {
     CONFIG.Actor.documentClass = ageSystemActor;
     CONFIG.Item.documentClass = ageSystemItem;
     CONFIG.ageSystem = ageSystem;
+    registerLegacySelectHelper();
     registerNativeEditorHelper();
 
     // Load partials for Handlebars
