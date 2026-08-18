@@ -9,7 +9,6 @@ node_modules/
 coverage/
 dist/
 tmp/
-*.log
 
 # Operating system and editor metadata
 .DS_Store
