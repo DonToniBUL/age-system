@@ -1,0 +1,8 @@
+{{#if (or (eq config.wealthMode 'currency') (eq config.wealthMode 'coins'))}}
+<label class="colorset-first-tier">{{localize "age-system.item.cost"}}</label>
+{{else}}
+<label class="colorset-first-tier">{{localize "age-system.item.purchaseTN"}}</label>
+{{/if}}
+<input type="text" {{#if inChat}}disabled{{/if}} name="system.cost" value="{{system.cost}}" data-dtype="String"
+    {{#if (eq config.wealthMode 'coins')}}placeholder="{{localize 'age-system.item.currencyPriceExampleCoins'}}" title="{{localize 'age-system.item.currencyPriceHintCoins'}}"{{/if}}
+    {{#if (eq config.wealthMode 'currency')}}inputmode="decimal" placeholder="{{localize 'age-system.item.currencyPriceExampleSingle'}}" title="{{localize 'age-system.item.currencyPriceHintSingle'}}"{{/if}} />

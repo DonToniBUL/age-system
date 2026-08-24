@@ -1,0 +1,91 @@
+{
+  "id": "age-system",
+  "title": "AGE System (unofficial)",
+  "description": "Unofficial AGE System implementation for most of AGE subsystems",
+  "version": "5.0.7",
+  "compatibility": {
+    "minimum": "14.365",
+    "verified": "14.365"
+  },
+  "url": "https://github.com/DonToniBUL/age-system/tree/codex/5.0.7-automation-v14.366",
+  "authors": [
+    {
+      "name": "VK Dolea",
+      "discord": "vkdolea#7974",
+      "reddit": "u/vkdolea",
+      "ko-fi": "vkdolea"
+    }
+  ],
+  "media": [
+    {
+      "type": "cover",
+      "url": "https://imgur.com/5k8i0Fy.png",
+      "caption": "AGE System (unofficial)"
+    },
+    {
+      "type": "setup",
+      "url": "systems/age-system/resources/logo/age-logo.png",
+      "thumbnail": "systems/age-system/resources/logo/age-logo.png"
+    }
+  ],
+  "scripts": [],
+  "styles": [
+    "styles/age-system.css",
+    "styles/age-design-system.css"
+  ],
+  "esmodules": [
+    "age-system.js"
+  ],
+  "packs": [],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "fr",
+      "name": "Français",
+      "path": "lang/fr.json"
+    },
+    {
+      "lang": "es",
+      "name": "Español",
+      "path": "lang/es.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/ptbr.json"
+    }
+  ],
+  "socket": true,
+  "documentTypes": {
+    "Actor": {
+      "char": {"htmlFields": ["features", "traits", "goals", "secretNote", "gmNotes"]},
+      "vehicle": {"htmlFields": ["description", "gmNotes"]},
+      "spaceship": {"htmlFields": ["description", "gmNotes"]},
+      "organization": {"htmlFields": ["description", "notes", "gmNotes"]}
+    },
+    "Item": {
+      "equipment": {"htmlFields": ["longDesc"]},
+      "focus": {"htmlFields": ["longDesc"]},
+      "weapon": {"htmlFields": ["longDesc"]},
+      "power": {"htmlFields": ["longDesc"]},
+      "talent": {"htmlFields": ["longDesc", "degree0.desc", "degree1.desc", "degree2.desc", "degree3.desc", "degree4.desc"]},
+      "stunts": {"htmlFields": ["longDesc"]},
+      "relationship": {"htmlFields": ["longDesc"]},
+      "honorifics": {"htmlFields": ["longDesc"]},
+      "membership": {"htmlFields": ["longDesc"]},
+      "shipfeatures": {"htmlFields": ["longDesc"]},
+      "class": {"htmlFields": ["description"]}
+    }
+  },
+  "grid": {
+    "distance": 2,
+    "units": "yd"
+  },
+  "initiative": "3d6 + @initiative",
+  "bugs": "https://github.com/DonToniBUL/age-system/issues",
+  "readme": "https://github.com/DonToniBUL/age-system/blob/codex/5.0.7-automation-v14.366/README.md"
+}

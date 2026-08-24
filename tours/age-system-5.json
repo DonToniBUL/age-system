@@ -1,0 +1,36 @@
+{
+  "namespace": "age-system",
+  "id": "age-system-5",
+  "title": "AGE System 5 Quick Tour",
+  "description": "A short guide to the AGE 5 AppV2 defaults, legacy fallback, automation tools, diagnostics, and safe data preview.",
+  "display": true,
+  "canBeResumed": true,
+  "steps": [
+    {
+      "id": "welcome",
+      "title": "AGE System 5",
+      "content": "<p>AGE 5 uses native AppV2 sheets by default and keeps the verified legacy sheets available as an explicit fallback. Existing automation and the versioned integration API remain intact.</p>"
+    },
+    {
+      "id": "sheets",
+      "title": "AppV2 default and legacy fallback",
+      "content": "<p>New and unconfigured Actors and Items open with AppV2. Use the Sheet Configuration control in a document header to select a compact Character sheet or a legacy AppV1 fallback for that document.</p>"
+    },
+    {
+      "id": "toolbox",
+      "title": "AGE Toolbox",
+      "content": "<p>Open the AGE Toolbox from the Token Controls tool group for requested rolls, recovery, Advanced Tests, and Operations &amp; Diagnostics.</p>"
+    },
+    {
+      "id": "diagnostics",
+      "title": "Audit before migration",
+      "content": "<p>Operations &amp; Diagnostics can audit content and preview typed-data migration. Preview is read-only: it never changes world or compendium documents.</p>",
+      "restricted": true
+    },
+    {
+      "id": "finish",
+      "title": "Safe rollout",
+      "content": "<p>Back up a world before upgrading. If an integration needs more time, select the clearly labelled legacy AppV1 fallback for that Actor or Item; no document data is converted merely by changing sheets.</p>"
+    }
+  ]
+}

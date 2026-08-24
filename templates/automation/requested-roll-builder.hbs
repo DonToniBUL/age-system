@@ -1,0 +1,13 @@
+<section class="age-requested-roll-builder flexcol" style="height:100%;min-height:0;gap:.55rem;padding:.35rem">
+  <form class="age-request-roll-form flexcol" style="height:100%;min-height:0;gap:.55rem">
+    <div class="form-group"><label>{{localize "age-system.AUTOMATION.requestTitle"}}</label><input type="text" name="title" placeholder="{{localize 'age-system.AUTOMATION.requestTitlePlaceholder'}}"></div>
+    <div class="form-group"><label>{{localize "age-system.AUTOMATION.ability"}}</label><select name="ability">{{#each abilities as |ability|}}<option value="{{ability.value}}">{{ability.label}}</option>{{/each}}</select></div>
+    <div class="form-group"><label>{{localize "age-system.AUTOMATION.focusOptional"}}</label><input type="text" name="focus"></div>
+    <div class="form-group"><label>{{localize "age-system.AUTOMATION.targetNumberOptional"}}</label><input type="number" name="targetNumber" min="1" step="1"></div>
+    <div class="flexrow" style="gap:.35rem"><strong style="flex:1">{{localize "age-system.AUTOMATION.requestRecipients"}}</strong><button type="button" class="age-request-select-all">{{localize "age-system.AUTOMATION.selectAll"}}</button><button type="button" class="age-request-select-none">{{localize "age-system.AUTOMATION.selectNone"}}</button></div>
+    <ol class="directory-list" style="flex:1;min-height:0;overflow:auto;border:1px solid rgba(0,0,0,.2)">
+      {{#each actors as |actor|}}<li class="directory-item flexrow" style="align-items:center;gap:.5rem;padding:.35rem .45rem"><input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}} style="flex:0 0 auto"><img src="{{actor.img}}" width="32" height="32"><div style="min-width:0"><strong>{{actor.name}}</strong>{{#if actor.owners}}<div class="notes">{{actor.owners}}</div>{{/if}}</div></li>{{else}}<li class="directory-item notes" style="padding:.6rem">{{localize "age-system.AUTOMATION.noCharacterActors"}}</li>{{/each}}
+    </ol>
+    <button type="submit"><i class="fa-solid fa-paper-plane"></i> {{localize "age-system.AUTOMATION.postRollRequest"}}</button>
+  </form>
+</section>

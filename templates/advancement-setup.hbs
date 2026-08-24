@@ -1,0 +1,96 @@
+<form class="class-advancement-setup">
+    <section class="options-column">
+        {{#if (eq advType "progressive")}}
+        <div class="form-group">
+            <label><strong>{{localize "age-system.trait"}}</strong></label>
+            <select name="trait">
+                {{#select trait}}{{#each traitArr as |entry|}}<option value="{{entry.key}}">{{entry.name}}</option>{{/each}}{{/select}}
+            </select>
+        </div>
+        {{else}}
+        <div class="form-group">
+            <label><strong>{{localize "age-system.type"}}</strong></label>
+            <select name="itemOption">
+                {{#select itemOption}}{{#each itemOptionObj as |label key|}}<option value="{{key}}">{{label}}</option>{{/each}}{{/select}}
+            </select>
+        </div>
+        <div class="form-group" {{#unless (eq itemOption "multiple")}}style="display:none"{{/unless}}>
+            <label><strong>{{localize "age-system.item.quantity"}}</strong></label>
+            <input type="number" name="itemQtd" value="{{itemQtd}}" min="1" max="{{itemArrSize}}"/>
+        </div>
+        <div class="form-group">
+            <label><strong>{{localize "age-system.CLASS.allowProgression"}}</strong></label>
+            <input type="checkbox" name="allowProgression" {{checked allowProgression}}/>
+            <p class="notes">{{localize "age-system.CLASS.allowProgressionHint"}}</p>
+        </div>
+        {{/if}}
+
+        <div class="form-group">
+            <label><strong>{{localize "age-system.alias"}}</strong></label>
+            <input type="text" name="alias" value="{{alias}}"/>
+        </div>
+        <div class="form-group">
+            <label><strong>{{localize "age-system.image"}}</strong></label>
+            <div class="form-fields">
+                <input type="text" name="img" value="{{img}}"/>
+                {{filePicker type="image" target="img"}}
+            </div>
+        </div>
+
+        {{#if (eq advType "item")}}
+        <div class="form-group">
+            <label><strong>{{localize "age-system.level"}}</strong></label>
+            <select name="level">{{#select level}}{{#each levels as |number|}}<option value="{{number}}">{{number}}</option>{{/each}}{{/select}}</select>
+        </div>
+        <div class="form-group">
+            <label><strong>{{localize "age-system.itemProgression"}}</strong></label>
+            <div class="form-fields">
+                <select name="tType">{{#select tType}}{{#each progressionTraits as |entry|}}<option value="{{entry.key}}">{{entry.name}}</option>{{/each}}{{/select}}</select>
+                <button class="addItemProg" type="button"><i class="fa fa-plus"></i> {{localize "age-system.add"}}</button>
+            </div>
+            <p class="notes">{{localize "age-system.itemProgressionHint"}}</p>
+        </div>
+        {{/if}}
+    </section>
+
+    {{#if (eq advType "progressive")}}
+    <section class="class-progressive-grid">
+        <div class="progressive-column">
+            <div class="progressive-header"><strong>{{localize "age-system.level"}}</strong><strong>{{localize "age-system.value"}}</strong></div>
+            {{#each adv as |value|}}{{#if (lt @index 10)}}
+            <div class="progressive-row"><span>{{levelarr @index}}</span><input type="text" name="adv.{{@index}}" value="{{value}}"/></div>
+            {{/if}}{{/each}}
+        </div>
+        <div class="progressive-column">
+            <div class="progressive-header"><strong>{{localize "age-system.level"}}</strong><strong>{{localize "age-system.value"}}</strong></div>
+            {{#each adv as |value|}}{{#if (gt @index 9)}}
+            <div class="progressive-row"><span>{{levelarr @index}}</span><input type="text" name="adv.{{@index}}" value="{{value}}"/></div>
+            {{/if}}{{/each}}
+        </div>
+    </section>
+    {{else}}
+    <section class="item-drop-area">
+        <p><strong>{{localize "age-system.dragAdvItem"}}</strong></p>
+        {{#if itemArr.length}}
+        <ol class="class-grant-list">
+            {{#each itemArr as |grant|}}
+            <li class="flexrow" data-index="{{@index}}">
+                <a class="item-delete" data-index="{{@index}}" title="{{localize 'age-system.settings.delete'}}"><i class="fa-solid fa-trash"></i></a>
+                <img src="{{grant.img}}" width="28" height="28"/>
+                <span>
+                    {{#if grant.uuid}}<a class="content-link" data-uuid="{{grant.uuid}}">{{grant.name}}</a>{{else}}{{grant.name}} — {{grant.trait}}{{/if}}
+                </span>
+            </li>
+            {{/each}}
+        </ol>
+        {{else}}
+        <p class="notes">{{localize "age-system.CLASS.noGrantsConfigured"}}</p>
+        {{/if}}
+    </section>
+    {{/if}}
+
+    <footer class="flexrow">
+        <button class="default-button cancel" type="button"><i class="fa-solid fa-xmark"></i>{{localize "age-system.cancel"}}</button>
+        <button class="default-button" type="submit"><i class="fa-solid fa-check"></i>{{localize "age-system.confirm"}}</button>
+    </footer>
+</form>

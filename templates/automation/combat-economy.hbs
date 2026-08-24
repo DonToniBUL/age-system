@@ -1,0 +1,22 @@
+<section class="age-combat-economy flexcol" style="gap:.55rem;padding:.35rem">
+  {{#if actor}}
+  <h2 style="margin:0">{{actor.name}}</h2>
+  <div class="flexrow" style="gap:.45rem">
+    <div class="notification info" style="margin:0;flex:1"><strong>{{state.major}}</strong><br>{{localize "age-system.AUTOMATION.majorActions"}}</div>
+    <div class="notification info" style="margin:0;flex:1"><strong>{{state.minor}}</strong><br>{{localize "age-system.AUTOMATION.minorActions"}}</div>
+    <div class="notification info" style="margin:0;flex:1"><strong>{{state.free}}</strong><br>{{localize "age-system.AUTOMATION.freeActions"}}</div>
+  </div>
+  {{#unless evaluation.legal}}<p class="notification warning">{{localize "age-system.AUTOMATION.actionEconomyExceeded"}}</p>{{/unless}}
+  <div class="flexrow" style="gap:.35rem">
+    <button type="button" data-economy-type="major" data-label="Manual major action"><i class="fa-solid fa-circle"></i> {{localize "age-system.AUTOMATION.markMajor"}}</button>
+    <button type="button" data-economy-type="minor" data-label="Manual minor action"><i class="fa-regular fa-circle"></i> {{localize "age-system.AUTOMATION.markMinor"}}</button>
+    <button type="button" data-economy-type="free" data-label="Manual free action"><i class="fa-solid fa-bolt"></i> {{localize "age-system.AUTOMATION.markFree"}}</button>
+  </div>
+  <button type="button" class="age-economy-undo" {{#unless history.length}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.undoLastActionMark"}}</button>
+  <ol class="directory-list" style="max-height:14rem;overflow:auto">
+    {{#each history as |entry|}}<li class="directory-item" style="padding:.3rem .4rem"><strong>{{entry.type}}</strong> · {{entry.label}}{{#if entry.offTurn}} <span class="notes">({{localize "age-system.AUTOMATION.offTurn"}})</span>{{/if}}</li>{{else}}<li class="directory-item notes" style="padding:.5rem">{{localize "age-system.AUTOMATION.noActionsRecorded"}}</li>{{/each}}
+  </ol>
+  {{else}}
+  <p class="notification warning">{{localize "age-system.AUTOMATION.noActiveCombatant"}}</p>
+  {{/if}}
+</section>

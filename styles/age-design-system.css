@@ -1,0 +1,599 @@
+/* AGE 5 design foundation. Everything is scoped so accepted legacy sheets retain their byte-locked presentation. */
+:root {
+    --age-v5-ink: #182225;
+    --age-v5-muted: #667378;
+    --age-v5-paper: #f5f2e9;
+    --age-v5-panel: #fffdf7;
+    --age-v5-line: #c9c4b6;
+    --age-v5-accent: #0f5f68;
+    --age-v5-accent-strong: #093f46;
+    --age-v5-gold: #c79b3b;
+    --age-v5-danger: #9b352f;
+    --age-v5-radius: 8px;
+    --age-v5-shadow: 0 10px 28px rgb(18 29 32 / 18%);
+    --age-v5-space-1: 0.25rem;
+    --age-v5-space-2: 0.5rem;
+    --age-v5-space-3: 0.75rem;
+    --age-v5-space-4: 1rem;
+}
+
+.age-v5-sheet .window-content {
+    padding: 0;
+    color: var(--age-v5-ink);
+    background: var(--age-v5-paper);
+}
+
+.age-v5-sheet__surface { min-height: 100%; background: var(--age-v5-paper); }
+.age-v5-sheet__header { display: grid; grid-template-columns: 76px 1fr auto; gap: var(--age-v5-space-3); align-items: center; padding: var(--age-v5-space-3) var(--age-v5-space-4); color: white; background: linear-gradient(125deg, var(--age-v5-accent-strong), var(--age-v5-accent)); border-bottom: 3px solid var(--age-v5-gold); }
+.age-v5-sheet__portrait { width: 76px; height: 76px; object-fit: cover; border: 2px solid rgb(255 255 255 / 70%); border-radius: 50%; box-shadow: 0 3px 12px rgb(0 0 0 / 30%); }
+.age-v5-sheet__identity { display: grid; gap: 2px; min-width: 0; }
+.age-v5-sheet__name { width: 100%; height: auto; padding: 0; color: white; background: transparent; border: 0; border-bottom: 1px solid rgb(255 255 255 / 35%); border-radius: 0; font-family: Georgia, serif; font-size: 1.65rem; font-weight: 700; }
+.age-v5-sheet__name:focus { box-shadow: none; border-color: white; }
+.age-v5-sheet__body { display: grid; gap: var(--age-v5-space-3); max-height: calc(100% - 102px); padding: var(--age-v5-space-3); overflow: auto; }
+.age-v5-kicker { color: var(--age-v5-gold); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; }
+.age-v5-muted { color: var(--age-v5-muted); font-size: 0.78rem; }
+.age-v5-sheet__header .age-v5-muted { color: rgb(255 255 255 / 72%); }
+.age-v5-primary { min-height: 34px; padding-inline: 0.9rem; color: var(--age-v5-accent-strong); background: var(--age-v5-gold); border: 0; font-weight: 800; }
+
+.age-v5-stat-ribbon { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: hidden; background: var(--age-v5-accent-strong); border-radius: var(--age-v5-radius); box-shadow: var(--age-v5-shadow); }
+.age-v5-stat-ribbon > * { display: grid; grid-template-columns: auto auto; gap: 0.2rem; align-items: center; justify-content: center; min-height: 64px; padding: var(--age-v5-space-2); color: white; border-right: 1px solid rgb(255 255 255 / 18%); text-align: center; }
+.age-v5-stat-ribbon > *:last-child { border-right: 0; }
+.age-v5-stat-ribbon span { grid-column: 1 / -1; color: rgb(255 255 255 / 68%); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.age-v5-stat-ribbon input { width: 3.2rem; height: 26px; color: white; background: rgb(255 255 255 / 10%); border-color: rgb(255 255 255 / 28%); text-align: center; }
+.age-v5-stat-ribbon strong { font-size: 1.15rem; }
+
+.age-v5-panel { padding: var(--age-v5-space-3); background: var(--age-v5-panel); border: 1px solid var(--age-v5-line); border-radius: var(--age-v5-radius); box-shadow: 0 2px 8px rgb(18 29 32 / 7%); }
+.age-v5-panel__heading { display: flex; align-items: end; justify-content: space-between; gap: var(--age-v5-space-2); margin-bottom: var(--age-v5-space-2); padding-bottom: var(--age-v5-space-2); border-bottom: 1px solid var(--age-v5-line); }
+.age-v5-panel h2 { margin: 0; color: var(--age-v5-accent-strong); font: 700 1.1rem/1.1 Georgia, serif; }
+.age-v5-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--age-v5-space-3); }
+
+.age-v5-ability-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--age-v5-space-2); }
+.age-v5-ability { display: grid; grid-template-columns: 34px 1fr; gap: var(--age-v5-space-2); align-items: center; padding: var(--age-v5-space-2); background: #ece9df; border-left: 3px solid transparent; border-radius: 5px; }
+.age-v5-ability.is-primary { border-left-color: var(--age-v5-gold); }
+.age-v5-ability button { width: 34px; height: 34px; margin: 0; padding: 0; color: white; background: var(--age-v5-accent); border: 0; border-radius: 50%; }
+.age-v5-ability label { display: grid; grid-template-columns: 1fr 42px; gap: var(--age-v5-space-1); align-items: center; font-weight: 700; }
+.age-v5-ability input { width: 42px; text-align: center; }
+
+.age-v5-item-list { display: grid; gap: var(--age-v5-space-1); }
+.age-v5-item-row { display: grid; grid-template-columns: 30px 1fr 32px 32px; gap: var(--age-v5-space-1); align-items: center; min-height: 36px; padding: 3px; border-bottom: 1px solid #ded9cc; }
+.age-v5-item-row img { width: 30px; height: 30px; object-fit: cover; border: 1px solid var(--age-v5-line); border-radius: 4px; }
+.age-v5-item-row button { min-width: 30px; min-height: 30px; margin: 0; padding: 0; border: 0; background: transparent; }
+.age-v5-item-row button:hover { color: var(--age-v5-accent); box-shadow: none; }
+.age-v5-item-row .age-v5-item-row__name { overflow: hidden; padding-inline: 0.25rem; font-weight: 700; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.age-v5-chip-list { display: flex; flex-wrap: wrap; gap: var(--age-v5-space-2); }
+.age-v5-chip-list button { display: grid; grid-template-columns: 28px auto; grid-template-rows: auto auto; column-gap: var(--age-v5-space-2); align-items: center; min-height: 42px; margin: 0; padding: 5px 8px; background: #ece9df; border: 1px solid var(--age-v5-line); }
+.age-v5-chip-list img { grid-row: 1 / 3; width: 28px; height: 28px; object-fit: cover; border-radius: 50%; }
+.age-v5-chip-list span { font-weight: 700; text-align: left; }
+.age-v5-chip-list small { color: var(--age-v5-muted); text-align: left; text-transform: capitalize; }
+.age-v5-empty { margin: 0.5rem; color: var(--age-v5-muted); font-style: italic; }
+
+.age-v5-action-bar { display: flex; gap: var(--age-v5-space-2); }
+.age-v5-action-bar button { flex: 1; min-height: 36px; color: white; background: var(--age-v5-accent); border: 0; font-weight: 700; }
+.age-v5-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--age-v5-space-3); }
+.age-v5-form-grid label { display: grid; gap: var(--age-v5-space-1); align-content: start; }
+.age-v5-form-grid label > span { color: var(--age-v5-muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.age-v5-form-grid input, .age-v5-form-grid textarea { width: 100%; }
+.age-v5-form-grid textarea { min-height: 180px; resize: vertical; }
+.age-v5-span-2 { grid-column: 1 / -1; }
+
+.age-v5-chat-card { --age-v5-chat-accent: var(--age-v5-accent); border-left: 3px solid var(--age-v5-chat-accent); }
+.age-v5-chat-card--damage { --age-v5-chat-accent: var(--age-v5-danger); }
+.age-v5-chat-card--healing { --age-v5-chat-accent: #32734a; }
+.age-v5-chat-card--power, .age-v5-chat-card--resistance { --age-v5-chat-accent: #65529b; }
+.age-v5-chat-card--requested-roll { --age-v5-chat-accent: var(--age-v5-gold); }
+
+@media (max-width: 680px) {
+    .age-v5-stat-ribbon { grid-template-columns: repeat(3, 1fr); }
+    .age-v5-columns, .age-v5-form-grid { grid-template-columns: 1fr; }
+    .age-v5-ability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .age-v5-span-2 { grid-column: auto; }
+}
+
+/* AppV2 parity shells retain the accepted 4.5 visual language while moving
+   document lifecycle, forms, tabs, and drag/drop onto the AppV2 framework. */
+.application.age-system.age-v5-parity-sheet .window-content {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    color: inherit;
+    background: rgb(207 194 188 / 60%);
+}
+
+.application.age-system.age-v5-parity-sheet.item .window-content {
+    background: none;
+}
+
+.application.age-system.age-v5-parity-sheet .window-content > section {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+}
+
+.application.age-system.age-v5-parity-sheet .window-content > section > input[name="name"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Foundry's shared flexrow utility centers children on the cross axis. AppV1
+   applied a legacy reset which made the sheet's main column stretch; AppV2
+   does not. Restore that contract so the banner and tabs start at the top. */
+.application.age-system.age-v5-parity-sheet .window-content > section.flexrow {
+    align-items: stretch;
+}
+
+.application.age-system.age-v5-parity-sheet .window-content > section.flexrow > .second-column {
+    align-self: stretch;
+    flex: 1 1 0;
+    width: 0;
+    min-width: 210px;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.application.age-system.age-v5-parity-sheet .second-column > .sheet-main-content,
+.application.age-system.age-v5-parity-sheet .second-column > .sheet-main-content > .sheet-tab-section {
+    min-height: 0;
+}
+
+/* V14's form-associated editor replaces AppV1's activated editor container. */
+.application.age-system.age-v5-parity-sheet prose-mirror.editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    color: inherit;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor > .editor-content {
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    color: inherit;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.application.age-system.age-v5-parity-sheet.item {
+    background: transparent;
+}
+
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .window-content > section,
+.application.age-system.age-v5-parity-sheet.vehicle .window-content > section,
+.application.age-system.age-v5-parity-sheet.spaceship .window-content > section {
+    background: none;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block section.actor-sheet {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.application.age-system.age-v5-parity-sheet img[data-edit]:not(.disabled) {
+    cursor: pointer;
+}
+
+/* Beta 6 presentation and editor polish. These rules only adapt the AppV2 parity shell;
+   the accepted 4.5 templates, stylesheet, controls, and color themes remain
+   the source of truth. */
+.application.age-system.age-v5-parity-sheet.char-sheet-alt header.top-banner,
+.application.age-system.age-v5-parity-sheet.item header.top-banner {
+    margin-top: 6px;
+    padding-block: 5px 7px;
+}
+
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .header-details .charname,
+.application.age-system.age-v5-parity-sheet.item .header-details .itemname {
+    height: 2.25rem;
+    margin-bottom: 6px;
+    line-height: 1.15;
+}
+
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .sheet-main-content nav,
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content nav {
+    margin-bottom: 6px;
+    column-gap: 2px;
+}
+
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .sheet-main-content nav a,
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.45rem;
+    min-height: 1.45rem;
+    padding-block: 0;
+    line-height: 1;
+}
+
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content {
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content prose-mirror.editor {
+    padding: 4px;
+}
+
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content prose-mirror.editor > .editor-content {
+    min-height: 6rem;
+}
+
+/* Organization sheets were designed as narrow stat blocks. Keep that visual
+   measure when an AppV2 window is widened instead of stretching every row. */
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet {
+    gap: 4px;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > .ability-table,
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > .derived-stats-table,
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > prose-mirror.editor {
+    width: min(100%, 42rem);
+    margin-inline: auto;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet .ability-row.flexrow {
+    display: grid;
+    grid-template-columns: 50px minmax(0, 1fr);
+    align-items: center;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet .ability-row .abl-value-box,
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet .ability-row .abl-value-box input {
+    width: 50px;
+    max-width: 50px;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet .ability-row .abl-name-focus {
+    min-width: 0;
+    padding-inline: 6px;
+    flex-wrap: wrap;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > prose-mirror.editor {
+    flex: 1 1 8rem;
+    padding: 6px;
+    background: rgb(255 255 255 / 10%);
+    border-radius: 5px;
+}
+
+/* Vehicle and spaceship roots are the AppV2 scroll regions. Their legacy
+   content can now reflow at narrow widths while retaining the wide layout. */
+.application.age-system.age-v5-parity-sheet.vehicle .window-content > section.vehicle,
+.application.age-system.age-v5-parity-sheet.spaceship .window-content > section.spaceship {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > input[name="name"],
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship > input[name="name"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle h2,
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship h2 {
+    margin-block: 0 5px;
+    font-size: 1.35rem;
+    line-height: 1.15;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship h3 {
+    font-size: 1.05rem;
+    line-height: 1.15;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle .stats-block,
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship .stats-block {
+    box-sizing: border-box;
+    min-width: 0;
+    margin-top: 7px;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .flexrow:not(.image-description),
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship > .flexrow:not(.image-description) {
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .flexrow:not(.image-description) > .spacer {
+    display: none;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .flexrow:not(.image-description) > .parameters,
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .flexrow:not(.image-description) > .vehicle-damage-chart {
+    flex: 1 1 19rem;
+    min-width: min(100%, 19rem);
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .vehicle-damage-chart .damage-chart > li {
+    min-width: 0;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .vehicle-damage-chart .damage-chart > li > .velocity,
+.application.age-system.age-v5-parity-sheet.vehicle .vehicle-damage-chart .damage-chart > li > .feature-controls {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .vehicle-damage-chart .custom-velocity input {
+    box-sizing: border-box;
+    flex: 0 0 2rem;
+    width: 2rem;
+    min-width: 0;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .passenger-container h2 > span {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    max-width: 100%;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .passenger-container span input[name="system.capacity"] {
+    display: inline-block;
+    width: 3rem;
+    height: 1.35rem;
+    max-height: 1.35rem;
+    vertical-align: baseline;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .gm-secret-notes textarea.free-text,
+.application.age-system.age-v5-parity-sheet.spaceship .gm-secret-notes textarea.free-text {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship .systems {
+    overflow-x: auto;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship .systems-list {
+    min-width: 630px;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship section.spaceship > .flexrow:not(.image-description) > .flexcol {
+    flex: 1 1 21rem;
+    min-width: min(100%, 21rem);
+    margin-right: 0;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship .crew-details > .flexrow,
+.application.age-system.age-v5-parity-sheet.spaceship .damage-control-box {
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+/* V14's default input sizing compresses the three Damage Control values to
+   roughly one digit. Give each value a readable two-digit measure while
+   preserving the legacy labels and structure. */
+.application.age-system.age-v5-parity-sheet.spaceship .damage-control-box .numeric-input {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+}
+
+.application.age-system.age-v5-parity-sheet.spaceship .damage-control-box .threshold-box {
+    flex: 0 0 100px;
+    min-width: 100px;
+}
+
+/* Foundry 14.366 AppV2 editor and form accessibility corrections. These
+   overrides intentionally retain the established AGE palette on surrounding
+   panels while giving editable values a stable, readable surface. */
+.application.age-system.age-v5-parity-sheet {
+    --age-editor-surface: #f7f9fb;
+    --age-editor-surface-active: #ffffff;
+    --age-editor-ink: #18212a;
+    --age-editor-muted: #52606d;
+    --age-editor-line: #52606d;
+    --age-editor-focus: #007da7;
+    --age-editor-toolbar: #e7edf1;
+}
+
+.application.age-system.age-v5-parity-sheet :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not(.colorset-first-tier),
+    select,
+    textarea
+) {
+    color: var(--age-editor-ink) !important;
+    background-color: rgb(255 255 255 / 76%) !important;
+    border-color: rgb(51 65 75 / 68%) !important;
+}
+
+.application.age-system.age-v5-parity-sheet :is(input, select, textarea)::placeholder {
+    color: var(--age-editor-muted);
+    opacity: 1;
+}
+
+.application.age-system.age-v5-parity-sheet :is(input, select, textarea):focus-visible {
+    border-color: var(--age-editor-focus) !important;
+    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 55%, transparent);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 85%) !important;
+}
+
+.application.age-system.age-v5-parity-sheet :is(input, select, textarea):disabled,
+.application.age-system.age-v5-parity-sheet :is(input, textarea)[readonly] {
+    color: #34414c !important;
+    background-color: rgb(235 239 242 / 82%) !important;
+    opacity: 1;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor {
+    box-sizing: border-box;
+    min-height: 2.5rem;
+    overflow: hidden;
+    color: var(--age-editor-ink);
+    color-scheme: light;
+    background: var(--age-editor-surface);
+    border: 1px solid var(--age-editor-line);
+    border-radius: 5px;
+    box-shadow: inset 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor > .editor-content {
+    padding: 0.5rem 0.65rem;
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface);
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > .editor-content {
+    padding-right: 2.75rem;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin: 0.25rem;
+    color: #ffffff;
+    background: #334e5c;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    opacity: 0.9;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:hover,
+.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:focus-visible {
+    color: #ffffff;
+    background: var(--age-editor-focus);
+    opacity: 1;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor.active {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface-active);
+    border-color: var(--age-editor-focus);
+    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 45%, transparent);
+    outline-offset: 1px;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor :is(.ProseMirror, .source-editor) {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-surface-active);
+    caret-color: var(--age-editor-ink);
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor .ProseMirror {
+    box-sizing: border-box;
+    min-height: 4rem;
+    padding: 0.55rem 0.65rem;
+    border-top: 1px solid #c1cad1;
+    outline: 0;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor menu {
+    color: var(--age-editor-ink);
+    background: var(--age-editor-toolbar);
+    border-bottom: 1px solid #aeb9c2;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor menu :is(button, select, input) {
+    color: var(--age-editor-ink) !important;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor :is(a.content-link, a.inline-roll) {
+    color: #004f78;
+    background: #dcecf5;
+    border-color: #7aa9bf;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor[disabled] {
+    color: var(--age-editor-ink);
+    background: #edf1f4;
+    border-style: dashed;
+}
+
+/* Every selected AGE palette receives explicit semantic ink colours with
+   WCAG-AA contrast on its established first-, second-, and third-tier fills. */
+.application.age-system.age-v5-parity-sheet.colorset-modern-blue { --age-ink-first: #ffffff; --age-ink-second: #00516f; --age-ink-third: #231f20; }
+.application.age-system.age-v5-parity-sheet.colorset-fantasy-blue { --age-ink-first: #ffffff; --age-ink-second: #083b43; --age-ink-third: #dbdada; }
+.application.age-system.age-v5-parity-sheet.colorset-dragon-red { --age-ink-first: #ffffff; --age-ink-second: #83272a; --age-ink-third: #000000; }
+.application.age-system.age-v5-parity-sheet.colorset-ronin-green { --age-ink-first: #ffffff; --age-ink-second: #155f0e; --age-ink-third: #000000; }
+.application.age-system.age-v5-parity-sheet.colorset-expanded-blue { --age-ink-first: #dde2e2; --age-ink-second: #005971; --age-ink-third: #dde2e2; }
+.application.age-system.age-v5-parity-sheet.colorset-folded-purple { --age-ink-first: #ffffff; --age-ink-second: #565183; --age-ink-third: #ffffff; }
+.application.age-system.age-v5-parity-sheet.colorset-select-one { --age-ink-first: #e7ccc3; --age-ink-second: #172033; --age-ink-third: #ffffff; }
+.application.age-system.age-v5-parity-sheet.colorset-the-grey { --age-ink-first: #ccc9c9; --age-ink-second: #3d3e3f; --age-ink-third: #ffffff; }
+.application.age-system.age-v5-parity-sheet.colorset-red-warrior { --age-ink-first: #f7b755; --age-ink-second: #1a0000; --age-ink-third: #ffffff; }
+.application.age-system.age-v5-parity-sheet.colorset-never-dead { --age-ink-first: #ffffff; --age-ink-second: #663322; --age-ink-third: #ffffff; }
+
+.application.age-system.age-v5-parity-sheet .colorset-first-tier,
+.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .values,
+.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .list-sub-header,
+.application.age-system.age-v5-parity-sheet input.colorset-first-tier,
+.application.age-system.age-v5-parity-sheet .sheet-main-content nav a.active,
+.application.age-system.age-v5-parity-sheet .stunt-points.stunted {
+    color: var(--age-ink-first) !important;
+}
+
+.application.age-system.age-v5-parity-sheet .colorset-second-tier,
+.application.age-system.age-v5-parity-sheet .colorset-first-tier.resource .list-sub-header,
+.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .values,
+.application.age-system.age-v5-parity-sheet .colorset-first-tier :is(a.content-link, a.inline-roll),
+.application.age-system.age-v5-parity-sheet .char-sheet input.colorset-second-tier {
+    color: var(--age-ink-second) !important;
+}
+
+.application.age-system.age-v5-parity-sheet .colorset-third-tier,
+.application.age-system.age-v5-parity-sheet .colorset-first-tier.resource .values,
+.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .list-sub-header,
+.application.age-system.age-v5-parity-sheet .colorset-second-tier :is(a.content-link, a.inline-roll),
+.application.age-system.age-v5-parity-sheet .item-summary label,
+.application.age-system.age-v5-parity-sheet .sheet-main-content nav a:not(.active) {
+    color: var(--age-ink-third) !important;
+}
+
+/* Keep the full Character header/sidebar in place while the selected tab
+   scrolls inside the AppV2 window. The compact stat block remains unchanged. */
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .sheet-main-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.application.age-system.age-v5-parity-sheet.item .sheet-main-content prose-mirror.editor {
+    min-height: 6rem;
+}
+
+.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > prose-mirror.editor {
+    min-height: 10rem;
+    background: var(--age-editor-surface);
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .image-description .editor-container,
+.application.age-system.age-v5-parity-sheet.spaceship .image-description .ship-desc {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .image-description prose-mirror.editor,
+.application.age-system.age-v5-parity-sheet.spaceship .image-description prose-mirror.editor {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 7rem;
+}

@@ -1,0 +1,12 @@
+<section class="age-recovery-assistant flexcol" style="height:100%;min-height:0;gap:.55rem;padding:.35rem">
+  <form class="age-recovery-form flexcol" style="height:100%;min-height:0;gap:.55rem">
+    <p class="notification info">{{localize "age-system.AUTOMATION.recoveryProfile" mode=gameMode}}</p>
+    <div class="form-group"><label>{{localize "age-system.AUTOMATION.recoveryType"}}</label><select name="kind"><option value="breather">{{localize "age-system.AUTOMATION.recovery.breather"}}</option><option value="sleep">{{localize "age-system.AUTOMATION.recovery.sleep"}}</option></select></div>
+    {{#if isGritty}}<label><input type="checkbox" name="grittyWoundDamage"> {{localize "age-system.AUTOMATION.grittyWoundDamage"}}</label>{{/if}}
+    {{#if isCinematic}}<label><input type="checkbox" name="cinematicOnlyStun"> {{localize "age-system.AUTOMATION.cinematicOnlyStun"}}</label>{{/if}}
+    <ol class="directory-list" style="flex:1;min-height:0;overflow:auto;border:1px solid rgba(0,0,0,.2)">
+      {{#each actors as |actor|}}<li class="directory-item flexrow" style="align-items:center;gap:.5rem;padding:.35rem .45rem"><input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}} style="flex:0 0 auto"><img src="{{actor.img}}" width="32" height="32"><div style="min-width:0;flex:1"><strong>{{actor.name}}</strong><div class="notes">{{actor.health}} / {{actor.maxHealth}} HP</div></div></li>{{/each}}
+    </ol>
+    <button type="submit"><i class="fa-solid fa-briefcase-medical"></i> {{localize "age-system.AUTOMATION.applyRecovery"}}</button>
+  </form>
+</section>

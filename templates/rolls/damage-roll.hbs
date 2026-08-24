@@ -1,0 +1,81 @@
+<form class="age-system age-roll-card damage-roll colorset-selection {{colorScheme}}">
+    
+    {{!-- Roll Header Section --}}
+    <ul class="card-header colorset-first-tier">
+        <li class="header">{{flavor}}</li>
+        {{#if flavor2}}
+        <li class="sub header">{{flavor2}}</li>
+        {{/if}}    
+    </ul>
+    {{!-- Roll Body Section --}}
+    <ul class="roll-body colorset-third-tier">
+        
+        {{!-- Total Damage --}}
+        <li class="flexrow total-roll">
+            <span class="line-header">{{localize "age-system.settings.totalRolled"}}{{#if ../rollTN}}{{#if ../isSuccess}} ({{localize "age-system.success"}}) {{else}} ({{localize "age-system.miss"}}) {{/if}}{{/if}}</span>
+            <span class="line-value">{{finalValue}}</span>
+        </li>
+
+        {{!-- Damage Breakdown --}}
+        <li class="mod-box">
+            {{#each diceTerms as |part key|}}
+            {{#unless part.operator}}
+            <div class="flexrow mod-desc">
+                <span class="line-header">{{part.options.flavor}}</span>
+                {{#if part.results}}
+                <span class="line-value">{{termOperator ../diceTerms key}}{{#each part.results as |die|}}{{die.result}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+                {{else}}
+                <span class="line-value">{{termOperator ../diceTerms key}}{{part.total}}</span>
+                {{/if}}
+            </div>
+            {{/unless}}
+            {{/each}}
+            {{#if wGroupPenalty}}
+            <div class="flexrow mod-desc wgroup-penalty italic">
+                <span class="line-header">{{localize "SETTINGS.weaponGroups"}}</span>
+                <span class="line-value">÷2</span>
+            </div>
+            {{/if}}
+        </li>        
+
+        {{!-- Description Section --}}
+        {{#if system.longDesc}}
+        <li class="item-desc colorset-first-tier">
+            {{editor system.longDesc target="system.longDesc" button=true owner=owner editable=false}}
+        </li>
+        {{/if}}
+    </ul>        
+
+    {{!-- Footer Section --}}
+    <div class="footer colorset-first-tier flexrow">
+        <span></span>
+    </div>
+    
+    <div class="feature-controls">
+
+        <div class="flexcol roll-card regular-roll-card">
+
+            {{#if (ne buttonVisibility "hidden")}}
+            <div class="age-chat-buttons flexcol">
+                {{!-- <button class="age-button resist-damage">
+                    <i class="fa fa-shield-alt" aria-hidden="true"></i>
+                </button> --}}
+                <button class="age-button apply-damage gm-only">
+                    {{#if isHealing}}
+                    <i class="fa fa-heartbeat" aria-hidden="true"></i>
+                    {{localize "age-system.applyHealing"}}
+                    {{else}}
+                    <i class="fa fa-crosshairs" aria-hidden="true"></i>
+                    {{#if useInjury}}
+                    Resist Damage
+                    {{else}}
+                    {{localize "age-system.applyDamage"}}
+                    {{/if}}
+                    {{/if}}
+                </button>
+            </div>
+            {{/if}}
+            
+        </div>
+    </div>
+</form>

@@ -1,0 +1,109 @@
+<section class="{{cssClass}} age-system item class flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" {{#if classDefinitionEditable}}data-edit="img"{{/if}} title="{{item.name}}"/>
+        <ul class="item-summary">
+            <li>
+                <label>{{localize "age-system.level"}}</label>
+                {{#if classOwned}}
+                <div class="class-level-control flexrow">
+                    <button type="button" class="class-level-change" data-action="remove" {{#unless classLevelCanDecrease}}disabled{{/unless}} title="{{localize 'age-system.CLASS.rollbackTitle'}}"><i class="fa fa-minus"></i></button>
+                    <strong>{{system.level}}</strong>
+                    <button type="button" class="class-level-change" data-action="add" {{#unless classLevelCanIncrease}}disabled{{/unless}} title="{{localize 'age-system.CLASS.advanceTitle'}}"><i class="fa fa-plus"></i></button>
+                </div>
+                {{else}}
+                <input type="number" value="0" disabled/>
+                {{/if}}
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder="{{localize 'age-system.name'}}" {{#unless classDefinitionEditable}}readonly{{/unless}}/>
+            </div>
+        </header>
+
+        <div class="sheet-main-content metal-background">
+            {{#if classOwned}}
+            <p class="class-info-banner"><i class="fa-solid fa-shield-check"></i> {{localize "age-system.CLASS.ownedDefinitionLocked"}}</p>
+            {{#if classLegacyLevel}}<p class="class-info-banner legacy"><i class="fa-solid fa-clock-rotate-left"></i> {{localize "age-system.CLASS.legacyBaseline"}}: {{classLegacyLevel}}</p>{{/if}}
+            {{else}}
+                {{#unless classValidation.valid}}
+                <div class="class-validation errors">
+                    <strong>{{localize "age-system.CLASS.validationErrors"}}</strong>
+                    <ul>{{#each classValidation.errors as |error|}}<li>{{error}}</li>{{/each}}</ul>
+                </div>
+                {{/unless}}
+                {{#if classValidation.warnings.length}}
+                <div class="class-validation warnings">
+                    <strong>{{localize "age-system.CLASS.validationWarnings"}}</strong>
+                    <ul>{{#each classValidation.warnings as |warning|}}<li>{{warning}}</li>{{/each}}</ul>
+                </div>
+                {{/if}}
+            {{/if}}
+
+            <nav class="add-sheet-tabs tabs" data-group="primary">
+                <a class="item" data-tab="main">{{localize "age-system.item.desc"}}</a>
+                <a class="item" data-tab="adv">{{localize "age-system.advancement"}}</a>
+            </nav>
+
+            <section class="sheet-tab-section">
+                <div class="tab main fill-space-height-100" data-group="primary" data-tab="main">
+                    <ul class="resource colorset-third-tier editor-parent">
+                        <li class="editor-parent no-value-class">{{{ageEditor system.description ageEditors.system.description target="system.description" editable=classDefinitionEditable documentUUID=item.uuid}}}</li>
+                    </ul>
+                </div>
+
+                <div class="tab adv" data-group="primary" data-tab="adv">
+                    {{#if usePrimaryAbl}}
+                    <ul class="resource item-group">
+                        <li class="title colorset-first-tier">{{localize "SETTINGS.primaryAbl"}}</li>
+                        <li class="colorset-third-tier flexrow">
+                            <p>
+                                {{#each ablOptions as |abl id|}}
+                                {{#if ../classDefinitionEditable}}
+                                <a class="feature-controls select-options item-name trait-item item-box {{#if (haswgroup id ../item.system.primaryAbl)}}colorset-first-tier{{else}}colorset-third-tier{{/if}}" data-trait-id="{{@key}}" data-trait-type="primaryAbl">{{abl}}</a>
+                                {{else}}
+                                {{#if (haswgroup id ../item.system.primaryAbl)}}<span class="item-box colorset-first-tier">{{abl}}</span>{{/if}}
+                                {{/if}}
+                                {{/each}}
+                            </p>
+                        </li>
+                    </ul>
+                    {{/if}}
+
+                    {{#if weaponGroups}}
+                        {{#if classDefinitionEditable}}
+                            {{> "systems/age-system/templates/partials/weapon-group-block.hbs" ownedGroups=item.system.wgroups weaponGroups=weaponGroups}}
+                        {{else}}
+                        <ul class="resource item-group">
+                            <li class="title colorset-first-tier">{{localize "SETTINGS.weaponGroups"}}</li>
+                            <li class="colorset-third-tier"><p>{{#each item.system.wgroups as |group|}}<span class="item-box colorset-first-tier">{{group}}</span>{{/each}}</p></li>
+                        </ul>
+                        {{/if}}
+                    {{/if}}
+
+                    <ol class="resource item-group colorset-third-tier">
+                        <li class="title colorset-first-tier">
+                            <span>{{localize "age-system.improvements"}}</span>
+                            {{#if classDefinitionEditable}}<a class="add-adv" title="{{localize 'age-system.advancementNew'}}"><i class="fa fa-plus-circle"></i></a>{{/if}}
+                        </li>
+                        {{#each system.advPerLvl as |advs|}}
+                        {{#if advs.length}}
+                        <li class="list-sub-header colorset-second-tier">{{localize "age-system.level"}} {{levelarr @index}}</li>
+                        {{#each advs as |a|}}
+                        <li class="advance feature-controls flexrow" data-type="{{a.type}}" data-id="{{a.id}}" data-level="{{a.level}}">
+                            <img src="{{a.img}}" width="28" height="28"/>
+                            <span class="adv-name">{{a.alias}}</span>
+                            {{#if (eq a.type "progressive")}}<span class="adv-value">{{a.value}}</span>{{/if}}
+                        </li>
+                        {{/each}}
+                        {{/if}}
+                        {{/each}}
+                    </ol>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,47 @@
+<section class="age-advanced-tests flexcol">
+<style>
+  #age-advanced-test-tracker .window-content { overflow: hidden; padding: .6rem; }
+  #age-advanced-test-tracker .age-advanced-tests { height: 100%; min-height: 0; gap: .5rem; overflow: hidden; }
+  #age-advanced-test-tracker .age-advanced-create { display: grid; grid-template-columns: minmax(10rem,1fr) 10rem 7rem 7rem auto; gap: .4rem; align-items: end; }
+  #age-advanced-test-tracker .age-advanced-create label { display: grid; gap: .15rem; }
+  #age-advanced-test-tracker .age-advanced-create input, #age-advanced-test-tracker .age-advanced-create select, #age-advanced-test-tracker button { height: 2rem; margin: 0; }
+  #age-advanced-test-tracker .age-advanced-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: .5rem; }
+  #age-advanced-test-tracker .age-advanced-card { padding: .55rem; border: 1px solid rgba(0,0,0,.24); border-radius: 4px; background: rgba(255,255,255,.14); }
+  #age-advanced-test-tracker .age-advanced-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .5rem; align-items: center; }
+  #age-advanced-test-tracker .age-advanced-heading h3 { margin: 0; overflow-wrap: anywhere; }
+  #age-advanced-test-tracker .age-advanced-bar { position: relative; height: 1.7rem; margin-top: .35rem; border: 1px solid rgba(0,0,0,.3); border-radius: 3px; overflow: hidden; }
+  #age-advanced-test-tracker .age-advanced-fill { position: absolute; inset: 0 auto 0 0; background: rgba(35,110,65,.38); }
+  #age-advanced-test-tracker .age-advanced-fill.opposition { background: rgba(145,45,45,.38); }
+  #age-advanced-test-tracker .age-advanced-bar span { position: relative; z-index: 1; display: grid; height: 100%; place-items: center; font-weight: 600; }
+  #age-advanced-test-tracker .age-advanced-controls { display: grid; grid-template-columns: auto auto 4.2rem auto auto auto; gap: .35rem; margin-top: .4rem; }
+  #age-advanced-test-tracker .age-advanced-controls input { height: 2rem; text-align: center; }
+</style>
+  {{#unless enabled}}<p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>{{/unless}}
+  {{#if isGM}}
+  <form class="age-advanced-create">
+    <label><span>{{localize "age-system.AUTOMATION.name"}}</span><input name="name" required></label>
+    <label><span>{{localize "age-system.AUTOMATION.type"}}</span><select name="type">{{#each types as |type|}}<option value="{{type.value}}">{{type.label}}</option>{{/each}}</select></label>
+    <label><span>{{localize "age-system.AUTOMATION.threshold"}}</span><input name="threshold" type="number" min="1" value="10"></label>
+    <label><span>{{localize "age-system.AUTOMATION.opposition"}}</span><input name="oppositionThreshold" type="number" min="1" value="10"></label>
+    <button type="submit"><i class="fa-solid fa-plus"></i> {{localize "age-system.AUTOMATION.create"}}</button>
+  </form>
+  {{/if}}
+
+  <div class="age-advanced-list">
+    {{#each trackers as |tracker|}}
+    <article class="age-advanced-card" data-tracker-id="{{tracker.id}}">
+      <header class="age-advanced-heading"><h3>{{tracker.name}}</h3><span class="notes">{{tracker.typeLabel}} · {{tracker.status}}</span></header>
+      <div class="age-advanced-bar"><div class="age-advanced-fill" style="width:{{tracker.partyPercent}}%"></div><span>{{localize "age-system.AUTOMATION.party"}}: {{tracker.progress}} / {{tracker.threshold}}</span></div>
+      {{#if tracker.opposed}}<div class="age-advanced-bar"><div class="age-advanced-fill opposition" style="width:{{tracker.oppositionPercent}}%"></div><span>{{localize "age-system.AUTOMATION.opposition"}}: {{tracker.oppositionProgress}} / {{tracker.oppositionThreshold}}</span></div>{{/if}}
+      {{#if ../isGM}}<div class="age-advanced-controls">
+        <button type="button" class="age-advanced-adjust" data-side="party" data-direction="minus" title="{{localize 'age-system.AUTOMATION.subtract'}}"><i class="fa-solid fa-minus"></i></button>
+        <button type="button" class="age-advanced-adjust" data-side="party" data-direction="plus" title="{{localize 'age-system.AUTOMATION.add'}}"><i class="fa-solid fa-plus"></i></button>
+        <input type="number" name="amount" min="1" value="1">
+        <button type="button" class="age-advanced-adjust" data-side="opposition" data-direction="plus" title="{{localize 'age-system.AUTOMATION.addOpposition'}}"><i class="fa-solid fa-flag"></i></button>
+        <button type="button" class="age-advanced-undo" {{#unless tracker.hasHistory}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.undo"}}</button>
+        {{#if tracker.isActive}}<button type="button" class="age-advanced-close"><i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.close"}}</button>{{else}}<button type="button" class="age-advanced-remove"><i class="fa-solid fa-trash"></i> {{localize "age-system.AUTOMATION.remove"}}</button>{{/if}}
+      </div>{{/if}}
+    </article>
+    {{else}}<p class="notes">{{localize "age-system.AUTOMATION.noAdvancedTests"}}</p>{{/each}}
+  </div>
+</section>

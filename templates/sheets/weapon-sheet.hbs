@@ -1,0 +1,207 @@
+<form class="{{cssClass}} age-system item weapon flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <ul class="item-summary">
+            {{!-- Base Damage --}}
+            <li>
+                <label>{{localize "age-system.item.damage"}}</label>
+                <input type="text" value="{{system.dmgFormula}}" disabled>
+            </li>
+            {{#if system.hasDamage}}
+            {{#if config.healthSys.useBallistic}}
+            <li>
+                <label>{{localize "age-system.type"}}</label>
+                <input type="text" value="{{localize (concat "age-system." system.dmgType)}}" disabled>
+            </li>
+            {{/if}}
+            <li>
+                <label>{{localize "age-system.source"}}</label>
+                <input type="text" value="{{localize (concat "age-system." effectiveDamageSource)}}" disabled>
+            </li>
+            {{/if}}
+            {{!-- Minimum Strenght --}}
+            <li>
+                <label>{{localize "age-system.item.minStr"}}</label>
+                <input name="system.minStr" type="text" {{#if inChat}}disabled{{/if}} value="{{system.minStr}}" placeholder="-" data-dtype="String"/>
+            </li>
+            {{!-- Purchase Block --}}
+            <li>
+                {{> "systems/age-system/templates/partials/cost-resource-block.hbs"}}
+            </li>
+            {{#if system.ranged}}
+            {{!-- Range --}}
+            <li>
+                <label>{{localize "age-system.item.range"}} ({{localize "age-system.item.yards"}})</label>                    
+                <div class="flexrow">
+                    <input type="text" disabled value="{{system.rangeCalc}}" data-dtype="String" />
+                    /
+                    <input type="text" disabled value="{{system.rangeMaxCalc}}" data-dtype="String" />
+                </div>
+            </li>
+            {{/if}}
+            {{#if system.reloadable}}
+            {{!-- ROF --}}
+            <li>
+                <label>{{localize "age-system.rof.rof"}}</label>
+                <select name="system.rof">
+                    {{#select system.rof}}
+                    {{#each config.rof as |rof|}}
+                    <option value="{{@key}}">{{localize rof}}</option>
+                    {{/each}}
+                    {{/select}}
+                </select>             
+            </li>
+            {{#unless (or (eq system.rof "none") (eq system.rof "singleShot"))}}
+            {{!-- Capacity --}}
+            <li>
+                <label>{{localize "age-system.item.capacity"}}</label>
+                <input type="text" {{#if inChat}}disabled{{/if}} name="system.capacity" value="{{system.capacity}}" data-dtype="Number" />                    
+            </li>
+            {{/unless}}
+            {{!-- Reload --}}
+            <li>
+                <label>{{localize "age-system.item.reload"}}</label>
+                {{#if inChat}}
+                <div>{{localize (concat "age-system." system.reload)}}</div>
+                {{else}}
+                <select name="system.reload" {{#if inChat}}disabled{{/if}}>
+                    {{#select system.reload}}
+                    {{#each config.reloadDuration as |reloadDuration|}}
+                    <option value="{{@key}}">{{localize reloadDuration}}</option>
+                    {{/each}}
+                    {{/select}}
+                </select>    
+                {{/if}}                   
+            </li>
+            {{/if}}
+            {{!-- Quantity --}}
+            <li>
+                <label>{{localize "age-system.item.quantity"}}</label>
+                <input type="number" {{#if inChat}}disabled{{/if}} name="system.quantity" value="{{system.quantity}}" data-dtype="Number"/>
+            </li>
+            {{!-- Weight --}}
+            <li>
+                <label>{{localize "age-system.item.weight"}}</label>
+                <input type="number" {{#if inChat}}disabled{{/if}} name="system.weight" value="{{system.weight}}" data-dtype="Number"/>
+            </li>
+            {{!-- Page Ref --}}
+            <li class="feature-controls" data-reference="{{system.reference}}">
+                <label class="find-reference {{#if config.pdfoundryOn}}mouse-to-pointer{{/if}}">{{localize "age-system.reference"}}</label>
+                <input type="text" name="system.reference" {{#if inChat}}disabled{{/if}} value="{{system.reference}}" placeholder="Page Ref." data-dtype="String"/>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder={{localize "age-system.name"}}/>
+                <div class="sub-details flexrow">
+                    {{> "systems/age-system/templates/partials/ability-focus-select.hbs"}}
+                </div>
+            </div>
+        </header>
+        
+        <div class="sheet-main-content metal-background">
+
+            {{!-- Sheet Tab Navigation --}}
+            <nav class="add-sheet-tabs tabs" data-group="primary">
+                <a class="item" data-tab="main">{{localize "age-system.item.desc"}}</a>
+                <a class="item" data-tab="bonus">{{localize "age-system.itemMod"}}</a>
+                <a class="item" data-tab="options"><i class="fa fa-cog" aria-hidden="true"></i></a>
+            </nav>
+
+            <section class="sheet-tab-section">
+                {{!-- Main Tab --}}
+                <div class="tab main fill-space-height-100" data-group="primary" data-tab="main">
+                    <ul class="resource colorset-third-tier editor-parent">
+                        <li class="editor-parent no-value-class">
+                            {{editor system.longDesc target="system.longDesc" button=true owner=owner editable=true engine="prosemirror"}}
+                        </li>
+                    </ul>
+                </div>
+
+                {{!-- Bonuses Tab --}}
+                <div class="tab bonus" data-group="primary" data-tab="bonus">
+                    {{> "systems/age-system/templates/partials/bonuses-sheet.hbs"}}
+                </div>
+
+                {{!-- Options Tab --}}
+                <div class="tab options-section" data-group="primary" data-tab="options">
+
+                    {{!-- Damage Formula --}}
+                    <ul class="resource item-group condensed-data">
+                        <li class="title colorset-first-tier">
+                            {{localize "age-system.item.damage"}}
+                        </li>
+                        <li class="colorset-third-tier flexrow">
+                            <label>{{localize "age-system.formula"}}</label>
+                            {{#if config.healthSys.useInjury}}
+                            <input type="text" name="system.damageInjury" value="{{system.damageInjury}}"/>
+                            {{else}}
+                            <input type="text" name="system.damageFormula" value="{{system.damageFormula}}"/>
+                            {{/if}}
+                            <div class="extra-input">
+                                <span>+<select name="system.dmgAbl">
+                                    {{#select system.dmgAbl}}
+                                    <option value="no-abl">—</option>
+                                    {{#each config.abilities as |name type|}}
+                                    <option value="{{type}}">{{localize name}}</option>
+                                    {{/each}}
+                                    {{/select}}
+                                </select></span>
+                            </div>
+                        </li>
+                        <li class="colorset-third-tier flexrow">
+                            <label class="colorset-third-tier">{{localize "age-system.type"}}</label>
+                            {{#if config.healthSys.useBallistic}}
+                            <select name="system.dmgType">
+                                {{#select system.dmgType}}
+                                {{#each config.damageType as |name type|}}
+                                <option value="{{type}}">{{localize name}}</option>
+                                {{/each}}
+                                {{/select}}
+                            </select>
+                            {{/if}}
+                            <select name="system.dmgSource">
+                                {{#select effectiveDamageSource}}
+                                {{#each config.damageSource as |name source|}}
+                                <option value="{{source}}">{{localize name}}</option>
+                                {{/each}}
+                                {{/select}}
+                            </select>
+                        </li>
+                    </ul>
+
+                    {{#if weaponGroups}}
+                    {{> "systems/age-system/templates/partials/weapon-group-block.hbs" ownedGroups=item.system.wgroups}}
+                    {{/if}}
+
+                    <ul class="resource item-group">
+                        <li class="title colorset-first-tier">
+                            {{localize "age-system.charOptions"}}
+                        </li>
+                        <li class="colorset-third-tier flexrow">
+                            <p>
+                                <a class="select-options toggle-feature item-name item-box {{#if system.ranged}}colorset-first-tier{{else}}colorset-third-tier{{/if}}" data-feature="ranged">{{localize "age-system.ranged"}}</a>
+                                <a class="select-options toggle-feature item-name item-box {{#if system.reloadable}}colorset-first-tier{{else}}colorset-third-tier{{/if}}" data-feature="reloadable">{{localize "age-system.reloadable"}}</a>
+                            </p>
+                        </li>
+                        {{#if system.ranged}}
+                        <li class="colorset-third-tier flexrow">
+                            <div class="flexrow flex-align-center">
+                                <label>{{localize "age-system.item.range"}}</label>
+                                <input type="text" name="system.range" value="{{system.range}}" data-dtype="String" />
+                            </div>
+                            <div class="flexrow flex-align-center">
+                                <label>{{localize "age-system.item.range"}} ({{localize "age-system.maximum"}})</label>
+                                <input type="text" name="system.rangeMax" value="{{system.rangeMax}}" data-dtype="String" />
+                            </div>
+                        </li>
+                        {{/if}}
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+</form>

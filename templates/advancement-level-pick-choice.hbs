@@ -1,0 +1,79 @@
+<form class="class-level-form">
+    <header class="class-level-summary colorset-first-tier">
+        <h2>{{classItem.name}}</h2>
+        <p>{{actor.name}} — {{localize "age-system.newLevel"}} {{targetLevel}}</p>
+    </header>
+
+    {{#if warnings.length}}
+    <div class="class-validation warnings"><ul>{{#each warnings as |warning|}}<li>{{warning}}</li>{{/each}}</ul></div>
+    {{/if}}
+
+    {{#if ability.points}}
+    <section class="class-level-section">
+        <h3>{{localize "age-system.advAbility"}}</h3>
+        <p>{{localize "age-system.CLASS.abilityAllocation"}}: <strong>{{ability.spent}} / {{ability.points}}</strong> ({{localize "age-system.CLASS.remaining"}}: {{ability.remaining}})</p>
+        <table class="class-ability-table">
+            <thead><tr><th>{{localize "age-system.abl"}}</th><th>{{localize "age-system.current"}}</th><th>{{localize "age-system.advancementPlural"}}</th><th>{{localize "age-system.advancementNew"}}</th></tr></thead>
+            <tbody>
+                {{#each ability.options as |option|}}
+                <tr>
+                    <td>{{option.name}}</td><td>{{option.currentValue}}</td><td>{{option.currentAdvances}}</td>
+                    <td class="ability-allocation"><button type="button" class="ability-change" data-key="{{option.key}}" data-delta="-1"><i class="fa fa-minus"></i></button><strong>{{option.allocation}}</strong><button type="button" class="ability-change" data-key="{{option.key}}" data-delta="1"><i class="fa fa-plus"></i></button></td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </section>
+    {{/if}}
+
+    {{#if formulas.length}}
+    <section class="class-level-section">
+        <h3>{{localize "age-system.CLASS.progressiveGains"}}</h3>
+        {{#each formulas as |formula|}}
+        <div class="class-formula-row">
+            <div><strong>{{formula.alias}}</strong><small>{{formula.formula}}</small></div>
+            <input class="formula-result" data-key="{{formula.key}}" type="number" value="{{formula.result}}"/>
+            <button type="button" class="reroll-formula" data-key="{{formula.key}}" title="{{localize 'age-system.CLASS.reroll'}}"><i class="fas fa-dice"></i></button>
+        </div>
+        {{/each}}
+    </section>
+    {{/if}}
+
+    {{#each itemGroups as |group|}}
+    <section class="class-level-section class-item-group">
+        <h3>{{group.alias}}</h3>
+        {{#if (eq group.selectionMode "choose")}}<p>{{localize "age-system.CLASS.chooseExactly"}} {{group.quantity}}</p>{{/if}}
+        <div class="class-grant-options">
+            {{#each group.grants as |grant|}}
+            <article class="class-grant-option {{#if grant.selected}}selected{{/if}}">
+                <label class="grant-main">
+                    <input type="checkbox" class="grant-select" data-group-key="{{group.key}}" data-grant-key="{{grant.key}}" {{checked grant.selected}} {{#if (eq group.selectionMode "all")}}disabled{{/if}}/>
+                    <img src="{{grant.sourceImg}}" width="36" height="36"/>
+                    <span><strong>{{grant.sourceName}}</strong><small>{{grant.trait}}</small></span>
+                </label>
+                {{#if grant.unresolved}}<p class="error-text">{{localize "age-system.CLASS.unresolvedGrant"}}</p>{{/if}}
+                {{#if grant.candidates.length}}
+                <label class="progression-choice">{{localize "age-system.CLASS.progressExisting"}}
+                    <select class="progression-target" data-grant-key="{{grant.key}}">
+                        {{#unless grant.isItemProg}}<option value="">{{localize "age-system.CLASS.createNewOrSelect"}}</option>{{/unless}}
+                        {{#select grant.progressionTarget}}{{#each grant.candidates as |candidate|}}<option value="{{candidate.id}}">{{candidate.name}}</option>{{/each}}{{/select}}
+                    </select>
+                </label>
+                {{else}}
+                    {{#if grant.isItemProg}}<p class="error-text">{{localize "age-system.CLASS.noProgressionTarget"}}</p>{{/if}}
+                {{/if}}
+            </article>
+            {{/each}}
+        </div>
+    </section>
+    {{/each}}
+
+    {{#unless validation.valid}}
+    <div class="class-validation errors"><ul>{{#each validation.errors as |error|}}<li>{{error}}</li>{{/each}}</ul></div>
+    {{/unless}}
+
+    <footer class="flexrow">
+        <button class="default-button cancel" type="button"><i class="fa-solid fa-xmark"></i>{{localize "age-system.cancel"}}</button>
+        <button class="default-button" type="submit" {{#unless canSubmit}}disabled{{/unless}}><i class="fa-solid fa-check"></i>{{localize "age-system.CLASS.applyLevel"}}</button>
+    </footer>
+</form>

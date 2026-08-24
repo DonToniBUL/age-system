@@ -1,0 +1,21 @@
+{{!-- Talents Tab --}}
+<section class="equip-section">
+
+    {{!-- Talents --}}
+    <ul class="talents resource item-group colorset-third-tier">
+        <li class="title colorset-first-tier">
+            {{localize "age-system.talentContainer"}}
+        </li>
+        {{#each data.talent as |item|}}
+        {{#if (eq item.system.type "talent")}}
+        {{> "systems/age-system/templates/partials/itemcontrols/talent.hbs" item=this config=../data.config colorset='colorset-third-tier'}}
+        {{else}}
+        {{> "systems/age-system/templates/partials/itemcontrols/talent.hbs" item=this config=../data.config colorset='colorset-second-tier'}}
+        {{/if}}
+        {{#unless @last}}
+        <hr>
+        {{/unless}}
+        {{/each}}
+    </ul>
+
+</section>

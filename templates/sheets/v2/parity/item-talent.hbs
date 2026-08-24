@@ -1,0 +1,114 @@
+<section class="{{cssClass}} age-system item talent flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <ul class="item-summary">
+            {{!-- Talent Degree --}}
+            <li>
+                <label>{{localize "age-system.talentDegree"}}</label>
+                <select name="system.degree">
+                {{#select system.degree}}
+                    {{#each config.talentDegrees.inUse as |degree|}}
+                    <option value="{{@key}}">{{degree}}</option>
+                    {{/each}}
+                {{/select}}
+                </select>
+            </li>
+
+            {{!-- Type (Talent/Specialization) --}}
+            <li>
+                <label>{{localize "age-system.type"}} </label>
+                <select name="system.type">
+                {{#select system.type}}
+                    <option value="talent">{{localize "TYPES.Item.talent"}}</option>
+                    <option value="spec">{{localize "age-system.item.spec"}}</option>
+                {{/select}}
+                </select>
+            </li>
+
+            {{!-- Page Ref --}}
+            <li class="feature-controls" data-reference="{{system.reference}}">
+                <label class="find-reference {{#if config.pdfoundryOn}}mouse-to-pointer{{/if}}">{{localize "age-system.reference"}}</label>
+                <input type="text" name="system.reference" {{#if inChat}}disabled{{/if}} value="{{system.reference}}" placeholder="Page Ref." data-dtype="String"/>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder={{localize "age-system.name"}}/>
+                <div class="sub-details">
+                    {{!-- Requirement --}}
+                    <input type="text" name="system.requirement" value="{{system.requirement}}">
+                    <label>{{localize "age-system.requirement"}}</label>
+                </div>
+            </div>
+        </header>
+        
+        <div class="sheet-main-content metal-background">
+
+            {{!-- Sheet Tab Navigation --}}
+            <nav class="add-sheet-tabs tabs" data-group="primary">
+                <a class="item" data-tab="main">{{localize "age-system.item.desc"}}</a>
+                <a class="item" data-tab="bonus">{{localize "age-system.itemMod"}}</a>
+                {{!-- <a class="item" data-tab="options"><i class="fa fa-cog" aria-hidden="true"></i></a> --}}
+            </nav>
+
+            <section class="sheet-tab-section">
+                {{!-- Main Tab --}}
+                <div class="tab main fill-space-height-100" data-group="primary" data-tab="main">
+                    <div class="flexrow flex-gap">
+                        <ul class="resource colorset-third-tier editor-parent">
+                            <li class="editor-parent no-value-class">{{{ageEditor system.longDesc ageEditors.system.longDesc target="system.longDesc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+
+                        <ul class="resource colorset-first-tier editor-parent">
+                            <li class="title">
+                                <label>{{config.talentDegrees.inUse.[0]}}</label>
+                            </li>
+                            <li class="editor-parent">{{{ageEditor system.degree0.desc ageEditors.system.degree0.desc target="system.degree0.desc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+                    </div>
+                    <div class="flexrow flex-gap">
+                        <ul class="resource colorset-first-tier editor-parent">
+                            <li class="title">
+                                <label>{{config.talentDegrees.inUse.[1]}}</label>
+                            </li>
+                            <li class="editor-parent">{{{ageEditor system.degree1.desc ageEditors.system.degree1.desc target="system.degree1.desc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+
+                        <ul class="resource colorset-first-tier editor-parent">
+                            <li class="title">
+                                <label>{{config.talentDegrees.inUse.[2]}}</label>
+                            </li>
+                            <li class="editor-parent">{{{ageEditor system.degree2.desc ageEditors.system.degree2.desc target="system.degree2.desc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+                    </div>
+		    {{#if expandedDegrees}}
+                    <div class="flexrow flex-gap">
+                        <ul class="resource colorset-first-tier editor-parent">
+                            <li class="title">
+                                <label>{{config.talentDegrees.inUse.[3]}}</label>
+                            </li>
+                            <li class="editor-parent">{{{ageEditor system.degree3.desc ageEditors.system.degree3.desc target="system.degree3.desc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+                        <ul class="resource colorset-first-tier editor-parent">
+                            <li class="title">
+                                <label>{{config.talentDegrees.inUse.[4]}}</label>
+                            </li>
+                            <li class="editor-parent">{{{ageEditor system.degree4.desc ageEditors.system.degree4.desc target="system.degree4.desc" editable=true documentUUID=item.uuid}}}</li>
+                        </ul>
+                    </div>
+		    {{/if}}
+
+                </div>
+
+                {{!-- Bonuses Tab --}}
+                <div class="tab bonus" data-group="primary" data-tab="bonus">
+                    {{> "systems/age-system/templates/partials/bonuses-sheet.hbs"}}
+                </div>
+
+            </section>
+        </div>
+    </div>
+</section>

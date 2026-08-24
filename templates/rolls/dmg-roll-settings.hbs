@@ -1,0 +1,75 @@
+<form>    
+    {{#if selectAbl}}
+    <div class="form-group">
+        <label>Select Ability</label>
+        <select name="selectedAbl">
+            {{#select selectedAbl}}
+            <option value="no-abl">—</option>
+            {{#each abilities as |name key|}}
+            <option value="{{key}}">{{name}}</option>
+            {{/each}}
+            {{/select}}
+        </select>
+    </div>
+    {{/if}}
+
+    <div class="form-group">
+        <label>{{localize "age-system.setStuntDmg"}}</label>
+        <select name="setStuntDamage">
+            {{#select setStuntDamage}}
+            <option value="0">-</option>
+            <option value="1">1{{localize "age-system.settings.d6"}}</option>
+            <option value="2">2{{localize "age-system.settings.d6"}}</option>
+            {{/select}}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>{{localize "age-system.setDmgExtraDice"}}</label>
+        <select name="setDmgExtraDice">
+            {{#select setDmgExtraDice}}
+            <option value="0">-</option>
+            <option value="1">1{{localize "age-system.settings.d6"}}</option>
+            <option value="2">2{{localize "age-system.settings.d6"}}</option>
+            <option value="3">3{{localize "age-system.settings.d6"}}</option>
+            <option value="4">4{{localize "age-system.settings.d6"}}</option>
+            <option value="5">5{{localize "age-system.settings.d6"}}</option>
+            <option value="6">6{{localize "age-system.settings.d6"}}</option>
+            <option value="7">7{{localize "age-system.settings.d6"}}</option>
+            <option value="8">8{{localize "age-system.settings.d6"}}</option>
+            <option value="9">9{{localize "age-system.settings.d6"}}</option>
+            <option value="10">10{{localize "age-system.settings.d6"}}</option>
+            {{/select}}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>{{localize "age-system.setRollGeneralMod"}}</label>
+        <input type="number" name="setDmgGeneralMod"/>
+    </div>
+
+    <div class="form-group">
+        <label>{{localize "age-system.chatCard.addStuntDie"}}</label>
+        <input type="number" name="stuntDieDmg" value="{{stuntDmg}}"/>
+    </div>
+
+    <div class="form-group">
+        <label>{{localize "age-system.rollVisibility"}}</label>
+        <select name="messageMode">
+            {{#select messageMode}}
+            <option value="public">{{localize "age-system.rollPublic"}}</option>
+            <option value="self">{{localize "age-system.rollSelf"}}</option>
+            <option value="gm">{{localize "age-system.rollPrivate"}}</option>
+            <option value="blind">{{localize "age-system.rollBlind"}}</option>
+            {{/select}}
+        </select>
+    </div>
+
+    {{#unless useFocus}}
+    <div class="form-group">
+        <input type="checkbox" name="addFocus" {{checked addFocus}}/>
+        <label>{{localize "age-system.chatCard.addFocus"}}</label>
+    </div>
+    {{/unless}}
+
+</form>

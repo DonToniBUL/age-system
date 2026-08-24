@@ -1,0 +1,46 @@
+{{!-- Options Tab --}}
+<section class="options-section">    
+
+    {{#if data.weaponGroups}}
+    {{> "systems/age-system/templates/partials/weapon-group-block.hbs" weaponGroups=data.weaponGroups ownedGroups=system.wgroups}}
+    {{/if}}
+
+    {{!-- Control individual overrides for Game Mode (Gritty / Pulp / Cinematic) --}}
+    {{#if (ne data.config.healthSys.mode 'none')}}
+    <ul class="resource item-group colorset-third-tier game-mode">
+        <li class="title colorset-first-tier">
+            <span>
+                {{localize "SETTINGS.gameMode"}}
+                <a class="override">
+                    {{#if system.gameMode.override}}
+                    <i class="fa fa-unlock-alt" aria-hidden="true" title="Override game mode"></i>
+                    {{else}}
+                    <i class="fa fa-lock" aria-hidden="true" title="Do not override game mode"></i>
+                    {{/if}}
+                </a>
+            </span>
+        </li>
+        <li class="labels colorset-second-tier"><strong>{{localize "age-system.worldSetting"}}: <em>{{localize (concat "SETTINGS.gameMode" data.config.healthSys.mode)}}</em></strong></li>
+        <li class="title header flexrow">
+            <span class="name" style="flex-grow: 1.5;">{{localize "age-system.gameModeBonus"}}</span>
+            <span>{{data.config.healthSys.healthName}}</span>
+            <span>{{localize "age-system.defense"}}</span>
+            <span>{{localize "age-system.toughness"}}</span>
+        </li>
+        {{#each system.gameMode.specs as |mode|}}
+        {{#if (ne @key 'none')}}
+        <li class="colorset-third-tier flexrow {{#if (ne ../system.gameMode.selected @key)}}opacity-low{{/if}}">
+            <div class="name multiple-selection" style="flex-grow: 1.5;">
+                <input type="radio" {{#if ../system.gameMode.override}}class="mouse-to-pointer"{{else}}disabled{{/if}} name="system.gameMode.selected" value="{{@key}}" {{#if (eq ../system.gameMode.selected @key)}}checked{{/if}}>
+                <label>{{localize (concat "SETTINGS.gameMode" @key)}}</label>
+            </div>
+            <input type="number" name="system.gameMode.specs.{{@key}}.health" value="{{mode.health}}" data-dtype="Number" />
+            <input type="number" name="system.gameMode.specs.{{@key}}.defense" value="{{mode.defense}}" data-dtype="Number" />
+            <input type="number" name="system.gameMode.specs.{{@key}}.toughness" value="{{mode.toughness}}" data-dtype="Number" />
+        </li>
+        {{/if}}
+        {{/each}}
+    </ul>
+    {{/if}}
+
+</section>

@@ -1,0 +1,78 @@
+<section class="age-action-diagnostics" style="display:flex;flex-direction:column;gap:.65rem;max-height:70vh;overflow:auto;padding:.25rem">
+  <div class="flexrow" style="gap:.5rem;align-items:stretch">
+    <div style="padding:.5rem;border:1px solid var(--color-border-light-2);border-radius:4px">
+      <strong>{{localize "age-system.AUTOMATION.operationsVersions"}}</strong><br>
+      <span class="notes">AGE {{systemVersion}} &middot; API {{apiVersion}} &middot; Schema {{schemaVersion}}</span>
+    </div>
+    <div style="padding:.5rem;border:1px solid var(--color-border-light-2);border-radius:4px">
+      <strong>{{localize "age-system.AUTOMATION.operationsRegistry"}}</strong><br>
+      <span class="notes">{{registeredActions}} {{localize "age-system.AUTOMATION.actions"}} &middot; {{registeredTemplates}} {{localize "age-system.AUTOMATION.actionTemplates"}} &middot; {{pending}} {{localize "age-system.AUTOMATION.pending"}}</span>
+    </div>
+  </div>
+
+  {{#if audit}}
+  <section style="padding:.5rem;border:1px solid var(--color-border-light-2);border-radius:4px">
+    <strong>{{localize "age-system.AUTOMATION.contentAudit"}}</strong>
+    <p style="margin:.25rem 0">{{audit.documents}} {{localize "age-system.AUTOMATION.documentsChecked"}} &middot; {{audit.errors}} {{localize "age-system.AUTOMATION.errors"}} &middot; {{audit.warnings}} {{localize "age-system.AUTOMATION.warnings"}}</p>
+    {{#if audit.issues.length}}
+    <details>
+      <summary>{{localize "age-system.AUTOMATION.firstAuditIssues"}}</summary>
+      <ol>
+        {{#each audit.issues}}
+        <li><strong>{{code}}</strong> &middot; {{name}} &middot; {{message}}</li>
+        {{/each}}
+      </ol>
+    </details>
+    {{/if}}
+  </section>
+  {{/if}}
+
+  {{#if migration}}
+  <section style="padding:.5rem;border:1px solid var(--color-border-light-2);border-radius:4px">
+    <strong>{{localize "age-system.AUTOMATION.migrationPreviewTitle"}} ({{localize "age-system.AUTOMATION.readOnly"}})</strong>
+    <p style="margin:.25rem 0">{{migration.documents}} {{localize "age-system.AUTOMATION.documentsChecked"}} &middot; {{migration.changes}} {{localize "age-system.AUTOMATION.safeChanges"}} &middot; {{migration.reviews}} {{localize "age-system.AUTOMATION.reviews"}} &middot; {{migration.blockers}} {{localize "age-system.AUTOMATION.blockers"}}</p>
+    {{#if migration.operations.length}}
+    <details>
+      <summary>{{localize "age-system.AUTOMATION.firstMigrationOperations"}}</summary>
+      <ol>
+        {{#each migration.operations}}
+        <li><strong>{{severity}}</strong> &middot; {{name}} &middot; {{path}} &middot; {{reason}}</li>
+        {{/each}}
+      </ol>
+    </details>
+    {{/if}}
+  </section>
+  {{/if}}
+
+  <section>
+    <h3 style="margin:.2rem 0">{{localize "age-system.AUTOMATION.recentActionDiagnostics"}}</h3>
+    {{#if diagnostics.length}}
+    <table>
+      <thead><tr><th>{{localize "age-system.AUTOMATION.time"}}</th><th>{{localize "age-system.AUTOMATION.action"}}</th><th>{{localize "age-system.AUTOMATION.status"}}</th><th>{{localize "age-system.AUTOMATION.targets"}}</th><th>ms</th></tr></thead>
+      <tbody>
+        {{#each diagnostics}}
+        <tr title="{{error}}"><td>{{time}}</td><td>{{type}}</td><td>{{status}}</td><td>{{targets}}</td><td>{{duration}}</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <p class="notes">{{localize "age-system.AUTOMATION.noActionDiagnostics"}}</p>
+    {{/if}}
+  </section>
+
+  <section>
+    <h3 style="margin:.2rem 0">{{localize "age-system.AUTOMATION.reversibleTransactions"}}</h3>
+    {{#if transactions.length}}
+    <table>
+      <thead><tr><th>{{localize "age-system.AUTOMATION.time"}}</th><th>{{localize "age-system.AUTOMATION.action"}}</th><th>{{localize "age-system.AUTOMATION.operations"}}</th><th>{{localize "age-system.AUTOMATION.status"}}</th></tr></thead>
+      <tbody>
+        {{#each transactions}}
+        <tr><td>{{time}}</td><td>{{label}}</td><td>{{operations}}</td><td>{{#if undone}}{{localize "age-system.AUTOMATION.undone"}}{{else}}{{localize "age-system.AUTOMATION.applied"}}{{/if}}</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <p class="notes">{{localize "age-system.AUTOMATION.noTransactions"}}</p>
+    {{/if}}
+  </section>
+</section>

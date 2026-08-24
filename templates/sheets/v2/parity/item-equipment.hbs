@@ -1,0 +1,60 @@
+<section class="{{cssClass}} age-system item equipment flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <ul class="item-summary">
+            {{!-- Purchase Block --}}
+            <li>
+                {{> "systems/age-system/templates/partials/cost-resource-block.hbs"}}
+            </li>
+            {{!-- Quantity --}}
+            <li>
+                <label>{{localize "age-system.item.quantity"}}</label>
+                <input type="number" {{#if inChat}}disabled{{/if}} name="system.quantity" value="{{system.quantity}}" data-dtype="Number"/>
+            </li>
+            {{!-- Weight --}}
+            <li>
+                <label>{{localize "age-system.item.weight"}}</label>
+                <input type="number" {{#if inChat}}disabled{{/if}} name="system.weight" value="{{system.weight}}" data-dtype="Number"/>
+            </li>
+            {{!-- Page Ref --}}
+            <li class="feature-controls" data-reference="{{system.reference}}">
+                <label class="find-reference {{#if config.pdfoundryOn}}mouse-to-pointer{{/if}}">{{localize "age-system.reference"}}</label>
+                <input type="text" name="system.reference" {{#if inChat}}disabled{{/if}} value="{{system.reference}}" placeholder="Page Ref." data-dtype="String"/>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder={{localize "age-system.name"}}/>
+            </div>
+        </header>
+        
+        <div class="sheet-main-content metal-background">
+
+            {{!-- Sheet Tab Navigation --}}
+            <nav class="add-sheet-tabs tabs" data-group="primary">
+                <a class="item" data-tab="main">{{localize "age-system.item.desc"}}</a>
+                <a class="item" data-tab="bonus">{{localize "age-system.itemMod"}}</a>
+                {{!-- <a class="item" data-tab="options"><i class="fa fa-cog" aria-hidden="true"></i></a> --}}
+            </nav>
+
+            <section class="sheet-tab-section">
+                {{!-- Main Tab --}}
+                <div class="tab main fill-space-height-100" data-group="primary" data-tab="main">
+                    <ul class="resource colorset-third-tier editor-parent">
+                        <li class="editor-parent no-value-class">
+                            {{{ageEditor system.longDesc ageEditors.system.longDesc target="system.longDesc" editable=true documentUUID=item.uuid}}}
+                        </li>
+                    </ul>
+                </div>
+
+                {{!-- Bonuses Tab --}}
+                <div class="tab bonus" data-group="primary" data-tab="bonus">
+                    {{> "systems/age-system/templates/partials/bonuses-sheet.hbs"}}
+                </div>
+            </section>
+        </div>
+    </div>
+</section>

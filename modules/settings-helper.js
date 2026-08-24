@@ -1,0 +1,165 @@
+import { ageSystem } from "./config.js";
+
+export class QuickSettings extends foundry.appv1.api.FormApplication {
+  constructor(object = {}, options = {}) {
+    super(object, options);
+    this.config = {};
+  }
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: 'quick-settings',
+      template: 'systems/age-system/templates/quick-settings.hbs',
+      resizable: false,
+      minimizable: false,
+      width: '700',
+      height: '500',
+      title: game.i18n.localize('SETTINGS.quicksetting'),
+      classes: ["age-system", "dialog", `colorset-${ageSystem.colorScheme}`],
+      //resizable: false,
+      closeOnSubmit: false,
+      submitOnClose: true,
+      submitOnChange: true,
+    })
+  }
+
+  getData() {
+    const data = {
+      ...super.getData(),
+      presets: ageSystem.gameSettings,
+      currentPreset: ageSystem.gameSettings[this.config.preset],
+      colors: ageSystem.colorScheme,
+      config: this.config,
+      settings: {}
+    }
+    
+    const canConfigure =  game.user.can("SETTINGS_MODIFY");
+    const gs = game.settings;
+    // Classify all settings
+    for ( let setting of gs.settings.values() ) {
+
+      // Exclude settings the user cannot change
+      if (!canConfigure && (setting.scope !== "client")) continue;
+
+      // Update setting data
+      const s = foundry.utils.deepClone(setting);
+      s.namespace = s.namespace || s.module; // 0.8.9 compatibility
+      s.id = `${s.namespace}.${s.key}`;
+      s.name = game.i18n.localize(s.name);
+      s.hint = game.i18n.localize(s.hint);
+      s.value = game.settings.get(s.namespace, s.key);
+      s.type = setting.type instanceof Function ? setting.type.name : "String";
+      s.isCheckbox = setting.type === Boolean;
+      s.isSelect = s.choices !== undefined;
+      s.isRange = (setting.type === Number) && s.range;
+      s.filePickerType = s.filePicker === true ? "any" : s.filePicker;
+
+      // Classify setting
+      const name = s.namespace;
+      if ( name === game.system.id ) data.settings[s.key] = s;
+    }
+
+    return data;
+  }
+
+  activateListeners(html) {
+    super.activateListeners(html);
+    html.find('.game-preset').click(this.onSelectPreset.bind(this));
+    html.find('button.accept-settings').click(this.onLoadSettings.bind(this));
+    html.find('button.close').click(e => this.close());
+  }
+
+  async onLoadSettings(ev) {
+    if (!this.config.preset) return this.close();
+    const fd = new foundry.applications.ux.FormDataExtended(this.form).object;
+    const sets = {
+      ...ageSystem.gameSettings[this.config.preset].settings.defined,
+      ...fd
+    };
+    await Promise.all(Object.entries(sets).map(([setting, value]) => game.settings.set("age-system", setting, value)));
+    return this.close();
+  }
+
+  onSelectPreset(ev) {
+    const preset = ev.currentTarget.dataset.preset;
+    this.config.preset = preset;
+    this.render(false)
+  }
+
+  _updateObject(event, data) {}
+}
+
+export class AdvancedSettings extends foundry.appv1.api.FormApplication {
+  constructor(object = {}, options = {}) {
+    super(object, options);
+    this.config = {};
+  }
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: 'adv-settings',
+      template: 'systems/age-system/templates/adv-settings.hbs',
+      resizable: false,
+      minimizable: false,
+      width: '500',
+      height: 'auto',
+      title: game.i18n.localize('SETTINGS.advSettings'),
+      classes: ["age-system", "dialog", `colorset-${ageSystem.colorScheme}`],
+      //resizable: false,
+      closeOnSubmit: false,
+      submitOnClose: true,
+      submitOnChange: true,
+    })
+  }
+
+  getData() {
+    const data = {
+      ...super.getData(),
+      colors: ageSystem.colorScheme,
+      advSettings: ageSystem.advSettings,
+      settings: {}
+    }
+    
+    const canConfigure =  game.user.can("SETTINGS_MODIFY");
+    const gs = game.settings;
+    // Classify all settings
+    for ( let setting of gs.settings.values() ) {
+
+      // Exclude settings the user cannot change
+      if (!canConfigure && (setting.scope !== "client")) continue;
+
+      // Update setting data
+      const s = foundry.utils.deepClone(setting);
+      s.namespace = s.namespace || s.module; // 0.8.9 compatibility
+      s.id = `${s.namespace}.${s.key}`;
+      s.name = game.i18n.localize(s.name);
+      s.hint = game.i18n.localize(s.hint);
+      s.value = game.settings.get(s.namespace, s.key);
+      s.type = setting.type instanceof Function ? setting.type.name : "String";
+      s.isCheckbox = setting.type === Boolean;
+      s.isSelect = s.choices !== undefined;
+      s.isRange = (setting.type === Number) && s.range;
+      s.filePickerType = s.filePicker === true ? "any" : s.filePicker;
+
+      // Classify setting
+      const name = s.namespace;
+      if ( name === game.system.id ) data.settings[s.key] = s;
+    }
+
+    return data;
+  }
+
+  activateListeners(html) {
+    super.activateListeners(html);
+    html.find('button.accept-settings').click(this.onLoadSettings.bind(this));
+    html.find('button.close').click(e => this.close());
+  }
+
+  // TODO - Filter which settings really need reload only prompt user in the correct cases
+  async onLoadSettings(ev) {
+    const sets = new foundry.applications.ux.FormDataExtended(this.form).object;
+    await Promise.all(Object.entries(sets).map(([setting, value]) => game.settings.set("age-system", setting, value)));
+    SettingsConfig.reloadConfirm();
+    return this.close();
+  }
+
+  _updateObject(event, data) {}
+}

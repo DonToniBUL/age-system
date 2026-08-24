@@ -1,0 +1,137 @@
+<form class="age-rule-profile-manager flexcol">
+<style>
+  #age-rule-profile-manager .window-content {
+    overflow: hidden;
+    padding: 0.6rem;
+  }
+  #age-rule-profile-manager .age-rule-profile-manager {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    gap: 0.45rem;
+    overflow: hidden;
+  }
+  #age-rule-profile-manager .age-rule-profile-manager > * {
+    flex: 0 0 auto;
+  }
+  #age-rule-profile-manager .age-profile-selector {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 10rem) minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0;
+  }
+  #age-rule-profile-manager .age-profile-selector label {
+    font-weight: 600;
+  }
+  #age-rule-profile-manager .age-profile-selector select {
+    width: 100%;
+  }
+  #age-rule-profile-manager .age-profile-summary {
+    padding: 0.45rem 0.55rem;
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+  #age-rule-profile-manager .age-profile-summary h2,
+  #age-rule-profile-manager .age-profile-summary p {
+    margin: 0;
+  }
+  #age-rule-profile-manager .age-profile-summary h2 {
+    margin-bottom: 0.25rem;
+  }
+  #age-rule-profile-manager .age-profile-active {
+    margin-top: 0.35rem !important;
+    font-weight: 600;
+  }
+  #age-rule-profile-manager .age-profile-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  #age-rule-profile-manager table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  #age-rule-profile-manager th,
+  #age-rule-profile-manager td {
+    padding: 0.32rem 0.45rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.16);
+  }
+  #age-rule-profile-manager th:last-child,
+  #age-rule-profile-manager td:last-child {
+    width: 3.5rem;
+    text-align: center;
+  }
+  #age-rule-profile-manager thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(225, 220, 207, 0.98);
+  }
+  #age-rule-profile-manager .age-profile-actions {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+  }
+  #age-rule-profile-manager .age-profile-actions button {
+    margin: 0;
+    min-height: 2rem;
+  }
+</style>
+  {{#unless automationEnabled}}
+  <p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>
+  {{/unless}}
+  <div class="age-profile-selector">
+    <label>{{localize "age-system.AUTOMATION.profile"}}</label>
+    <select name="profile">
+      {{#select selectedProfileId}}
+      {{#each profiles as |profile|}}
+      <option value="{{profile.id}}">{{profile.localizedLabel}}</option>
+      {{/each}}
+      {{/select}}
+    </select>
+  </div>
+
+  <section class="age-profile-summary">
+    <h2>{{selectedLabel}}</h2>
+    <p class="notes">{{selectedDescription}}</p>
+    <p class="notes age-profile-active">{{localize "age-system.AUTOMATION.activeProfile" profile=activeProfileLabel}}</p>
+  </section>
+
+  <div class="age-profile-table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>{{localize "age-system.AUTOMATION.setting"}}</th>
+          <th>{{localize "age-system.AUTOMATION.currentValue"}}</th>
+          <th>{{localize "age-system.AUTOMATION.proposedValue"}}</th>
+          <th>{{localize "age-system.AUTOMATION.reload"}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows as |row|}}
+        <tr>
+          <td>{{row.name}}</td>
+          <td>{{row.currentLabel}}</td>
+          <td>{{#if row.changed}}<strong>{{row.proposedLabel}}</strong>{{else}}{{row.proposedLabel}}{{/if}}</td>
+          <td>{{#if row.requiresReload}}<i class="fa-solid fa-rotate" title="{{localize 'age-system.AUTOMATION.reloadRequired'}}"></i>{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="age-profile-actions">
+    <button type="button" class="apply-rule-profile" {{#unless automationEnabled}}disabled{{/unless}}><i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.applyProfile"}}</button>
+    <button type="button" class="revert-rule-profile" {{#unless canRevert}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.restoreProfile"}}</button>
+  </footer>
+</form>

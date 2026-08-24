@@ -1,0 +1,54 @@
+{{!-- Injury Bar --}}
+<div class="injury-bar flexrow general-aid-bar colorset-first-tier">
+
+    <div class="injury-box">
+        <div>{{localize "age-system.injury"}} <a><i class="fa fa-heartbeat heal-all-injuries" aria-hidden="true"></i></a></div>
+        <div class="flexrow injury-degrees">
+            <div class="flexrow degree no-flexwrap">
+                <div>{{localize "age-system.injuryLight"}}</div>
+                <input type="number" name="system.injury.degrees.light" disabled value="{{system.injury.degrees.light}}" data-dtype="Number" />
+                <div class="flexcol arrow-control light">
+                    <a><i class="fa fa-chevron-up change-injury add" aria-hidden="true"></i></a>
+                    <a><i class="fa fa-chevron-down change-injury remove" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <div class="flexrow degree no-flexwrap">
+                <div>{{localize "age-system.injurySerious"}}</div>
+                <input type="number" name="system.injury.degrees.serious" disabled value="{{system.injury.degrees.serious}}" data-dtype="Number" />
+                <div class="flexcol arrow-control serious">
+                    <a><i class="fa fa-chevron-up change-injury add" aria-hidden="true"></i></a>
+                    <a><i class="fa fa-chevron-down change-injury remove" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <div class="flexrow degree no-flexwrap">
+                <div>{{localize "age-system.injurySevere"}}</div>
+                <input type="number" name="system.injury.degrees.severe" disabled value="{{system.injury.degrees.severe}}" data-dtype="Number" />
+                <div class="flexcol arrow-control severe">
+                    <a><i class="fa fa-chevron-up change-injury add" aria-hidden="true"></i></a>
+                    <a><i class="fa fa-chevron-down change-injury remove" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="marks-box">
+        <div> <a class="roll-breather feature-controls" title="{{localize "age-system.breather"}}"><i class="fas fa-medkit"></i></a> {{localize "age-system.injuryMarks"}} <a><i class="fa fa-undo refresh-injury-marks" aria-hidden="true"></i></a></div>
+        <div class="flexrow marks-control">
+            {{#unless (eq data.injury.degrees.severeMult 1)}}
+            <div class="flexcol tracker-container">
+                {{#each system.injury.marksArray as |tracker|}}
+                {{#if tracker}}
+                <div class="severe-injury-tracker"></div>
+                {{/if}}
+                {{/each}}
+            </div>
+            {{/unless}}
+            <input type="number" name="system.injury.marks" disabled value="{{system.injury.marks}}" data-dtype="Number" />
+            <div class="flexcol arrow-control mark">
+                {{!-- <a><i class="fa fa-chevron-up change-injury add" aria-hidden="true"></i></a> --}}
+                <a><i class="fa fa-chevron-down change-injury remove" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </div>
+
+</div>

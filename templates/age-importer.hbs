@@ -1,0 +1,160 @@
+<div class="age-importer flexcol feature-controls" style="gap: 15px;">
+    <h2 style="margin: 5px 0; max-height: 30px; overflow: hidden;">{{localize "age-system.ageImporter"}}</h2>
+    
+    <!-- NPC Importer Section -->
+    <div class="importer-section flexrow" style="gap: 15px;">
+        <div class="parser-text flexcol" style="flex: 1;">
+            <h4 style="margin: 5px 0; font-size: 14px; font-weight: bold; color: #666; max-height: 20px; overflow: hidden;">{{localize "age-system.npcImporter"}}</h4>
+            <p style="margin: 5px 0; font-size: 12px; max-height: 30px; overflow: hidden;">{{localize "age-system.ageImporterInstruction"}} <i><a title="AGE Importer wiki" href="https://github.com/vkdolea/age-system/wiki/AGE-Importer">{{localize "age-system.clickHelp"}}</a></i></p>
+            <textarea class="text-to-import" placeholder="{{localize 'age-system.npcImporterPlaceholder'}}" style="min-height: 120px;">{{npcImportingText}}</textarea>
+        </div>
+        <div class="options" style="flex: 0 0 250px; margin-left: 0;">
+            <h3 style="margin: 5px 0; font-size: 14px; max-height: 20px; overflow: hidden;">{{localize "age-system.settings.options"}}</h3>
+            <div class="flexcol">
+                <h4 style="margin: 5px 0; font-size: 12px; max-height: 18px; overflow: hidden;">{{localize "age-system.selectGameSetting"}}</h4>
+                {{radioBoxes npcRadioB.name npcRadioB.choices npcRadioB.options}}
+            </div>
+            {{#if importerV2}}
+            <button type="button" class="default-button preview-npc-importing" style="margin-top: 10px;">
+                <i class="fa-solid fa-magnifying-glass"></i> {{localize "age-system.AUTOMATION.previewImport"}}
+            </button>
+            <button type="button" class="default-button start-npc-importing" style="margin-top: 5px;" {{#if npcPreview.created}}disabled{{/if}}>
+                <i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.createVerified"}}
+            </button>
+            {{else}}
+            <button type="button" class="default-button start-npc-importing" style="margin-top: 10px;">{{localize "age-system.createCharacter"}}</button>
+            {{/if}}
+        </div>
+    </div>
+
+    {{#if npcPreview}}
+    <section class="import-preview">
+        <h4>{{localize "age-system.AUTOMATION.importPreview"}}</h4>
+        <p class="notes">{{localize "age-system.AUTOMATION.importPreviewCounts" valid=npcPreview.validCount errors=npcPreview.errorCount}}</p>
+        {{#if npcPreview.normalization.changed}}
+        <p class="notification info import-normalization-note">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{localize "age-system.AUTOMATION.clipboardCleaned"}}
+        </p>
+        {{/if}}
+        <ul>
+            {{#each npcPreview.entries as |entry|}}
+            <li class="import-preview-entry">
+                <strong>{{entry.name}}</strong> — {{localize "age-system.AUTOMATION.importMatchCounts" matched=entry.matchedCount unresolved=entry.unresolvedCount}}
+                <div class="import-match-list">
+                    {{#each entry.matches as |match|}}
+                    <div class="import-match-row" data-status="{{match.status}}">
+                        <div class="import-match-heading">
+                            <strong>{{match.name}}</strong>
+                            <span class="tag">{{match.type}}</span>
+                            {{#if match.options.length}}<span class="notes">{{localize "age-system.AUTOMATION.bestConfidence" confidence=match.confidencePercent}}</span>{{/if}}
+                        </div>
+                        <div class="import-match-controls">
+                            <select class="import-match-resolution"
+                                data-kind="npc" data-session-id="{{@root.npcPreview.id}}"
+                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}">
+                                <option value="create" {{#if match.createSelected}}selected{{/if}}>{{localize "age-system.AUTOMATION.createMissingItem"}}</option>
+                                {{#each match.options as |option|}}
+                                <option value="{{option.uuid}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                                {{/each}}
+                            </select>
+                            <input class="import-match-search" type="search" value="{{match.searchQuery}}" placeholder="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
+                            <button type="button" class="import-match-search-button icon"
+                                data-kind="npc" data-session-id="{{@root.npcPreview.id}}"
+                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                                title="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </li>
+            {{/each}}
+            {{#each npcPreview.errors as |error|}}
+            <li class="notification error"><strong>#{{error.index}}</strong> {{error.message}}</li>
+            {{/each}}
+        </ul>
+    </section>
+    {{/if}}
+
+    <!-- Separator -->
+    <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd; max-height: 2px; height: 2px;">
+
+    <!-- Talent Importer Section -->
+    <div class="importer-section flexrow" style="gap: 15px;">
+        <div class="parser-text flexcol" style="flex: 1;">
+            <h4 style="margin: 5px 0; font-size: 14px; font-weight: bold; color: #666; max-height: 20px; overflow: hidden;">{{localize "age-system.talentImporter"}}</h4>
+            <p style="margin: 5px 0; font-size: 12px; max-height: 30px; overflow: hidden;">{{localize "age-system.talentImporterInstruction"}}</p>
+            <textarea class="talent-to-import" placeholder="{{localize 'age-system.talentImporterPlaceholder'}}" style="min-height: 120px;">{{talentImportingText}}</textarea>
+        </div>
+        <div class="options" style="flex: 0 0 250px; margin-left: 0;">
+            <h3 style="margin: 5px 0; font-size: 14px; max-height: 20px; overflow: hidden;">{{localize "age-system.settings.options"}}</h3>
+            <div class="flexcol">
+                <h4 style="margin: 5px 0; font-size: 12px; max-height: 18px; overflow: hidden;">{{localize "age-system.selectGameSetting"}}</h4>
+                {{radioBoxes talentRadioB.name talentRadioB.choices talentRadioB.options}}
+            </div>
+            {{#if importerV2}}
+            <button type="button" class="default-button preview-talent-importing" style="margin-top: 10px;">
+                <i class="fa-solid fa-magnifying-glass"></i> {{localize "age-system.AUTOMATION.previewImport"}}
+            </button>
+            <button type="button" class="default-button start-talent-importing" style="margin-top: 5px;" {{#if talentPreview.created}}disabled{{/if}}>
+                <i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.createVerified"}}
+            </button>
+            {{else}}
+            <button type="button" class="default-button start-talent-importing" style="margin-top: 10px;">{{localize "age-system.createTalent"}}</button>
+            {{/if}}
+        </div>
+    </div>
+
+    {{#if talentPreview}}
+    <section class="import-preview">
+        <h4>{{localize "age-system.AUTOMATION.importPreview"}}</h4>
+        <p class="notes">{{localize "age-system.AUTOMATION.importPreviewCounts" valid=talentPreview.validCount errors=talentPreview.errorCount}}</p>
+        {{#if talentPreview.normalization.changed}}
+        <p class="notification info import-normalization-note">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{localize "age-system.AUTOMATION.clipboardCleaned"}}
+        </p>
+        {{/if}}
+        <ul>
+            {{#each talentPreview.entries as |entry|}}
+            <li class="import-preview-entry">
+                <strong>{{entry.name}}</strong> — {{localize "age-system.AUTOMATION.importMatchCounts" matched=entry.matchedCount unresolved=entry.unresolvedCount}}
+                <div class="import-match-list">
+                    {{#each entry.matches as |match|}}
+                    <div class="import-match-row" data-status="{{match.status}}">
+                        <div class="import-match-heading">
+                            <strong>{{match.name}}</strong>
+                            <span class="tag">{{match.type}}</span>
+                            {{#if match.options.length}}<span class="notes">{{localize "age-system.AUTOMATION.bestConfidence" confidence=match.confidencePercent}}</span>{{/if}}
+                        </div>
+                        <div class="import-match-controls">
+                            <select class="import-match-resolution"
+                                data-kind="talent" data-session-id="{{@root.talentPreview.id}}"
+                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}">
+                                <option value="create" {{#if match.createSelected}}selected{{/if}}>{{localize "age-system.AUTOMATION.createMissingItem"}}</option>
+                                {{#each match.options as |option|}}
+                                <option value="{{option.uuid}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                                {{/each}}
+                            </select>
+                            <input class="import-match-search" type="search" value="{{match.searchQuery}}" placeholder="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
+                            <button type="button" class="import-match-search-button icon"
+                                data-kind="talent" data-session-id="{{@root.talentPreview.id}}"
+                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                                title="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </li>
+            {{/each}}
+            {{#each talentPreview.errors as |error|}}
+            <li class="notification error"><strong>#{{error.index}}</strong> {{error.message}}</li>
+            {{/each}}
+        </ul>
+    </section>
+    {{/if}}
+</div>

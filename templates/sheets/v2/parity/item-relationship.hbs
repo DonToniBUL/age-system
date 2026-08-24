@@ -1,0 +1,45 @@
+<section class="{{cssClass}} age-system item relationship flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <ul class="item-summary">
+
+            {{!-- Intensity --}}
+            <li>
+                <label>{{localize "age-system.relationshipIntensity"}}</label>
+                <div class="flexrow">
+                    <input type="number" name="system.intensity" value="{{system.intensity}}"/>
+                    <span> / </span>
+                    <input type="number" name="system.intensityMax" value="{{system.intensityMax}}"/>
+                </div>
+            </li>
+
+            {{!-- Page Ref --}}
+            <li class="feature-controls" data-reference="{{system.reference}}">
+                <label class="find-reference {{#if config.pdfoundryOn}}mouse-to-pointer{{/if}}">{{localize "age-system.reference"}}</label>
+                <input type="text" name="system.reference" {{#if inChat}}disabled{{/if}} value="{{system.reference}}" placeholder="Page Ref." data-dtype="String"/>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder={{localize "age-system.name"}}/>
+                <div class="sub-details">
+                    {{!-- Relationship Bond --}}
+                    <input type="text" name="system.shortDesc" value="{{system.shortDesc}}">
+                    <label>{{localize "age-system.relationshipBond"}}</label>
+                </div>
+            </div>
+        </header>
+        
+        <div class="sheet-main-content metal-background fill-space-height-100">
+            <ul class="resource colorset-first-tier editor-parent">
+                <li>
+                    <label class="title">{{localize "age-system.item.desc"}}</label>
+                </li>
+                <li class="editor-parent">{{{ageEditor system.longDesc ageEditors.system.longDesc target="system.longDesc" editable=true documentUUID=item.uuid}}}</li>
+            </ul>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,73 @@
+<form>  
+    {{#if selectAbl}}
+    <div class="form-group">
+        <label>Select Ability</label>
+        <select name="selectedAbl">
+            {{#select selectedAbl}}
+            <option value="no-abl">—</option>
+            {{#each abilities as |name key|}}
+            <option value="{{key}}">{{name}}</option>
+            {{/each}}
+            {{/select}}
+        </select>
+    </div>
+    {{/if}}
+
+    <div class="form-group">
+        <label>{{localize "age-system.setAgeRollMod"}}</label>
+        <input type="number" name="ageRollMod" placeholder="{{localize "age-system.setAgeRollMod"}}" value=""/>
+    </div> 
+
+    {{#if (eq itemType 'weapon')}}
+    <div class="form-group">
+        <label>{{localize "age-system.setAgeRollAtkDmgTradeOff"}}</label>
+        <input type="number" name="atkDmgTradeOff" placeholder="{{localize "age-system.penaltyToDamage"}}" value=""/>
+    </div>
+    {{/if}}
+
+    {{#if (or (ne itemType 'weapon') (and (eq itemType 'weapon') (eq targetNumber null)))}}
+    <div class="form-group">
+        <label>{{localize "age-system.setAgeRollTN"}}</label>
+        <input type="number" name="rollTN" value="{{targetNumber}}" placeholder="{{localize "age-system.setAgeRollTN"}}"/>
+    </div>
+    {{/if}}
+
+    {{#if ppCost}}
+    <div class="form-group">
+        <label>{{config.POWER_FLAVOR.points}}</label>
+        <input type="number" name="pointCost" value="{{ppCost.cost}}" placeholder="0"/>
+    </div>
+    {{/if}}
+
+    {{#if rollVisibility}}
+    <div class="form-group">
+        <label>{{localize "age-system.rollVisibility"}}</label>
+        <select name="messageMode">
+            {{#select messageMode}}
+            <option value="public">{{localize "age-system.rollPublic"}}</option>
+            <option value="self">{{localize "age-system.rollSelf"}}</option>
+            <option value="gm">{{localize "age-system.rollPrivate"}}</option>
+            <option value="blind">{{localize "age-system.rollBlind"}}</option>
+            {{/select}}
+        </select>
+    </div>
+    {{/if}}
+
+    <hr>
+
+    {{#if (ne rollType ROLL_TYPE.RESOURCES)}}
+    <div class="form-group">
+        <label>{{localize "age-system.settings.bonusStuntPoints"}}</label>
+        <input type="number" name="extraSP" value="{{extraSP}}" placeholder="0"/>
+    </div>
+    <div class="form-group">
+        <input type="checkbox" name="stuntAttack" {{checked stuntAttack}}/>
+        <label>{{localize "age-system.stuntAttack"}}</label>
+    </div>
+    <div class="form-group">
+        <input type="checkbox" name="stackSP" {{checked stackSP}}/>
+        <label>{{localize "age-system.stuntStack"}}</label>
+    </div>
+    {{/if}}
+
+</form>

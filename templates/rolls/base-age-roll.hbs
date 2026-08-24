@@ -1,0 +1,136 @@
+<form class="age-system age-roll-card colorset-selection {{colorScheme}}">
+{{#each rolls as |roll|}}
+    {{!-- Roll Header Section --}}
+    <ul class="card-header colorset-first-tier">
+        <li class="header">{{../flavor}}</li>
+        {{#if ../flavor2}}
+        <li class="sub header">{{../flavor2}}</li>
+        {{/if}}    
+    </ul>
+    {{!-- Roll Body Section --}}
+    <ul class="roll-body colorset-third-tier">
+        
+        {{!-- Total Roll and Dice --}}
+        <li class="flexrow">
+            {{!-- Dice --}}
+            <div class="dice-show flexrow">
+                {{#each ../ageRollSummary.dice as |diceFace|}}
+                <i class="fas fa-dice-{{facename diceFace}} fa-2x"></i>
+                {{/each}}
+            </div>
+
+            {{!-- Total and Stunt --}}
+            <div class="flexcol roll-summary">
+                
+                {{!-- Total --}}
+                <div class="flexrow total-roll">
+                    <span class="line-header">{{localize "age-system.settings.totalRolled"}}{{#if ../rollTN}}{{#if ../isSuccess}} ({{localize "age-system.success"}}) {{else}} ({{localize "age-system.miss"}}) {{/if}}{{/if}}</span>
+                    <span class="line-value">{{roll.total}}</span>
+                </div>
+
+                {{!-- Stunt Points --}}
+                <div class="flexrow stunt-points{{#if ../ageRollSummary.stunt}} stunted{{/if}}">
+                    <span class="line-header">{{localize "age-system.settings.stuntPoints"}}</span>
+                    <span class="line-value">{{#if ../ageRollSummary.stunt}}{{../ageRollSummary.stuntPoints}}{{else}}-{{/if}}</span>
+                </div>
+            </div>
+        </li>
+
+        {{!-- Roll Mods Section --}}
+        <li class="mod-box section-break">
+            {{#each ../partials as |part key|}}
+            <div class="flexrow mod-desc">
+                <span class="line-header">{{part.label}}</span>
+                <span class="line-value">{{part.value}}</span>
+            </div>
+            {{/each}}
+        </li>
+
+        {{!-- Description Section --}}
+        {{#if system.longDesc}}
+        <li class="item-desc colorset-first-tier">
+            {{editor system.longDesc target="system.longDesc" button=true owner=owner editable=false}}
+        </li>
+        {{/if}}
+    </ul>        
+
+    {{!-- Footer Section --}}
+    <div class="footer colorset-first-tier flexrow">
+        <span>
+        {{#unless ../isSuccess}}
+        
+        {{!-- Automatic Toughness Roll --}}
+        {{#if (eq ../ROLL_TYPE.TOUGHNESS_AUTO ../rollType)}}
+        {{localize (concat "age-system." ../injuryDegree "InjuryInflicted")}}
+        {{/if}}
+
+        {{!-- Toughness Roll --}}
+        {{#if (eq ../ROLL_TYPE.TOUGHNESS ../rollType)}}
+        {{localize "age-system.autoApplyInjury"}}
+        {{/if}}
+
+        {{/unless}}
+        </span>
+    </div>
+
+    {{!-- Buttons Section --}}
+    {{#if (ne ../rollType ../ROLL_TYPE.FATIGUE)}}
+    <div class="chat-buttons flexcol">
+        {{#if (or ../hasDamage ../hasHealing)}}
+        <button class="age-button roll-damage main-dmg">
+            {{#if ../hasTest}}
+                {{#if ../hasDamage}}<i class="fa-solid fa-hand-fist"></i> {{localize "age-system.chatCard.rollFullDamage"}}
+                {{else}}<i class="fa-solid fa-notes-medical"></i> {{localize "age-system.chatCard.rollFullHealing"}} {{/if}}
+            {{else}}
+                {{#if ../hasDamage}}<i class="fa-solid fa-hand-fist"></i> {{localize "age-system.chatCard.rollDamage"}}
+                {{else}}<i class="fa-solid fa-notes-medical"></i> {{localize "age-system.chatCard.rollHealing"}} {{/if}}
+            {{/if}}
+        </button>
+
+        {{!-- Add Stund Die or Focus --}}
+        <div class="flexrow">
+            <button class="age-button roll-damage add-stunt-damage sd-dmg">
+                <i class="fa-regular fa-dice-d6"></i> {{localize "age-system.chatCard.addStuntDie"}}
+            </button>
+
+            <button class="age-button roll-damage add-focus-damage focus-dmg">
+                <i class="fa-solid fa-book"></i> {{localize "age-system.chatCard.addFocus"}}
+            </button>
+        </div>
+
+        {{!-- Add Both Stund Die and Focus --}}
+        <button class="age-button roll-damage add-focus-damage add-stunt-damage both-dmg">
+            <i class="fa-solid fa-burst"></i> {{localize "age-system.chatCard.addFocusSD"}}
+        </button>
+        {{/if}}
+
+        
+        {{!-- Fatigue Buttons --}}
+        {{#if (and ../hasFatigue ../usingFatigue (ne ../ROLL_TYPE.FATIGUE ../rollType))}}
+        <button class="roll-fatigue age-button">
+            <i class="fas fa-head-side-cough"></i> {{localize "age-system.rollFatigue"}}
+        </button>
+        {{/if}}
+
+        {{!-- Apply Injury Buttons --}}
+        {{#unless ../isSuccess}}
+        {{#if (eq ../ROLL_TYPE.TOUGHNESS ../rollType)}}
+        <div class="flexrow">
+            <button class="apply-injury light age-button">
+                <i class="fas fa-dizzy opacity-high"></i> {{localize "age-system.injuryLight"}}
+            </button>
+            <button class="apply-injury serious age-button">
+                <i class="fas fa-dizzy opacity-low"></i> {{localize "age-system.injurySerious"}}
+            </button>
+            <button class="apply-injury severe age-button">
+                <i class="fas fa-dizzy"></i> {{localize "age-system.injurySevere"}}
+            </button>
+        </div>
+        {{/if}}
+        {{/unless}}
+        
+    </div>
+    {{/if}}
+
+{{/each}}
+</form>

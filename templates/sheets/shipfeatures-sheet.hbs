@@ -1,0 +1,98 @@
+<form class="{{cssClass}} age-system item shipfeatures flexrow no-flexwrap" autocomplete="off">
+    <aside class="sidebar metal-background colorset-first-tier">
+        <img class="document-picture" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <ul class="item-summary">
+
+            {{!-- Quality / Flaw Definition --}}
+            <li>
+                <label>{{localize "age-system.spaceship.qualityType"}}</label>
+                <select name="system.quality">
+                    {{#select system.quality}}
+                    <option value="quality">{{localize "age-system.spaceship.quality"}}</option>
+                    <option value="flaw">{{localize "age-system.spaceship.flaw"}}</option>
+                    {{/select}}
+                </select>
+            </li>
+
+            {{!-- Value --}}
+            <li>
+                {{#if (eq system.type "weapon")}}
+                <label>{{localize "age-system.item.damage"}}</label>
+                <input type="text" value="{{system.damage}}" name="system.damage" data-dtype="String" placeholder="{{localize "age-system.formulaExample"}}"/>
+                {{/if}}
+                
+                {{#if (eq system.type "sensorMod")}}
+                <label>{{localize "age-system.spaceship.sensorMod"}}</label>
+                <input type="number" name="system.sensorMod" value="{{system.sensorMod}}" data-dtype="Number" />
+                {{/if}}
+
+                {{#if (eq system.type "maneuverSizeStep")}}
+                <label>{{localize "age-system.spaceship.maneuverSizeStep"}}</label>
+                <input type="number" name="system.maneuverSizeStep" value="{{system.maneuverSizeStep}}" data-dtype="Number" />
+                {{/if}}
+
+                {{#if (eq system.type "juiceMod")}}
+                <label>{{localize "age-system.spaceship.juiceMod"}}</label>
+                <input type="number" name="system.juiceMod" value="{{system.juiceMod}}" data-dtype="Number" />
+                {{/if}}
+
+                {{#if (eq system.type "hullPlating")}}
+                <label>{{localize "age-system.spaceship.hullPlating"}}</label>
+                <input type="number" name="system.hullPlating" value="{{system.hullPlating}}" data-dtype="Number" />
+                {{/if}}
+
+                {{#if (eq system.type "hullMod")}}
+                <label>{{localize "age-system.spaceship.hullMod"}}</label>
+                <input type="number" name="system.hullMod" value="{{system.hullMod}}" data-dtype="Number" />
+                {{/if}}
+                
+                {{#if (eq system.type "rollable")}}
+                <label>{{localize "age-system.abl"}}</label>
+                <select name="system.useAbl" class="data-input">
+                    {{#select system.useAbl}}
+                    {{#each config.abilities as |name type|}}
+                    <option value="{{type}}">{{localize name}}</option>
+                    {{/each}}
+                    {{/select}}
+                </select>
+                {{/if}}
+            </li>
+
+            {{!-- Page Ref --}}
+            <li class="feature-controls" data-reference="{{system.reference}}">
+                <label class="find-reference {{#if config.pdfoundryOn}}mouse-to-pointer{{/if}}">{{localize "age-system.reference"}}</label>
+                <input type="text" name="system.reference" value="{{system.reference}}" placeholder="Page Ref." data-dtype="String"/>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="second-column flexcol">
+        <header class="top-banner colorset-first-tier flexrow">
+            <div class="header-details">
+                <input class="itemname" name="name" type="text" value="{{item.name}}" placeholder="{{localize "age-system.name"}}"/>
+                {{!-- Feature Type --}}
+                <div class="sub-details flexrow">
+                    <div class="flexcol minimum-length">
+                        <select name="system.type" class="header-input">
+                        {{#select system.type}}
+                            {{#each config.featuresTypeLocal as |feature|}}
+                            <option value="{{feature.key}}">{{feature.name}}</option>
+                            {{/each}}
+                        {{/select}}
+                        </select>
+                        <label class="label-under">{{localize "age-system.spaceship.featuresType"}}</label>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="sheet-main-content metal-background fill-space-height-100">
+            <ul class="resource colorset-first-tier editor-parent">
+                <li>
+                    <label class="title">{{localize "age-system.item.desc"}}</label>
+                </li>
+                <li class="editor-parent">{{editor system.longDesc target="system.longDesc" button=true owner=owner editable=true engine="prosemirror"}}</li>
+            </ul>
+        </div>
+    </div>
+</form>

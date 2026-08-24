@@ -1,0 +1,6 @@
+<section class="age-system age-requested-roll-card">
+  <ul class="card-header colorset-first-tier"><li class="header">{{#if request.title}}{{request.title}}{{else}}{{localize "age-system.AUTOMATION.requestedRoll"}}{{/if}}</li><li class="sub header">{{localize (concat "age-system." request.ability)}}{{#if request.focus}} ({{request.focus}}){{/if}}{{#if request.targetNumber}} · TN {{request.targetNumber}}{{/if}}</li></ul>
+  <div class="chat-buttons flexcol" style="padding:.35rem;gap:.3rem">
+    {{#each actors as |actor|}}<button type="button" class="age-button age-requested-roll" data-actor-uuid="{{actor.uuid}}"><i class="fa-solid fa-dice"></i> {{localize "age-system.AUTOMATION.rollFor" actor=actor.name}}</button>{{/each}}
+  </div>
+</section>
