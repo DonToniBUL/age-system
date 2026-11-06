@@ -51,6 +51,22 @@ export function normalizeAtomicSystemUpdate(changed, source, {recursive = true} 
         throw new Error("AGE System cannot safely apply partial system updates with recursive:false; use the default recursive update mode.");
     }
 
+    // DataFieldOperators are Proxies. Preserve caller-supplied branch
+    // operators by identity rather than relying on expandObject to treat the
+    // Proxy as an opaque value. Foundry's TypeDataModel update pipeline must
+    // receive the original operator for an exact AnyField replacement.
+    if (isDataFieldOperator(changed?.system)) return {...(changed ?? {})};
+    const explicitBranchOperators = new Map();
+    if (objectBranch(changed?.system)) {
+        for (const [field, value] of Object.entries(changed.system)) {
+            if (isDataFieldOperator(value)) explicitBranchOperators.set(field, value);
+        }
+    }
+    for (const [path, value] of Object.entries(changed ?? {})) {
+        const match = /^system\.([^.]+)$/.exec(path);
+        if (match && isDataFieldOperator(value)) explicitBranchOperators.set(match[1], value);
+    }
+
     const expanded = foundry.utils.expandObject(changed ?? {});
     let changedSystem = expanded?.system;
     const storedSystem = source?.system;
@@ -77,10 +93,15 @@ export function normalizeAtomicSystemUpdate(changed, source, {recursive = true} 
         }
         changedSystem = nestedSystem;
     }
+    for (const [field, operator] of explicitBranchOperators) changedSystem[field] = operator;
 
+    // Normalize only `system`. Preserve every unrelated caller key in its
+    // original flat-or-nested representation. Expanding a dotted flag update
+    // as a side effect of a simultaneous system edit changes how Foundry's
+    // ObjectField/SchemaField update pipeline interprets nested operators.
     const normalized = {};
-    for (const [field, value] of Object.entries(expanded)) {
-        if (field !== "system") normalized[field] = value;
+    for (const [field, value] of Object.entries(changed ?? {})) {
+        if (field !== "system" && !field.startsWith("system.")) normalized[field] = value;
     }
     const normalizedSystem = {};
     const ForcedReplacement = foundry.data?.operators?.ForcedReplacement;

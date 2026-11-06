@@ -1,4 +1,4 @@
-export const AGE_API_VERSION = "1.2.0";
+export const AGE_API_VERSION = "1.4.0";
 
 const CAPABILITIES = Object.freeze({
   transactions: Object.freeze({
@@ -21,6 +21,30 @@ const CAPABILITIES = Object.freeze({
     diagnostics: true,
     templates: true,
     gmDelegation: true
+  }),
+  progression: Object.freeze({
+    version: 2,
+    available: true,
+    definitionVersion: 2,
+    definitionVersions: Object.freeze([1, 2]),
+    previewVersion: 1,
+    receiptVersion: 1,
+    providerNeutral: true,
+    contentModuleRequired: false,
+    previewFirst: true,
+    targetedUndo: true,
+    characterBuilder: true,
+    advancementCenter: true,
+    authoringUi: true,
+    executabilityValidation: true
+  }),
+  npcStudio: Object.freeze({
+    version: 1,
+    available: true,
+    creationOnly: true,
+    previewFirst: true,
+    targetedUndo: true,
+    origins: Object.freeze(["blank", "paste", "clone"])
   })
 });
 
@@ -29,8 +53,11 @@ const CAPABILITIES = Object.freeze({
  * game.ageSystem properties remain available during the 4.x compatibility
  * cycle, but new integrations should feature-detect this API instead.
  */
-export function createAgeSystemApi({transactions, contentValidator, migrationPreview = null, actions, delegation, systemVersion = null} = {}) {
-  if (!transactions || !contentValidator || !actions || !delegation) throw new TypeError("AGE API services are required.");
+export function createAgeSystemApi({transactions, contentValidator, migrationPreview = null, actions, delegation, progression, npcStudio, systemVersion = null} = {}) {
+  if (!transactions || !contentValidator || !actions || !delegation || !progression || !npcStudio) throw new TypeError("AGE API services are required.");
+  if (!(progression.validateExecutability instanceof Function)) {
+    throw new TypeError("AGE progression API requires executability validation support.");
+  }
 
   const api = {
     apiVersion: AGE_API_VERSION,
@@ -63,6 +90,40 @@ export function createAgeSystemApi({transactions, contentValidator, migrationPre
       definitions: () => actions.definitions(),
       templates: () => actions.templates(),
       create: (templateId, overrides) => actions.create(templateId, overrides)
+    }),
+    progression: Object.freeze({
+      validateDefinition: definition => progression.validateDefinition(definition),
+      validateExecutability: (definition, options) => progression.validateExecutability(definition, options),
+      registerDefinition: (definition, options) => progression.registerDefinition(definition, options),
+      unregisterDefinition: definitionId => progression.unregisterDefinition(definitionId),
+      getDefinition: definitionId => progression.getDefinition(definitionId),
+      definitions: filters => progression.listDefinitions(filters),
+      provider: definitionId => progression.provider(definitionId),
+      definitionRecord: definitionId => progression.definitionRecord(definitionId),
+      previewCreation: options => progression.previewCreation(options),
+      previewAdvancement: options => progression.previewAdvancement(options),
+      commitCreation: (previewId, planDigest) => progression.commitCreation(previewId, planDigest),
+      commitAdvancement: (previewId, planDigest) => progression.commitAdvancement(previewId, planDigest),
+      receipt: receiptId => progression.lookupReceipt(receiptId),
+      receipts: filters => progression.receipts(filters),
+      previewUndo: receiptId => progression.previewUndo(receiptId),
+      undo: (receiptId, options) => progression.undo(receiptId, options),
+      status: () => progression.status(),
+      capabilities: () => progression.capabilities()
+    }),
+    npcStudio: Object.freeze({
+      createDraft: options => npcStudio.createDraft(options),
+      preview: draft => npcStudio.preview(draft),
+      searchActors: (query, options) => npcStudio.searchActors(query, options),
+      searchItems: (query, options) => npcStudio.searchItems(query, options),
+      commit: (previewId, digests) => npcStudio.commit(previewId, digests),
+      cancel: previewId => npcStudio.cancel(previewId),
+      previewUndo: receiptId => npcStudio.previewUndo(receiptId),
+      undo: (receiptId, options) => npcStudio.undo(receiptId, options),
+      receipt: receiptId => npcStudio.receipt(receiptId),
+      getActiveProfile: () => npcStudio.getActiveProfile(),
+      status: () => npcStudio.status(),
+      capabilities: () => npcStudio.capabilities()
     }),
     hasCapability(name, minimumVersion = 1) {
       const capability = CAPABILITIES[name];

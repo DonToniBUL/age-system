@@ -1,0 +1,302 @@
+<form class="age-progression-definition-sheet__form" autocomplete="off">
+  <header class="age-progression-definition-sheet__header">
+    <img class="age-progression-definition-sheet__image" src="{{img}}" alt="" />
+    <div class="age-progression-definition-sheet__identity">
+      <label>
+        <span>Document name</span>
+        <input type="text" name="name" value="{{name}}" data-age-progression-metadata {{#unless canEdit}}disabled{{/unless}} />
+      </label>
+      <div class="age-progression-definition-sheet__badges">
+        <span class="age-progression-definition-sheet__badge">DefinitionV{{definition.schemaVersion}}</span>
+        {{#if definition.profileId}}<span class="age-progression-definition-sheet__badge">{{definition.profileId}}</span>{{/if}}
+        {{#if isCompendium}}<span class="age-progression-definition-sheet__badge">Compendium</span>{{else}}<span class="age-progression-definition-sheet__badge">World</span>{{/if}}
+        <span class="age-progression-definition-sheet__badge age-progression-definition-sheet__badge--{{lifecycle.tone}}">{{lifecycle.label}}</span>
+        {{#if dirty}}<span class="age-progression-definition-sheet__badge age-progression-definition-sheet__badge--warn">{{saveState}}</span>{{/if}}
+      </div>
+    </div>
+    <label class="age-progression-definition-sheet__enabled">
+      <input type="checkbox" name="enabled" data-age-progression-metadata {{checked enabled}} {{#unless canEdit}}disabled{{/unless}} />
+      <span>Provider enabled</span>
+    </label>
+  </header>
+
+  {{#unless canEdit}}
+    {{#if isCompendium}}
+      <aside class="age-progression-definition-sheet__readonly-banner" aria-label="Read-only compendium definition">
+        <div><i class="fa-solid fa-lock" aria-hidden="true"></i><span><strong>Read-only compendium definition</strong><small>Create an editable world copy to customize this progression without changing its source.</small></span></div>
+        {{#if canDuplicate}}<button type="button" data-action="duplicate"><i class="fa-solid fa-copy" aria-hidden="true"></i> Create editable world copy</button>{{/if}}
+      </aside>
+    {{/if}}
+  {{/unless}}
+
+  <div class="age-progression-definition-sheet__toolbar" aria-label="Definition actions">
+    <button type="button" data-action="validate"><i class="fa-solid fa-shield-check"></i> Validate draft</button>
+    {{#if canEdit}}
+      <button type="button" data-action="save" {{#unless canSaveDefinition}}class="age-progression-definition-sheet__attention" disabled{{/unless}} {{#if busy}}disabled{{/if}}><i class="fa-solid fa-floppy-disk"></i> Save validated draft</button>
+      <button type="button" data-action="reset"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      <button type="button" data-action="bumpVersion"><i class="fa-solid fa-arrow-up-1-9"></i> Bump patch</button>
+      <label class="age-progression-definition-sheet__import"><i class="fa-solid fa-file-import"></i> Load JSON draft<input type="file" accept="application/json,.json" data-age-progression-import /></label>
+    {{/if}}
+    <button type="button" data-action="export"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+    {{#if canDuplicate}}{{#if canEdit}}<button type="button" data-action="duplicate"><i class="fa-solid fa-copy"></i> Duplicate to world</button>{{else}}{{#unless isCompendium}}<button type="button" data-action="duplicate"><i class="fa-solid fa-copy"></i> Create editable world copy</button>{{/unless}}{{/if}}{{/if}}
+    {{#if hasCreation}}<button type="button" data-action="openBuilder" title="{{creationLaunchReason}}" {{#unless canLaunchCreation}}disabled{{/unless}}><i class="fa-solid fa-user-plus"></i> Test in Builder</button>{{/if}}
+    {{#if hasAdvancement}}<button type="button" data-action="openCenter" title="{{advancementLaunchReason}}" {{#unless canLaunchAdvancement}}disabled{{/unless}}><i class="fa-solid fa-arrow-trend-up"></i> Test in Center</button>{{/if}}
+  </div>
+
+  {{#if saveBlockers.length}}
+    <div class="age-progression-definition-sheet__save-blockers" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      <div>
+        <strong>This draft is not ready to save</strong>
+        <ul>{{#each saveBlockers as |blocker|}}<li data-save-blocker="{{blocker.code}}">{{blocker.message}} {{#if blocker.canBump}}<button type="button" data-action="bumpVersion">Bump patch now</button>{{/if}}</li>{{/each}}</ul>
+      </div>
+    </div>
+  {{/if}}
+
+  <nav class="age-progression-definition-sheet__studio-nav" aria-label="Definition Studio sections" role="tablist">
+    {{#each studioSections as |section|}}
+      <button type="button" id="age-progression-definition-tab-{{section.id}}" role="tab" data-action="showSection" data-section="{{section.id}}" aria-controls="age-progression-definition-section-{{section.id}}" aria-selected="{{#if section.active}}true{{else}}false{{/if}}" tabindex="{{#if section.active}}0{{else}}-1{{/if}}">
+        <i class="fa-solid {{section.icon}}" aria-hidden="true"></i><span>{{section.label}}</span>{{#if section.count}}<small>{{section.count}}</small>{{/if}}
+      </button>
+    {{/each}}
+  </nav>
+
+  <main class="age-progression-definition-sheet__body">
+    <div class="age-progression-definition-sheet__semantic">
+      <div id="age-progression-definition-section-setup" class="age-progression-definition-sheet__panel-group" role="tabpanel" aria-labelledby="age-progression-definition-tab-setup" data-age-progression-section-panel="setup" {{#unless (eq studioSection "setup")}}hidden{{/unless}}>
+      <section class="age-progression-definition-sheet__editor-card age-progression-definition-sheet__quick-start">
+        <div class="age-progression-definition-sheet__section-heading">
+          <div><span class="age-progression-definition-sheet__eyebrow">Guided setup</span><h2>What are you building?</h2></div>
+          <label class="age-progression-definition-sheet__quick-ranks"><span>Ranks</span><input type="number" min="1" max="20" value="20" data-age-progression-quick-ranks {{#unless canUseQuickStart}}disabled{{/unless}} /></label>
+        </div>
+        <p class="age-progression-definition-sheet__help">Choose a starting workflow. AGE creates the track, milestones, rank effects, ids, and triggers for you. It replaces only this unsaved draft; review and save when ready.</p>
+        <div class="age-progression-definition-sheet__quick-grid">
+          {{#each quickStarts as |quick|}}
+          <button type="button" data-action="quickStart" data-workflow="{{quick.id}}" {{#unless ../canUseQuickStart}}disabled{{/unless}}>
+            <i class="fa-solid {{quick.icon}}"></i><span><strong>{{quick.label}}</strong><small>{{quick.help}}</small></span>
+          </button>
+          {{/each}}
+        </div>
+        {{#if (eq definition.schemaVersion 1)}}<p class="age-progression-definition-sheet__notice"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> Guided templates create DefinitionV2 drafts and never convert DefinitionV1 in place. Create a new Progression Definition for a V2 template, or continue editing this V1 contract.</p>{{/if}}
+        <ol class="age-progression-definition-sheet__checklist" aria-label="Definition readiness">
+          {{#each checklist as |step|}}
+          <li class="{{#if step.complete}}is-complete{{else}}is-pending{{/if}}"><i class="fa-solid {{#if step.complete}}fa-circle-check{{else}}fa-circle{{/if}}"></i><span>{{step.label}}{{#if step.optional}} <small>optional for this draft</small>{{/if}}</span></li>
+          {{/each}}
+        </ol>
+      </section>
+
+      <section class="age-progression-definition-sheet__editor-card">
+        <div class="age-progression-definition-sheet__section-heading">
+          <div><span class="age-progression-definition-sheet__eyebrow">Normal authoring</span><h2>Definition identity and rank model</h2></div>
+          {{#if digest}}<code title="Canonical SHA-256">{{digest}}</code>{{/if}}
+        </div>
+        <p class="age-progression-definition-sheet__help">These semantic controls write only to an in-memory draft. Use Save validated draft to persist it.</p>
+        <div class="age-progression-definition-sheet__field-grid">
+          <label><span>Stable definition id</span><input value="{{semantic.definition.id}}" data-age-progression-semantic-field data-path="id" {{#unless canEditIdentity}}disabled{{/unless}} /></label>
+          <label><span>Game profile</span><select data-age-progression-semantic-field data-path="profileId" {{#unless canEditIdentity}}disabled{{/unless}}>{{selectOptions profileChoices selected=semantic.definition.profileId}}</select></label>
+          <label><span>Semantic version</span><input value="{{semantic.definition.version}}" data-age-progression-semantic-field data-path="version" {{#unless canEdit}}disabled{{/unless}} /></label>
+          <label><span>Content coverage</span><select data-age-progression-semantic-field data-path="rulesContentCoverage" {{#unless canEdit}}disabled{{/unless}}>{{selectOptions semantic.coverageChoices selected=semantic.definition.rulesContentCoverage}}</select></label>
+          <label><span>Minimum rank</span><input type="number" value="{{semantic.definition.rank.minimum}}" data-age-progression-semantic-field data-path="rank.minimum" data-value-type="integer" {{#unless canEdit}}disabled{{/unless}} /></label>
+          <label><span>Maximum rank</span><input type="number" value="{{semantic.definition.rank.maximum}}" data-age-progression-semantic-field data-path="rank.maximum" data-value-type="integer" {{#unless canEdit}}disabled{{/unless}} /></label>
+          <label class="age-progression-definition-sheet__field--wide"><span>Capabilities (comma separated)</span><input value="{{semantic.capabilitiesText}}" data-age-progression-semantic-field data-path="capabilities" data-value-type="csv" {{#unless canEdit}}disabled{{/unless}} /></label>
+        </div>
+        {{#unless canEditIdentity}}<p class="age-progression-definition-sheet__help"><i class="fa-solid fa-lock" aria-hidden="true"></i> A saved definition keeps its stable id and game profile. Duplicate it to create a new identity.</p>{{/unless}}
+      </section>
+
+      <section class="age-progression-definition-sheet__editor-card">
+        <div class="age-progression-definition-sheet__section-heading">
+          <div><span class="age-progression-definition-sheet__eyebrow">Advancement security</span><h2>Track binding</h2></div>
+          {{#if canEdit}}{{#if semantic.definition.trackBinding}}<button type="button" data-action="semanticToggleBinding" data-enabled="false"><i class="fa-solid fa-link-slash"></i> Remove binding</button>{{else}}<button type="button" data-action="semanticToggleBinding" data-enabled="true"><i class="fa-solid fa-link"></i> Add binding</button>{{/if}}{{/if}}
+        </div>
+        {{#if semantic.definition.trackBinding}}
+          <div class="age-progression-definition-sheet__field-grid">
+            <label><span>Storage</span><select data-age-progression-semantic-field data-path="trackBinding.kind" {{#unless canEdit}}disabled{{/unless}}>{{selectOptions semantic.trackKindChoices selected=semantic.definition.trackBinding.kind}}</select></label>
+            <label><span>Track id</span><input value="{{semantic.definition.trackBinding.trackId}}" data-age-progression-semantic-field data-path="trackBinding.trackId" {{#unless canEdit}}disabled{{/unless}} /></label>
+            {{#if (eq semantic.definition.trackBinding.kind "class-item")}}<label class="age-progression-definition-sheet__field--wide"><span>Allowed Class source UUIDs (optional, comma separated)</span><input value="{{semantic.classSourceUuidsText}}" data-age-progression-semantic-field data-path="trackBinding.sourceUuids" data-value-type="csv" data-optional="true" {{#unless canEdit}}disabled{{/unless}} /></label>{{/if}}
+          </div>
+        {{else}}<p class="age-progression-definition-sheet__empty">Creation-only definitions need no track binding. A rank.advance milestone requires an Actor or Class Item track.</p>{{/if}}
+      </section>
+      </div>
+
+      <section id="age-progression-definition-section-sources" class="age-progression-definition-sheet__editor-card" role="tabpanel" aria-labelledby="age-progression-definition-tab-sources" data-age-progression-section-panel="sources" {{#unless (eq studioSection "sources")}}hidden{{/unless}}>
+        <div class="age-progression-definition-sheet__section-heading"><div><span class="age-progression-definition-sheet__eyebrow">Portable content</span><h2>Source Items</h2></div></div>
+        <p class="age-progression-definition-sheet__help">Drop Items here from the sidebar or a compendium, or search by name. AGE creates the stable reference automatically.</p>
+        {{#if canEdit}}
+          <div class="age-progression-definition-sheet__source-tools" data-age-progression-source-drop>
+            <div class="age-progression-definition-sheet__source-search"><input type="search" value="{{sourceSearchQuery}}" placeholder="Search Items by name or type" aria-label="Search source Items by name or type" data-age-progression-source-search /><button type="button" data-action="sourceSearch"><i class="fa-solid fa-magnifying-glass"></i> Search</button></div>
+            <div class="age-progression-definition-sheet__drop-zone"><i class="fa-solid fa-arrow-down-to-bracket"></i><span>Drop an Item here</span></div>
+            {{#if sourceSearchResults.length}}<div class="age-progression-definition-sheet__source-results">{{#each sourceSearchResults as |result|}}<button type="button" data-action="sourceSelect" data-uuid="{{result.uuid}}"><img src="{{result.img}}" alt="" /><span><strong>{{result.name}}</strong><small>{{result.type}} · {{result.location}}</small></span><i class="fa-solid fa-plus"></i></button>{{/each}}</div>{{/if}}
+          </div>
+        {{/if}}
+        {{#each semantic.sourceRefs as |source|}}
+          <article class="age-progression-definition-sheet__node" data-definition-path="{{source.validationPath}}">
+            <div class="age-progression-definition-sheet__node-actions"><strong>{{source.label}}</strong><span class="age-progression-definition-sheet__source-type">{{source.kind}}</span>{{#if ../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{source.collectionPath}}" data-index="{{source.index}}" data-direction="-1" title="Move {{source.label}} up" aria-label="Move {{source.label}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="{{source.collectionPath}}" data-index="{{source.index}}" data-direction="1" title="Move {{source.label}} down" aria-label="Move {{source.label}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="{{source.collectionPath}}" data-index="{{source.index}}" title="Remove {{source.label}}" aria-label="Remove {{source.label}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+            <p class="age-progression-definition-sheet__source-summary"><code>{{source.id}}</code><span>{{source.uuid}}</span></p>
+            <details class="age-progression-definition-sheet__source-advanced"><summary>Advanced reference fields</summary><div class="age-progression-definition-sheet__field-grid">
+              <label><span>Stable id</span><input value="{{source.id}}" data-age-progression-semantic-field data-path="{{source.nodePath}}.id" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Kind</span><select data-age-progression-semantic-field data-path="{{source.nodePath}}.kind" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions source.kindChoices selected=source.kind}}</select></label><label class="age-progression-definition-sheet__field--wide"><span>UUID</span><input value="{{source.uuid}}" data-age-progression-semantic-field data-path="{{source.nodePath}}.uuid" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Label</span><input value="{{source.label}}" data-age-progression-semantic-field data-path="{{source.nodePath}}.label" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Revision</span><input value="{{source.revision}}" data-age-progression-semantic-field data-path="{{source.nodePath}}.revision" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+            </div></details>
+          </article>
+        {{else}}<p class="age-progression-definition-sheet__empty">No source Items yet. Drop or search for the Talents, Powers, Focuses, equipment, or other Items this progression grants.</p>{{/each}}
+      </section>
+
+      <section id="age-progression-definition-section-timeline" class="age-progression-definition-sheet__editor-card" role="tabpanel" aria-labelledby="age-progression-definition-tab-timeline" data-age-progression-section-panel="timeline" {{#unless (eq studioSection "timeline")}}hidden{{/unless}}>
+        <div class="age-progression-definition-sheet__section-heading"><div><span class="age-progression-definition-sheet__eyebrow">Progression timeline</span><h2>Milestones, inputs, and choices</h2></div>{{#if canEdit}}<button type="button" data-action="semanticAdd" data-kind="milestone"><i class="fa-solid fa-plus"></i> Add milestone</button>{{/if}}</div>
+        <label class="age-progression-definition-sheet__milestone-filter"><span>Show milestone</span><select data-age-progression-milestone-filter aria-label="Show milestone"><option value="all" {{#if (eq milestoneFilter "all")}}selected{{/if}}>All milestones</option>{{#each semantic.milestones as |option|}}<option value="{{option.filterValue}}" {{#if (eq option.filterValue ../milestoneFilter)}}selected{{/if}}>{{option.selectorLabel}}</option>{{/each}}</select></label>
+        {{#each semantic.milestones as |milestone|}}
+          <article class="age-progression-definition-sheet__milestone" data-definition-path="{{milestone.validationPath}}" data-age-progression-milestone="{{milestone.filterValue}}" {{#unless (or (eq ../milestoneFilter "all") (eq milestone.filterValue ../milestoneFilter))}}hidden{{/unless}}>
+            <div class="age-progression-definition-sheet__node-actions"><h3>{{milestone.selectorLabel}}</h3><code>{{milestone.validationPath}}</code>{{#if ../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="milestones" data-index="{{milestone.index}}" data-direction="-1" title="Move {{milestone.selectorLabel}} up" aria-label="Move {{milestone.selectorLabel}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="milestones" data-index="{{milestone.index}}" data-direction="1" title="Move {{milestone.selectorLabel}} down" aria-label="Move {{milestone.selectorLabel}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="milestones" data-index="{{milestone.index}}" title="Remove {{milestone.selectorLabel}}" aria-label="Remove {{milestone.selectorLabel}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+            <div class="age-progression-definition-sheet__field-grid">
+              <label><span>Stable id</span><input value="{{milestone.id}}" data-age-progression-semantic-field data-path="{{milestone.nodePath}}.id" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+              <label><span>Rank</span><input type="number" value="{{milestone.rank}}" data-age-progression-semantic-field data-path="{{milestone.nodePath}}.rank" data-value-type="integer" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+              <fieldset class="age-progression-definition-sheet__trigger-field"><legend>Triggers</legend><label><input type="checkbox" data-age-progression-trigger="character.create" data-milestone="{{milestone.index}}" {{checked milestone.creationTrigger}} {{#unless ../canEdit}}disabled{{/unless}} /> Character creation</label><label><input type="checkbox" data-age-progression-trigger="rank.advance" data-milestone="{{milestone.index}}" {{checked milestone.advancementTrigger}} {{#unless ../canEdit}}disabled{{/unless}} /> Rank advancement</label></fieldset>
+              <label class="age-progression-definition-sheet__field--wide"><span>Milestone source ids (comma separated)</span><input value="{{milestone.sourceRefIdsText}}" data-age-progression-semantic-field data-path="{{milestone.nodePath}}.sourceRefIds" data-value-type="csv" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+            </div>
+
+            {{#if milestone.supportsStages}}
+              <div class="age-progression-definition-sheet__subsection-heading"><h4>Workflow stages</h4>{{#if ../canEdit}}<button type="button" data-action="semanticAdd" data-kind="stage" data-collection="{{milestone.nodePath}}.stages"><i class="fa-solid fa-plus"></i> Add stage</button>{{/if}}</div>
+              {{#each milestone.stages as |stage|}}
+                <div class="age-progression-definition-sheet__node age-progression-definition-sheet__node--compact" data-definition-path="{{stage.validationPath}}">
+                  <div class="age-progression-definition-sheet__node-actions"><code>{{stage.validationPath}}</code>{{#if ../../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{stage.collectionPath}}" data-index="{{stage.index}}" data-direction="-1" title="Move stage {{stage.label}} up" aria-label="Move stage {{stage.label}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="{{stage.collectionPath}}" data-index="{{stage.index}}" data-direction="1" title="Move stage {{stage.label}} down" aria-label="Move stage {{stage.label}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="{{stage.collectionPath}}" data-index="{{stage.index}}" title="Remove stage {{stage.label}}" aria-label="Remove stage {{stage.label}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+                  <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+                    <label><span>Id</span><input value="{{stage.id}}" data-age-progression-semantic-field data-path="{{stage.nodePath}}.id" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Label</span><input value="{{stage.label}}" data-age-progression-semantic-field data-path="{{stage.nodePath}}.label" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label class="age-progression-definition-sheet__field--wide"><span>Description (optional)</span><input value="{{stage.description}}" data-age-progression-semantic-field data-path="{{stage.nodePath}}.description" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Input ids</span><input value="{{stage.inputIdsText}}" data-age-progression-semantic-field data-path="{{stage.nodePath}}.inputIds" data-value-type="csv" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Choice group ids</span><input value="{{stage.choiceGroupIdsText}}" data-age-progression-semantic-field data-path="{{stage.nodePath}}.choiceGroupIds" data-value-type="csv" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  </div>
+                </div>
+              {{/each}}
+            {{/if}}
+
+            <div class="age-progression-definition-sheet__subsection-heading"><h4>Semantic inputs</h4>{{#if ../canEdit}}<button type="button" data-action="semanticAdd" data-kind="input" data-collection="{{milestone.nodePath}}.inputs"><i class="fa-solid fa-plus"></i> Add input</button>{{/if}}</div>
+            {{#each milestone.inputs as |input|}}
+              <div class="age-progression-definition-sheet__node age-progression-definition-sheet__node--compact" data-definition-path="{{input.validationPath}}">
+                <div class="age-progression-definition-sheet__node-actions"><code>{{input.validationPath}}</code>{{#if ../../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{input.collectionPath}}" data-index="{{input.index}}" data-direction="-1" title="Move input {{input.label}} up" aria-label="Move input {{input.label}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="{{input.collectionPath}}" data-index="{{input.index}}" data-direction="1" title="Move input {{input.label}} down" aria-label="Move input {{input.label}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="{{input.collectionPath}}" data-index="{{input.index}}" title="Remove input {{input.label}}" aria-label="Remove input {{input.label}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+                <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+                  <label><span>Id</span><input value="{{input.id}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.id" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label><span>Label</span><input value="{{input.label}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.label" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label><span>Type</span><select data-age-progression-special="input-type" data-path="{{input.nodePath}}" {{#unless ../../canEdit}}disabled{{/unless}}>{{selectOptions input.typeChoices selected=input.type}}</select></label>
+                  <label class="age-progression-definition-sheet__check"><input type="checkbox" data-age-progression-semantic-field data-path="{{input.nodePath}}.required" {{checked input.required}} {{#unless ../../canEdit}}disabled{{/unless}} /> Required</label>
+                  {{#if input.isInteger}}
+                    <label><span>Default (optional)</span><input type="number" value="{{input.default}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.default" data-value-type="integer" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Minimum</span><input type="number" value="{{input.minimum}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.minimum" data-value-type="integer" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Maximum</span><input type="number" value="{{input.maximum}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.maximum" data-value-type="integer" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  {{else if input.isSelect}}
+                    <label><span>Default value (optional)</span><input value="{{input.default}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.default" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label class="age-progression-definition-sheet__field--wide"><span>Options (one value|label per line)</span><textarea data-age-progression-semantic-field data-path="{{input.nodePath}}.options" data-value-type="select-options" {{#unless ../../canEdit}}disabled{{/unless}}>{{input.selectOptionsText}}</textarea></label>
+                  {{else}}
+                    <label><span>Default (optional)</span><input value="{{input.default}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.default" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Min length</span><input type="number" value="{{input.minLength}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.minLength" data-value-type="integer" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                    <label><span>Max length</span><input type="number" value="{{input.maxLength}}" data-age-progression-semantic-field data-path="{{input.nodePath}}.maxLength" data-value-type="integer" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  {{/if}}
+                </div>
+              </div>
+            {{else}}<p class="age-progression-definition-sheet__empty">No semantic inputs.</p>{{/each}}
+
+            <div class="age-progression-definition-sheet__subsection-heading"><h4>Choice groups</h4>{{#if ../canEdit}}<button type="button" data-action="semanticAdd" data-kind="choiceGroup" data-collection="{{milestone.nodePath}}.choiceGroups"><i class="fa-solid fa-plus"></i> Add choice group</button>{{/if}}</div>
+            {{#each milestone.choiceGroups as |group|}}
+              <div class="age-progression-definition-sheet__choice" data-definition-path="{{group.validationPath}}">
+                <div class="age-progression-definition-sheet__node-actions"><h4>{{group.id}}</h4><code>{{group.validationPath}}</code>{{#if ../../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{group.collectionPath}}" data-index="{{group.index}}" data-direction="-1" title="Move choice group {{group.label}} up" aria-label="Move choice group {{group.label}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="{{group.collectionPath}}" data-index="{{group.index}}" data-direction="1" title="Move choice group {{group.label}} down" aria-label="Move choice group {{group.label}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="{{group.collectionPath}}" data-index="{{group.index}}" title="Remove choice group {{group.label}}" aria-label="Remove choice group {{group.label}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+                <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+                  <label><span>Id</span><input value="{{group.id}}" data-age-progression-semantic-field data-path="{{group.nodePath}}.id" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label><span>Label</span><input value="{{group.label}}" data-age-progression-semantic-field data-path="{{group.nodePath}}.label" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label><span>Minimum</span><input type="number" value="{{group.minimum}}" data-age-progression-semantic-field data-path="{{group.nodePath}}.minimum" data-value-type="integer" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label><span>Maximum</span><input type="number" value="{{group.maximum}}" data-age-progression-semantic-field data-path="{{group.nodePath}}.maximum" data-value-type="integer" {{#unless ../../canEdit}}disabled{{/unless}} /></label>
+                  <label class="age-progression-definition-sheet__check"><input type="checkbox" data-age-progression-semantic-field data-path="{{group.nodePath}}.distinct" {{checked group.distinct}} {{#unless ../../canEdit}}disabled{{/unless}} /> Distinct selections</label>
+                  {{#if milestone.supportsStages}}<label><span>Stage id (optional)</span><input value="{{group.stageId}}" data-age-progression-semantic-field data-path="{{group.nodePath}}.stageId" data-optional="true" {{#unless ../../canEdit}}disabled{{/unless}} /></label>{{/if}}
+                </div>
+                {{#if group.supportsEvaluations}}<div class="age-progression-definition-sheet__inline-actions">{{#if ../../canEdit}}<button type="button" data-action="semanticAdd" data-kind="evaluation" data-collection="{{group.nodePath}}.evaluations"><i class="fa-solid fa-plus"></i> Group condition</button>{{/if}}<small>{{group.evaluations.length}} condition(s) gate this whole choice group</small></div>{{/if}}
+                <div class="age-progression-definition-sheet__subsection-heading"><h5>Options</h5>{{#if ../../canEdit}}<button type="button" data-action="semanticAdd" data-kind="option" data-collection="{{group.nodePath}}.options"><i class="fa-solid fa-plus"></i> Add option</button>{{/if}}</div>
+                {{#each group.options as |option|}}
+                  <div class="age-progression-definition-sheet__node age-progression-definition-sheet__node--compact" data-definition-path="{{option.validationPath}}">
+                    <div class="age-progression-definition-sheet__node-actions"><code>{{option.validationPath}}</code>{{#if ../../../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{option.collectionPath}}" data-index="{{option.index}}" data-direction="-1" title="Move option {{option.label}} up" aria-label="Move option {{option.label}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}{{#unless @last}}<button type="button" data-action="semanticMove" data-collection="{{option.collectionPath}}" data-index="{{option.index}}" data-direction="1" title="Move option {{option.label}} down" aria-label="Move option {{option.label}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticRemove" data-collection="{{option.collectionPath}}" data-index="{{option.index}}" title="Remove option {{option.label}}" aria-label="Remove option {{option.label}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+                    <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+                      <label><span>Id</span><input value="{{option.id}}" data-age-progression-semantic-field data-path="{{option.nodePath}}.id" {{#unless ../../../canEdit}}disabled{{/unless}} /></label>
+                      <label><span>Label</span><input value="{{option.label}}" data-age-progression-semantic-field data-path="{{option.nodePath}}.label" data-optional="true" {{#unless ../../../canEdit}}disabled{{/unless}} /></label>
+                      <label class="age-progression-definition-sheet__field--wide"><span>Source ids</span><input value="{{option.sourceRefIdsText}}" data-age-progression-semantic-field data-path="{{option.nodePath}}.sourceRefIds" data-value-type="csv" {{#unless ../../../canEdit}}disabled{{/unless}} /></label>
+                    </div>
+                    <div class="age-progression-definition-sheet__inline-actions">{{#if ../../../canEdit}}<button type="button" data-action="semanticAdd" data-kind="evaluation" data-collection="{{option.nodePath}}.evaluations"><i class="fa-solid fa-plus"></i> Evaluation</button><button type="button" data-action="semanticAdd" data-kind="effect" data-collection="{{option.nodePath}}.effects"><i class="fa-solid fa-plus"></i> Effect</button>{{/if}}<small>{{option.evaluations.length}} evaluation(s), {{option.effects.length}} effect(s)</small></div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}<p class="age-progression-definition-sheet__empty">No choices at this milestone.</p>{{/each}}
+            <div class="age-progression-definition-sheet__inline-actions">{{#if ../canEdit}}<button type="button" data-action="semanticAdd" data-kind="evaluation" data-collection="{{milestone.nodePath}}.evaluations"><i class="fa-solid fa-plus"></i> Add milestone evaluation</button><button type="button" data-action="semanticAdd" data-kind="effect" data-collection="{{milestone.nodePath}}.effects"><i class="fa-solid fa-plus"></i> Add milestone effect</button>{{/if}}</div>
+          </article>
+        {{/each}}
+      </section>
+
+      <div id="age-progression-definition-section-rules" class="age-progression-definition-sheet__panel-group" role="tabpanel" aria-labelledby="age-progression-definition-tab-rules" data-age-progression-section-panel="rules" {{#unless (eq studioSection "rules")}}hidden{{/unless}}>
+      <section class="age-progression-definition-sheet__editor-card">
+        <div class="age-progression-definition-sheet__section-heading"><div><span class="age-progression-definition-sheet__eyebrow">Semantic conditions</span><h2>Evaluations</h2><p class="age-progression-definition-sheet__help">Condition IDs are local to the milestone, choice group, or option shown on each card. Composite conditions can reference only IDs in that same block.</p></div></div>
+        {{#each semantic.evaluations as |evaluation|}}
+          <article class="age-progression-definition-sheet__node" data-definition-path="{{evaluation.validationPath}}">
+            <div class="age-progression-definition-sheet__node-actions"><strong>{{evaluation.ownerLabel}}</strong><code>{{evaluation.validationPath}}</code>{{#if ../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{evaluation.collectionPath}}" data-index="{{evaluation.index}}" data-direction="-1" title="Move evaluation {{evaluation.id}} up" aria-label="Move evaluation {{evaluation.id}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticMove" data-collection="{{evaluation.collectionPath}}" data-index="{{evaluation.index}}" data-direction="1" title="Move evaluation {{evaluation.id}} down" aria-label="Move evaluation {{evaluation.id}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button><button type="button" data-action="semanticRemove" data-collection="{{evaluation.collectionPath}}" data-index="{{evaluation.index}}" title="Remove evaluation {{evaluation.id}}" aria-label="Remove evaluation {{evaluation.id}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+            <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+              <label><span>Local condition id</span><input value="{{evaluation.id}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.id" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+              <label><span>Kind</span><select data-age-progression-special="evaluation-kind" data-path="{{evaluation.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions evaluation.kindChoices selected=evaluation.kind}}</select></label>
+              {{#if (eq evaluation.kind "rank.atLeast")}}<label><span>Minimum rank</span><input type="number" value="{{evaluation.rank}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.rank" data-value-type="integer" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq evaluation.kind "choice.selected")}}<label><span>Choice group id</span><input value="{{evaluation.choiceGroupId}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.choiceGroupId" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Option ids (optional)</span><input value="{{evaluation.optionIdsText}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.optionIds" data-value-type="csv" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq evaluation.kind "item.owned")}}<label><span>Source Item</span><select data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.sourceRefId" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions evaluation.sourceChoices selected=evaluation.sourceRefId}}</select></label>{{/if}}
+              {{#if (eq evaluation.kind "ability.minimum")}}<label><span>Ability id</span><input value="{{evaluation.abilityId}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.abilityId" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Minimum value</span><input type="number" value="{{evaluation.value}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.value" data-value-type="integer" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq evaluation.kind "allOf")}}<label class="age-progression-definition-sheet__field--wide"><span>Evaluation ids</span><input value="{{evaluation.evaluationIdsText}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.evaluationIds" data-value-type="csv" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq evaluation.kind "anyOf")}}<label class="age-progression-definition-sheet__field--wide"><span>Evaluation ids</span><input value="{{evaluation.evaluationIdsText}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.evaluationIds" data-value-type="csv" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq evaluation.kind "not")}}<label class="age-progression-definition-sheet__field--wide"><span>Evaluation id</span><input value="{{evaluation.evaluationIdsText}}" data-age-progression-semantic-field data-path="{{evaluation.nodePath}}.evaluationIds" data-value-type="csv" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+            </div>
+          </article>
+        {{else}}<p class="age-progression-definition-sheet__empty">No milestone or option evaluations.</p>{{/each}}
+      </section>
+
+      <section class="age-progression-definition-sheet__editor-card">
+        <div class="age-progression-definition-sheet__section-heading"><div><span class="age-progression-definition-sheet__eyebrow">Semantic mutations</span><h2>Effects</h2></div></div>
+        {{#each semantic.effects as |effect|}}
+          <article class="age-progression-definition-sheet__node" data-definition-path="{{effect.validationPath}}">
+            <div class="age-progression-definition-sheet__node-actions"><strong>{{effect.ownerLabel}}</strong><code>{{effect.validationPath}}</code>{{#if ../canEdit}}{{#unless @first}}<button type="button" data-action="semanticMove" data-collection="{{effect.collectionPath}}" data-index="{{effect.index}}" data-direction="-1" title="Move effect {{effect.id}} up" aria-label="Move effect {{effect.id}} up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>{{/unless}}<button type="button" data-action="semanticMove" data-collection="{{effect.collectionPath}}" data-index="{{effect.index}}" data-direction="1" title="Move effect {{effect.id}} down" aria-label="Move effect {{effect.id}} down"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button><button type="button" data-action="semanticRemove" data-collection="{{effect.collectionPath}}" data-index="{{effect.index}}" title="Remove effect {{effect.id}}" aria-label="Remove effect {{effect.id}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>{{/if}}</div>
+            <div class="age-progression-definition-sheet__field-grid age-progression-definition-sheet__field-grid--dense">
+              <label><span>Id</span><input value="{{effect.id}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.id" {{#unless ../canEdit}}disabled{{/unless}} /></label>
+              <label><span>Type</span><select data-age-progression-special="effect-type" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.typeChoices selected=effect.type}}</select></label>
+              {{#if (eq effect.type "identity.set")}}<label><span>Identity field</span><select data-age-progression-semantic-field data-path="{{effect.nodePath}}.field" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.identityFieldChoices selected=effect.field}}</select></label><label><span>Value mode</span><select data-age-progression-special="identity-mode" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}><option value="literal" {{#if (eq effect.identityMode "literal")}}selected{{/if}}>Literal</option><option value="input" {{#if (eq effect.identityMode "input")}}selected{{/if}}>Semantic input</option></select></label><label class="age-progression-definition-sheet__field--wide"><span>{{#if effect.inputReference}}Input id{{else}}Literal value{{/if}}</span><input value="{{effect.identityValue}}" data-age-progression-special="identity-value" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (or (eq effect.type "resource.initialize") (eq effect.type "resource.gain"))}}<label><span>Resource</span><select data-age-progression-semantic-field data-path="{{effect.nodePath}}.resource" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.resourceChoices selected=effect.resource}}</select></label><label><span>Amount mode</span><select data-age-progression-special="amount-mode" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}><option value="number" {{#if (eq effect.amountMode "number")}}selected{{/if}}>Number</option><option value="formula" {{#if (eq effect.amountMode "formula")}}selected{{/if}}>Deterministic formula</option></select></label><label><span>Amount</span><input value="{{effect.amountValue}}" data-age-progression-special="amount-value" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{#if (eq effect.amountMode "formula")}}<label><span>Minimum (optional)</span><input type="number" value="{{effect.amountMinimum}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.amount.minimum" data-value-type="number" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Maximum (optional)</span><input type="number" value="{{effect.amountMaximum}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.amount.maximum" data-value-type="number" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label><label class="age-progression-definition-sheet__field--wide"><span>Shared roll key (optional)</span><input value="{{effect.amountRollId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.amount.rollId" data-optional="true" placeholder="Use the same key to reuse one roll" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}{{/if}}
+              {{#if (eq effect.type "classBonus.gain")}}<label><span>Class bonus</span><select data-age-progression-semantic-field data-path="{{effect.nodePath}}.bonus" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.classBonusChoices selected=effect.bonus}}</select></label><label><span>Amount mode</span><select data-age-progression-special="amount-mode" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}><option value="number" {{#if (eq effect.amountMode "number")}}selected{{/if}}>Number</option><option value="formula" {{#if (eq effect.amountMode "formula")}}selected{{/if}}>Deterministic formula</option></select></label><label><span>Amount</span><input value="{{effect.amountValue}}" data-age-progression-special="amount-value" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{#if (eq effect.amountMode "formula")}}<label class="age-progression-definition-sheet__field--wide"><span>Shared roll key (optional)</span><input value="{{effect.amountRollId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.amount.rollId" data-optional="true" placeholder="Use the same key to reuse one roll" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}{{/if}}
+              {{#if (eq effect.type "ability.allocate")}}<label><span>Points</span><input type="number" value="{{effect.amount}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.amount" data-value-type="integer" {{#unless ../canEdit}}disabled{{/unless}} /></label><label class="age-progression-definition-sheet__field--wide"><span>Eligible ability ids (optional)</span><input value="{{effect.eligibleAbilityIdsText}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.eligibleAbilityIds" data-value-type="csv" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "ability.set")}}<label><span>Ability id</span><input value="{{effect.abilityId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.abilityId" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Value mode</span><select data-age-progression-special="identity-mode" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}><option value="literal" {{#if (eq effect.identityMode "literal")}}selected{{/if}}>Number</option><option value="input" {{#if (eq effect.identityMode "input")}}selected{{/if}}>Integer input</option></select></label><label><span>{{#if effect.inputReference}}Input id{{else}}Value{{/if}}</span><input {{#unless effect.inputReference}}type="number"{{/unless}} value="{{effect.identityValue}}" data-age-progression-special="identity-value" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "ability.setPrimary")}}<label><span>Ability id</span><input value="{{effect.abilityId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.abilityId" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "language.add")}}<label><span>Value mode</span><select data-age-progression-special="identity-mode" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}}><option value="literal" {{#if (eq effect.identityMode "literal")}}selected{{/if}}>Literal</option><option value="input" {{#if (eq effect.identityMode "input")}}selected{{/if}}>Semantic input</option></select></label><label class="age-progression-definition-sheet__field--wide"><span>{{#if effect.inputReference}}Input id{{else}}Language{{/if}}</span><input value="{{effect.identityValue}}" data-age-progression-special="identity-value" data-path="{{effect.nodePath}}" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "weaponGroup.add")}}<label><span>Weapon group id</span><input value="{{effect.weaponGroupId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.weaponGroupId" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "item.acquire")}}<label><span>Source Item</span><select data-age-progression-semantic-field data-path="{{effect.nodePath}}.sourceRefId" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.sourceChoices selected=effect.sourceRefId}}</select></label><label><span>Quantity</span><input type="number" value="{{effect.quantity}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.quantity" data-value-type="integer" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "item.advance")}}<label><span>Trait id</span><input value="{{effect.trait}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.trait" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Source Item (optional)</span><select data-age-progression-semantic-field data-path="{{effect.nodePath}}.sourceRefId" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}}>{{selectOptions effect.sourceChoices selected=effect.sourceRefId}}</select></label>{{/if}}
+              {{#if (eq effect.type "track.setRank")}}<label><span>Track id</span><input value="{{effect.trackId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.trackId" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Rank</span><input type="number" value="{{effect.rank}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.rank" data-value-type="integer" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+              {{#if (eq effect.type "summary.add")}}<label><span>Entry id</span><input value="{{effect.entryId}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.entryId" {{#unless ../canEdit}}disabled{{/unless}} /></label><label><span>Label (optional)</span><input value="{{effect.label}}" data-age-progression-semantic-field data-path="{{effect.nodePath}}.label" data-optional="true" {{#unless ../canEdit}}disabled{{/unless}} /></label>{{/if}}
+            </div>
+          </article>
+        {{else}}<p class="age-progression-definition-sheet__empty">No milestone or option effects.</p>{{/each}}
+      </section>
+      </div>
+
+      <details id="age-progression-definition-section-advanced" class="age-progression-definition-sheet__advanced" role="tabpanel" aria-labelledby="age-progression-definition-tab-advanced" data-age-progression-section-panel="advanced" {{#unless (eq studioSection "advanced")}}hidden{{/unless}}>
+        <summary><i class="fa-solid fa-code"></i> Advanced: normalized DefinitionV{{definition.schemaVersion}} JSON</summary>
+        <p class="age-progression-definition-sheet__help">This is an expert escape hatch and import/export view. Normal authoring should use the semantic controls above.</p>
+        <textarea class="age-progression-definition-sheet__json" name="definitionJson" spellcheck="false" aria-label="Advanced normalized progression definition JSON" data-age-progression-raw {{#unless canEdit}}readonly{{/unless}}>{{definitionJson}}</textarea>
+      </details>
+    </div>
+
+    <aside class="age-progression-definition-sheet__sidebar">
+      <section class="age-progression-definition-sheet__status-card">
+        <div class="age-progression-definition-sheet__live-status" role="status" aria-live="polite" aria-atomic="true">
+          <div class="age-progression-definition-sheet__section-heading"><div><span class="age-progression-definition-sheet__eyebrow">Definition lifecycle</span><h2>{{lifecycle.label}}</h2></div><span class="age-progression-definition-sheet__state-dot age-progression-definition-sheet__state-dot--{{lifecycle.tone}}" aria-hidden="true"></span></div>
+          <p class="age-progression-definition-sheet__lifecycle-copy">{{lifecycle.description}}</p>
+          <p class="age-progression-definition-sheet__save-state"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{saveState}}</p>
+        </div>
+        {{#if issues.length}}<ol class="age-progression-definition-sheet__issues" aria-label="Validation issues">{{#each issues as |issue|}}<li><button type="button" class="age-progression-definition-sheet__issue-focus" data-action="focusIssue" data-issue-path="{{issue.path}}" data-issue-code="{{issue.code}}" title="Go to {{issue.path}}"><code>{{issue.path}}</code><span>{{issue.message}}</span><small>{{issue.code}}</small></button><button type="button" class="age-progression-definition-sheet__issue-copy" data-action="copyIssue" data-issue="{{issue.path}} {{issue.message}}" title="Copy validation issue" aria-label="Copy validation issue at {{issue.path}}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button></li>{{/each}}</ol>{{else}}<p class="age-progression-definition-sheet__success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> The draft satisfies DefinitionV{{definition.schemaVersion}}.</p>{{/if}}
+        {{#if dirty}}<p class="age-progression-definition-sheet__notice"><i class="fa-solid fa-floppy-disk"></i> Save this draft before testing it in Builder or Center.</p>{{/if}}
+        {{#unless enabled}}<p class="age-progression-definition-sheet__notice"><i class="fa-solid fa-toggle-off"></i> Disabled definitions cannot be launched for testing.</p>{{/unless}}
+      </section>
+      <section class="age-progression-definition-sheet__reference-card">
+        <span class="age-progression-definition-sheet__eyebrow">Semantic vocabulary</span><h2>Allowed operations</h2>
+        <details open><summary>Triggers</summary><div class="age-progression-definition-sheet__tokens">{{#each triggerTypes}}<code>{{this}}</code>{{/each}}</div></details>
+        <details><summary>Effects</summary><div class="age-progression-definition-sheet__tokens">{{#each effectTypes}}<code>{{this}}</code>{{/each}}</div></details>
+        <details><summary>Evaluations</summary><div class="age-progression-definition-sheet__tokens">{{#each evaluationTypes}}<code>{{this}}</code>{{/each}}</div></details>
+      </section>
+      <section class="age-progression-definition-sheet__reference-card"><span class="age-progression-definition-sheet__eyebrow">Portability</span><h2>One contract family, every provider</h2><p>Core world Items, unlocked Item compendia, imports, content modules, and legacy Class adapters all register through the same versioned progression contract.</p><p>Source Items are pinned during preview. Commit receives only the preview id and plan digest.</p></section>
+    </aside>
+  </main>
+</form>

@@ -1,46 +1,71 @@
-<form class="game-settings-window feature-controls">
-    <h1>{{localize "age-system.selectGameSetting"}}</h1>
-    <div class="flexrow">
-        {{#each presets as |preset|}}
-        <div class="flexrow flex-justify-between resource {{#if (ne preset.name ../config.preset)}}opacity-low{{/if}} colorset-second-tier">
-            <a><img src="{{preset.img}}" alt="{{localize preset.label}}" class="game-preset" data-preset="{{preset.name}}"/></a>
-            <p class="notes colorset-second-tier" style="background: none;">{{localize preset.hint}} <a href="{{preset.link}}" title="{{preset.link}}"><i class="colorset-second-tier fas fa-external-link-alt" style="background: none;"></i></a></p>
+<form class="age-utility-workflow__surface age-quick-settings colorset-selection game-settings-window age-quick-settings-form" aria-labelledby="age-quick-settings-title" autocomplete="off">
+    <header class="age-utility-workflow__header colorset-first-tier">
+      <div>
+        <span class="age-utility-workflow__kicker">{{localize "SETTINGS.quicksetting"}}</span>
+        <h1 id="age-quick-settings-title">{{localize "age-system.selectGameSetting"}}</h1>
+      </div>
+      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+    </header>
+
+    <div class="age-utility-workflow__scroll">
+      <section class="age-utility-workflow__panel colorset-second-tier" aria-labelledby="age-quick-settings-presets-title">
+        <div class="age-utility-workflow__heading">
+          <h2 id="age-quick-settings-presets-title">{{localize "age-system.selectGameSetting"}}</h2>
         </div>
-        {{/each}}
-    </div>
-    {{!-- User Defined Settings --}}
-    {{#if currentPreset.settings.user}}
-    {{#each currentPreset.settings.user as |setting|}}
-    {{#with (lookup ../settings [setting])~}}
-    <div class="form-group">
-        <label>{{name}}</label>
-        <div class="form-fields">
-            {{#if isSelect}}
-            <select name="{{key}}">
+        <div class="age-utility-workflow__grid age-quick-settings__presets">
+          {{#each presets as |preset|}}
+          <article class="age-utility-workflow__card age-quick-settings__preset resource {{#if (ne preset.name ../config.preset)}}opacity-low{{/if}}">
+            <button type="button" class="game-preset" data-action="selectPreset" data-preset="{{preset.name}}" aria-pressed="{{#if (eq preset.name ../config.preset)}}true{{else}}false{{/if}}">
+              <img src="{{preset.img}}" alt="">
+              <strong>{{localize preset.label}}</strong>
+            </button>
+            <p class="notes">{{localize preset.hint}}</p>
+            <a href="{{preset.link}}" title="{{preset.link}}" target="_blank" rel="noopener noreferrer" aria-label="{{localize preset.label}}">
+              <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            </a>
+          </article>
+          {{/each}}
+        </div>
+      </section>
+
+      {{#if currentPreset.settings.user}}
+      <section class="age-utility-workflow__panel colorset-second-tier" aria-labelledby="age-quick-settings-options-title">
+        <div class="age-utility-workflow__heading">
+          <h2 id="age-quick-settings-options-title">{{localize currentPreset.label}}</h2>
+        </div>
+        <div class="age-utility-workflow__grid age-utility-workflow__grid--two age-quick-settings__fields feature-controls">
+          {{#each currentPreset.settings.user as |setting|}}
+          {{#with (lookup ../settings [setting])~}}
+          <div class="form-group">
+            <label for="quick-setting-{{key}}">{{name}}</label>
+            <div class="form-fields">
+              {{#if isSelect}}
+              <select id="quick-setting-{{key}}" name="{{key}}">
                 {{#select value}}
                 {{#each choices as |name type|}}
-                {{#unless (and (eq ../key 'gameMode') (eq type 'none'))}}
+                {{#unless (and (eq ../key "gameMode") (eq type "none"))}}
                 <option value="{{type}}">{{localize name}}</option>
                 {{/unless}}
                 {{/each}}
                 {{/select}}
-            </select>
-            {{else}}
-            {{#if (eq type 'Boolean')}}
-            <input type="checkbox" name="{{key}}" {{#if value}}checked{{/if}} data-dtype="Boolean">
-            {{else}}
-            <input type="{{#if (eq type 'String')}}text{{else}}number{{/if}}" name="{{key}}" value="{{value}}" data-dtype="{{type}}">
-            {{/if}}
-            {{/if}}
+              </select>
+              {{else if (eq type "Boolean")}}
+              <input id="quick-setting-{{key}}" type="checkbox" name="{{key}}" {{checked value}} data-dtype="Boolean">
+              {{else}}
+              <input id="quick-setting-{{key}}" type="{{#if (eq type "String")}}text{{else}}number{{/if}}" name="{{key}}" value="{{value}}" data-dtype="{{type}}">
+              {{/if}}
+            </div>
+            <p class="notes">{{hint}}</p>
+          </div>
+          {{/with}}
+          {{/each}}
         </div>
-        <p class="notes">{{hint}}</p>
+      </section>
+      {{/if}}
     </div>
-    {{/with}}
-    {{/each}}
-    {{/if}}
+
+    <footer class="age-utility-workflow__footer sheet-footer">
+      <button type="button" class="default-button close" data-action="cancel">{{localize "age-system.cancel"}}</button>
+      <button type="button" class="default-button accept-settings" data-action="save">{{localize "age-system.saveSettings"}}</button>
+    </footer>
 </form>
-<hr>
-<footer class="sheet-footer flexrow">
-    <button type="button" class="default-button close">{{localize "age-system.cancel"}}</button>
-    <button type="button" class="default-button accept-settings">{{localize "age-system.saveSettings"}}</button>
-</footer>

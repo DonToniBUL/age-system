@@ -1,0 +1,183 @@
+<section class="mass-battle-force-sheet {{cssClass}} colorset-selection" autocomplete="off">
+    <header class="mass-battle-force__header colorset-first-tier">
+        <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" alt="{{actor.name}}">
+        <div class="mass-battle-force__identity">
+            <span class="mass-battle-force__kicker">{{localize "age-system.MASS_BATTLE.actorType"}}</span>
+            <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize "age-system.MASS_BATTLE.forceName"}}">
+            <select name="system.profile" aria-label="{{localize "age-system.MASS_BATTLE.profile"}}">
+                {{#select system.profile}}
+                {{#each massBattle.profileOptions as |profile|}}
+                <option value="{{profile.id}}">{{profile.label}}</option>
+                {{/each}}
+                {{/select}}
+            </select>
+        </div>
+        <div class="mass-battle-force__troops" title="{{localize "age-system.MASS_BATTLE.troopsHint"}}">
+            <span>{{localize "age-system.MASS_BATTLE.troops"}}</span>
+            <div>
+                <input name="system.troops.value" type="number" min="0" max="{{system.troops.max}}" value="{{system.troops.value}}">
+                <b>/</b>
+                <input name="system.troops.max" type="number" min="0" value="{{system.troops.max}}">
+            </div>
+        </div>
+    </header>
+
+    <div class="mass-battle-force__body">
+        <section class="mass-battle-panel">
+            <div class="mass-battle-panel__heading">
+                <div>
+                    <span class="mass-battle-kicker">{{localize "age-system.MASS_BATTLE.command"}}</span>
+                    <h2>{{localize "age-system.MASS_BATTLE.commander"}}</h2>
+                </div>
+                <label class="mass-battle-inline-check">
+                    <input name="system.commander.useLinked" type="checkbox" {{checked system.commander.useLinked}}>
+                    {{localize "age-system.MASS_BATTLE.useLinkedCommander"}}
+                </label>
+            </div>
+            <div class="mass-battle-link-grid">
+                <div class="mass-battle-drop-zone" data-force-drop="commander">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <div>
+                        <strong>{{#if massBattle.commander.name}}{{massBattle.commander.name}}{{else}}{{localize "age-system.MASS_BATTLE.dropCommander"}}{{/if}}</strong>
+                        <small>{{#if massBattle.commander.linked}}{{localize "age-system.MASS_BATTLE.linkLive"}}{{else}}{{localize "age-system.MASS_BATTLE.manualValues"}}{{/if}}</small>
+                    </div>
+                    {{#if system.commander.uuid}}
+                    <button type="button" data-force-clear="commander" title="{{localize "age-system.MASS_BATTLE.clearLink"}}"><i class="fa-solid fa-link-slash"></i></button>
+                    {{/if}}
+                </div>
+                <div class="mass-battle-command-summary colorset-second-tier">
+                    <span>{{localize "age-system.MASS_BATTLE.leadershipTotal"}} <strong>{{massBattle.commander.communicationTotal}}</strong></span>
+                    <span>{{localize "age-system.MASS_BATTLE.militaryTotal"}} <strong>{{massBattle.commander.militaryTotal}}</strong></span>
+                </div>
+            </div>
+            <div class="mass-battle-grid mass-battle-grid--four">
+                <label><span>{{localize "age-system.MASS_BATTLE.communicationAbility"}}</span><input name="system.commander.manual.communication" type="number" value="{{system.commander.manual.communication}}"></label>
+                <label><span>{{localize "age-system.MASS_BATTLE.leadershipFocus"}}</span><input name="system.commander.manual.leadership" type="number" value="{{system.commander.manual.leadership}}"></label>
+                <label><span>{{localize "age-system.MASS_BATTLE.militaryAbility"}}</span><input name="system.commander.manual.military" type="number" value="{{system.commander.manual.military}}"></label>
+                <label><span>{{localize "age-system.MASS_BATTLE.militaryLoreFocus"}}</span><input name="system.commander.manual.militaryLore" type="number" value="{{system.commander.manual.militaryLore}}"></label>
+            </div>
+        </section>
+
+        <section class="mass-battle-panel">
+            <div class="mass-battle-panel__heading">
+                <div>
+                    <span class="mass-battle-kicker">{{localize "age-system.MASS_BATTLE.setup"}}</span>
+                    <h2>{{localize "age-system.MASS_BATTLE.armies"}}</h2>
+                </div>
+                <span class="mass-battle-badge">{{localize "age-system.MASS_BATTLE.suggestedThreshold"}} {{massBattle.suggestedThreshold}}</span>
+            </div>
+            <div class="mass-battle-grid mass-battle-grid--two">
+                <label><span>{{localize "age-system.MASS_BATTLE.primaryTroop"}}</span><input name="system.primaryTroop.name" type="text" value="{{system.primaryTroop.name}}"></label>
+                <label><span>{{localize "age-system.MASS_BATTLE.troopDifficulty"}}</span><input name="system.primaryTroop.difficulty" type="number" min="1" value="{{system.primaryTroop.difficulty}}"></label>
+            </div>
+            <div class="mass-battle-drop-zone mass-battle-drop-zone--opponent" data-force-drop="opponent">
+                <i class="fa-solid fa-people-arrows-left-right"></i>
+                <div>
+                    <strong>{{#if massBattle.opponent}}{{massBattle.opponent.name}}{{else}}{{localize "age-system.MASS_BATTLE.dropOpponent"}}{{/if}}</strong>
+                    <small>{{#if massBattle.opponent}}{{massBattle.opponent.troops}} / {{massBattle.opponent.maximumTroops}} · TN {{massBattle.opponent.testDifficulty}}{{else}}{{localize "age-system.MASS_BATTLE.opponentFallback"}}{{/if}}</small>
+                </div>
+                {{#if system.battle.opponentUuid}}
+                <button type="button" data-force-clear="opponent" title="{{localize "age-system.MASS_BATTLE.clearLink"}}"><i class="fa-solid fa-link-slash"></i></button>
+                {{/if}}
+            </div>
+            <div class="mass-battle-grid mass-battle-grid--three">
+                <label><span>{{localize "age-system.MASS_BATTLE.fallbackTN"}}</span><input name="system.battle.testDifficulty" type="number" min="1" value="{{system.battle.testDifficulty}}"></label>
+                <label><span>{{localize "age-system.MASS_BATTLE.successThreshold"}}</span><input name="system.battle.successThreshold" type="number" min="1" value="{{system.battle.successThreshold}}"></label>
+                <button type="button" class="mass-battle-use-threshold"><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "age-system.MASS_BATTLE.useSuggested"}}</button>
+            </div>
+            <label class="mass-battle-finishing-choice">
+                <span>{{localize "age-system.MASS_BATTLE.finishingAbility"}}</span>
+                <select name="system.battle.finishingAbility">
+                    {{#select system.battle.finishingAbility}}
+                    <option value="military">{{localize "age-system.MASS_BATTLE.militaryTotal"}}</option>
+                    <option value="communication">{{localize "age-system.MASS_BATTLE.leadershipTotal"}}</option>
+                    {{/select}}
+                </select>
+            </label>
+        </section>
+
+        <section class="mass-battle-panel">
+            <div class="mass-battle-panel__heading">
+                <div>
+                    <span class="mass-battle-kicker">{{localize "age-system.MASS_BATTLE.resolve"}}</span>
+                    <h2>{{localize "age-system.MASS_BATTLE.stages"}}</h2>
+                </div>
+                <span class="mass-battle-badge">TN {{massBattle.testDifficulty}} · {{localize "age-system.MASS_BATTLE.thresholdShort"}} {{massBattle.currentThreshold}}</span>
+            </div>
+            <div class="mass-battle-stages">
+                {{#each massBattle.stages as |stage|}}
+                <article class="mass-battle-stage colorset-second-tier">
+                    <header>
+                        <div><span>{{localize "age-system.MASS_BATTLE.stage"}} {{stage.number}}</span><h3>{{stage.label}}</h3></div>
+                        <select name="system.battle.stages.{{stage.id}}.result" aria-label="{{localize "age-system.MASS_BATTLE.stageResult"}}">
+                            {{#select stage.data.result}}
+                            <option value="unresolved">{{localize "age-system.MASS_BATTLE.unresolved"}}</option>
+                            <option value="won">{{localize "age-system.MASS_BATTLE.won"}}</option>
+                            <option value="lost">{{localize "age-system.MASS_BATTLE.lost"}}</option>
+                            {{/select}}
+                        </select>
+                    </header>
+                    <label><span>{{localize "age-system.MASS_BATTLE.specialists"}}</span><input name="system.specialists.{{stage.id}}.description" type="text" value="{{stage.specialist.description}}"></label>
+                    <div class="mass-battle-stage__modifiers">
+                        <label><span>{{localize "age-system.MASS_BATTLE.specialistBonus"}}</span><input name="system.specialists.{{stage.id}}.bonus" type="number" value="{{stage.specialist.bonus}}"></label>
+                        <label><span>{{localize "age-system.MASS_BATTLE.situationalModifier"}}</span><input name="system.battle.stages.{{stage.id}}.modifier" type="number" value="{{stage.data.modifier}}"></label>
+                    </div>
+                    <div class="mass-battle-progress">
+                        <progress value="{{stage.data.progress}}" max="{{../massBattle.currentThreshold}}"></progress>
+                        <strong>{{stage.data.progress}} / {{../massBattle.currentThreshold}}</strong>
+                    </div>
+                    <div class="mass-battle-actions">
+                        <button type="button" class="mass-battle-roll-stage" data-stage="{{stage.id}}"><i class="fa-solid fa-dice"></i> {{localize "age-system.MASS_BATTLE.rollStage"}}</button>
+                        <button type="button" class="mass-battle-crisis" data-stage="{{stage.id}}"><i class="fa-solid fa-burst"></i> {{localize "age-system.MASS_BATTLE.crisisPoint"}}</button>
+                    </div>
+                </article>
+                {{/each}}
+            </div>
+            <button type="button" class="mass-battle-reset mass-battle-secondary"><i class="fa-solid fa-arrow-rotate-left"></i> {{localize "age-system.MASS_BATTLE.resetProgress"}}</button>
+        </section>
+
+        <section class="mass-battle-panel mass-battle-casualties">
+            <div class="mass-battle-panel__heading">
+                <div>
+                    <span class="mass-battle-kicker">{{localize "age-system.MASS_BATTLE.afterBattle"}}</span>
+                    <h2>{{localize "age-system.MASS_BATTLE.casualties"}}</h2>
+                </div>
+                <span class="mass-battle-badge">{{massBattle.outcomes.wins}} {{localize "age-system.MASS_BATTLE.wins"}} · {{massBattle.outcomes.losses}} {{localize "age-system.MASS_BATTLE.losses"}}</span>
+            </div>
+            <div class="mass-battle-grid mass-battle-grid--two">
+                <label><span>{{localize "age-system.MASS_BATTLE.customCasualtyModifier"}}</span><input name="system.battle.casualties.customModifier" type="number" value="{{system.battle.casualties.customModifier}}"></label>
+                <button type="button" class="mass-battle-preview-casualties"><i class="fa-solid fa-calculator"></i> {{localize "age-system.MASS_BATTLE.previewCasualties"}}</button>
+            </div>
+            {{#if system.battle.casualtyPreview}}
+            <div class="mass-battle-casualty-result">
+                <div><span>{{localize "age-system.MASS_BATTLE.casualtyRate"}}</span><strong>{{system.battle.casualtyPreview.outcome.rate}}%</strong></div>
+                <div><span>{{localize "age-system.MASS_BATTLE.totalCasualties"}}</span><strong>{{system.battle.casualtyPreview.outcome.casualties}}</strong></div>
+                <div><span>{{localize "age-system.MASS_BATTLE.dead"}}</span><strong>{{system.battle.casualtyPreview.outcome.dead}}</strong></div>
+                <div><span>{{localize "age-system.MASS_BATTLE.wounded"}}</span><strong>{{system.battle.casualtyPreview.outcome.wounded}}</strong></div>
+                <div><span>{{localize "age-system.MASS_BATTLE.survivors"}}</span><strong>{{system.battle.casualtyPreview.outcome.survivors}}</strong></div>
+            </div>
+            <button type="button" class="mass-battle-apply-casualties" data-preview-id="{{system.battle.casualtyPreview.id}}"><i class="fa-solid fa-check"></i> {{localize "age-system.MASS_BATTLE.applyCasualties"}}</button>
+            {{/if}}
+            {{#if massBattle.latestHistory}}
+            <button type="button" class="mass-battle-undo-casualties mass-battle-secondary" data-history-id="{{massBattle.latestHistory.id}}"><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.MASS_BATTLE.undoCasualties"}}</button>
+            {{/if}}
+        </section>
+
+        <section class="mass-battle-panel">
+            <div class="mass-battle-panel__heading"><h2>{{localize "age-system.MASS_BATTLE.description"}}</h2></div>
+            {{{ageEditor system.description ageEditors.system.description target="system.description" editable=editable toggled=false documentUUID=actor.uuid}}}
+        </section>
+        <section class="mass-battle-grid mass-battle-grid--two">
+            <div class="mass-battle-panel">
+                <div class="mass-battle-panel__heading"><h2>{{localize "age-system.MASS_BATTLE.notes"}}</h2></div>
+                {{{ageEditor system.notes ageEditors.system.notes target="system.notes" editable=editable toggled=false documentUUID=actor.uuid}}}
+            </div>
+            {{#if isGM}}
+            <div class="mass-battle-panel mass-battle-gm-notes">
+                <div class="mass-battle-panel__heading"><h2>{{localize "age-system.MASS_BATTLE.gmNotes"}}</h2></div>
+                {{{ageEditor system.gmNotes ageEditors.system.gmNotes target="system.gmNotes" editable=editable toggled=false documentUUID=actor.uuid}}}
+            </div>
+            {{/if}}
+        </section>
+    </div>
+</section>

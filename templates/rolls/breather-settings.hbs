@@ -1,33 +1,68 @@
+{{#if settingMode}}
+<form class="age-utility-workflow__surface age-breather-settings colorset-selection age-breather-settings-form" aria-labelledby="age-breather-settings-title" autocomplete="off">
+    <header class="age-utility-workflow__header colorset-first-tier">
+      <div>
+        <span class="age-utility-workflow__kicker">{{localize "age-system.breather"}}</span>
+        <h1 id="age-breather-settings-title">{{localize "SETTINGS.breatherSettings"}}</h1>
+      </div>
+      <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
+    </header>
+
+    <div class="age-utility-workflow__scroll">
+      <section class="age-utility-workflow__panel colorset-second-tier feature-controls" aria-labelledby="age-breather-settings-fields-title">
+        <div class="age-utility-workflow__heading">
+          <h2 id="age-breather-settings-fields-title">{{localize "SETTINGS.breatherSettings"}}</h2>
+        </div>
+        <div class="age-utility-workflow__grid age-utility-workflow__grid--two">
+{{else}}
 <form>
-    <div class="form-group">
-        <label>{{localize "age-system.formula"}}</label>
-        <input type="text" name="k" value="{{k}}" placeholder="{{localize "age-system.formulaExample"}}"/>
+{{/if}}
+        <div class="form-group">
+          <label for="age-breather-formula">{{localize "age-system.formula"}}</label>
+          <div class="form-fields">
+            <input id="age-breather-formula" type="text" name="k" value="{{k}}" placeholder="{{localize 'age-system.formulaExample'}}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="age-breather-ability">{{localize "age-system.ablSelect"}}</label>
+          <div class="form-fields">
+            <select id="age-breather-ability" name="abl">
+              {{#select abl}}
+              <option value="no-abl">—</option>
+              {{#each abilities as |name key|}}
+              <option value="{{key}}">{{name}}</option>
+              {{/each}}
+              {{/select}}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="age-breather-add-level">{{localize "age-system.addLevel"}}</label>
+          <div class="form-fields">
+            <input id="age-breather-add-level" type="checkbox" name="addLevel" {{checked addLevel}} data-dtype="Boolean">
+          </div>
+          <p class="notes">If Injury is used, each 4 complete levels will restore 1 injury mark</p>
+        </div>
+
+        {{#unless settingMode}}
+        <div class="form-group">
+          <label for="age-breather-auto-apply">{{localize "age-system.autoApply"}}</label>
+          <div class="form-fields">
+            <input id="age-breather-auto-apply" type="checkbox" name="autoApply" {{checked autoApply}} data-dtype="Boolean">
+          </div>
+        </div>
+        {{/unless}}
+{{#if settingMode}}
+        </div>
+      </section>
     </div>
 
-    <div class="form-group">
-        <label>{{localize "age-system.ablSelect"}}</label>
-        <select name="abl">
-            {{#select abl}}
-            <option value="no-abl">—</option>
-            {{#each abilities as |name key|}}
-            <option value="{{key}}">{{name}}</option>
-            {{/each}}
-            {{/select}}
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>{{localize "age-system.addLevel"}}</label>
-        <input type="checkbox" name="addLevel" {{checked addLevel}}/>
-        <p class="notes">If Injury is used, each 4 complete levels will restore 1 injury mark</p>
-    </div>
-
-    {{#unless settingMode}}
-    <hr>
-    <div class="form-group">
-        <label>{{localize "age-system.autoApply"}}</label>
-        <input type="checkbox" name="autoApply" {{checked autoApply}}/>
-    </div>
-    {{/unless}}
-
+    <footer class="age-utility-workflow__footer sheet-footer">
+      <button type="button" class="default-button accept-settings" data-action="save">{{localize "age-system.saveSettings"}}</button>
+    </footer>
 </form>
+{{else}}
+</form>
+{{/if}}

@@ -106,7 +106,8 @@ export function normalizeActiveEffectChange(change, finalKeys = []) {
     const sourceType = normalized.type ?? normalized.mode;
     normalized.type = typeof sourceType === "number" ? (LEGACY_EFFECT_TYPES[sourceType] ?? "custom") : (sourceType ?? "custom");
     normalized.phase = normalized.phase ?? (finalKeys.includes(normalized.key) ? "final" : "initial");
-    normalized.priority = normalized.priority ?? CONFIG.ActiveEffect?.changeTypes?.[normalized.type]?.priority ?? 0;
+    const changeType = CONFIG.ActiveEffect?.changeTypes?.[normalized.type];
+    normalized.priority = normalized.priority ?? changeType?.priority ?? changeType?.defaultPriority ?? 0;
     delete normalized.mode;
     return normalized;
 }

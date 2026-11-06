@@ -1,160 +1,352 @@
-<div class="age-importer flexcol feature-controls" style="gap: 15px;">
-    <h2 style="margin: 5px 0; max-height: 30px; overflow: hidden;">{{localize "age-system.ageImporter"}}</h2>
-    
-    <!-- NPC Importer Section -->
-    <div class="importer-section flexrow" style="gap: 15px;">
-        <div class="parser-text flexcol" style="flex: 1;">
-            <h4 style="margin: 5px 0; font-size: 14px; font-weight: bold; color: #666; max-height: 20px; overflow: hidden;">{{localize "age-system.npcImporter"}}</h4>
-            <p style="margin: 5px 0; font-size: 12px; max-height: 30px; overflow: hidden;">{{localize "age-system.ageImporterInstruction"}} <i><a title="AGE Importer wiki" href="https://github.com/vkdolea/age-system/wiki/AGE-Importer">{{localize "age-system.clickHelp"}}</a></i></p>
-            <textarea class="text-to-import" placeholder="{{localize 'age-system.npcImporterPlaceholder'}}" style="min-height: 120px;">{{npcImportingText}}</textarea>
-        </div>
-        <div class="options" style="flex: 0 0 250px; margin-left: 0;">
-            <h3 style="margin: 5px 0; font-size: 14px; max-height: 20px; overflow: hidden;">{{localize "age-system.settings.options"}}</h3>
-            <div class="flexcol">
-                <h4 style="margin: 5px 0; font-size: 12px; max-height: 18px; overflow: hidden;">{{localize "age-system.selectGameSetting"}}</h4>
-                {{radioBoxes npcRadioB.name npcRadioB.choices npcRadioB.options}}
-            </div>
-            {{#if importerV2}}
-            <button type="button" class="default-button preview-npc-importing" style="margin-top: 10px;">
-                <i class="fa-solid fa-magnifying-glass"></i> {{localize "age-system.AUTOMATION.previewImport"}}
-            </button>
-            <button type="button" class="default-button start-npc-importing" style="margin-top: 5px;" {{#if npcPreview.created}}disabled{{/if}}>
-                <i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.createVerified"}}
-            </button>
-            {{else}}
-            <button type="button" class="default-button start-npc-importing" style="margin-top: 10px;">{{localize "age-system.createCharacter"}}</button>
-            {{/if}}
-        </div>
+<section class="age-importer-v2__surface" data-importer-kind="{{activeKind}}">
+  <header class="age-importer-v2__header">
+    <div class="age-importer-v2__heading">
+      <span class="age-importer-v2__kicker">{{labels.kicker}}</span>
+      <h1>{{labels.title}}</h1>
+      <p>{{labels.subtitle}}</p>
     </div>
 
-    {{#if npcPreview}}
-    <section class="import-preview">
-        <h4>{{localize "age-system.AUTOMATION.importPreview"}}</h4>
-        <p class="notes">{{localize "age-system.AUTOMATION.importPreviewCounts" valid=npcPreview.validCount errors=npcPreview.errorCount}}</p>
-        {{#if npcPreview.normalization.changed}}
-        <p class="notification info import-normalization-note">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            {{localize "age-system.AUTOMATION.clipboardCleaned"}}
-        </p>
-        {{/if}}
-        <ul>
-            {{#each npcPreview.entries as |entry|}}
-            <li class="import-preview-entry">
-                <strong>{{entry.name}}</strong> — {{localize "age-system.AUTOMATION.importMatchCounts" matched=entry.matchedCount unresolved=entry.unresolvedCount}}
-                <div class="import-match-list">
-                    {{#each entry.matches as |match|}}
-                    <div class="import-match-row" data-status="{{match.status}}">
-                        <div class="import-match-heading">
-                            <strong>{{match.name}}</strong>
-                            <span class="tag">{{match.type}}</span>
-                            {{#if match.options.length}}<span class="notes">{{localize "age-system.AUTOMATION.bestConfidence" confidence=match.confidencePercent}}</span>{{/if}}
-                        </div>
-                        <div class="import-match-controls">
-                            <select class="import-match-resolution"
-                                data-kind="npc" data-session-id="{{@root.npcPreview.id}}"
-                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}">
-                                <option value="create" {{#if match.createSelected}}selected{{/if}}>{{localize "age-system.AUTOMATION.createMissingItem"}}</option>
-                                {{#each match.options as |option|}}
-                                <option value="{{option.uuid}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
-                                {{/each}}
-                            </select>
-                            <input class="import-match-search" type="search" value="{{match.searchQuery}}" placeholder="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
-                            <button type="button" class="import-match-search-button icon"
-                                data-kind="npc" data-session-id="{{@root.npcPreview.id}}"
-                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
-                                title="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {{/each}}
-                </div>
-            </li>
-            {{/each}}
-            {{#each npcPreview.errors as |error|}}
-            <li class="notification error"><strong>#{{error.index}}</strong> {{error.message}}</li>
-            {{/each}}
-        </ul>
+    <div class="age-importer-v2__tabs" role="tablist" aria-label="{{labels.documentTabs}}">
+      <button type="button" role="tab" id="age-importer-tab-npc" data-action="switch-kind" data-kind="npc"
+              aria-selected="{{#if isNpc}}true{{else}}false{{/if}}" aria-controls="age-importer-panel-npc"
+              tabindex="{{#if isNpc}}0{{else}}-1{{/if}}" class="{{#if isNpc}}is-active{{/if}}">
+        <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+        <span>{{labels.npcTab}}</span>
+      </button>
+      <button type="button" role="tab" id="age-importer-tab-talent" data-action="switch-kind" data-kind="talent"
+              aria-selected="{{#if isTalent}}true{{else}}false{{/if}}" aria-controls="age-importer-panel-talent"
+              tabindex="{{#if isTalent}}0{{else}}-1{{/if}}" class="{{#if isTalent}}is-active{{/if}}">
+        <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <span>{{labels.talentTab}}</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="age-importer-v2__steps" aria-label="{{labels.stepsAria}}">
+    <button type="button" data-action="go-input" class="{{#if activeInput}}is-current{{else}}is-complete{{/if}}"
+            {{#if activeInput}}aria-current="step"{{/if}}>
+      <b>1</b><span>{{labels.inputStep}}</span>
+    </button>
+    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+    <button type="button" data-action="go-review" {{#unless hasPreview}}disabled{{/unless}}
+            class="{{#if activeReview}}is-current{{else}}{{#if hasPreview}}is-complete{{/if}}{{/if}}"
+            {{#if activeReview}}aria-current="step"{{/if}}>
+      <b>2</b><span>{{labels.reviewStep}}</span>
+    </button>
+    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+    <button type="button" data-action="go-result" {{#unless hasResult}}disabled{{/unless}}
+            class="{{#if activeResult}}is-current{{else}}{{#if hasResult}}is-complete{{/if}}{{/if}}"
+            {{#if activeResult}}aria-current="step"{{/if}}>
+      <b>3</b><span>{{labels.resultStep}}</span>
+    </button>
+  </nav>
+
+  <div class="age-importer-v2__scroll" role="tabpanel"
+       id="{{#if isNpc}}age-importer-panel-npc{{else}}age-importer-panel-talent{{/if}}"
+       aria-labelledby="{{#if isNpc}}age-importer-tab-npc{{else}}age-importer-tab-talent{{/if}}">
+    {{#if activeInput}}
+    <section class="age-importer-v2__stage" aria-labelledby="age-importer-input-heading">
+      <header class="age-importer-v2__section-heading">
+        <div>
+          <span>{{labels.step}} 1</span>
+          <h2 id="age-importer-input-heading" data-step-heading="input" tabindex="-1">{{labels.inputStep}}</h2>
+        </div>
+        <small>{{#if isNpc}}{{labels.npcTab}}{{else}}{{labels.talentTab}}{{/if}}</small>
+      </header>
+
+      {{#if automationUnavailable}}
+      <aside class="age-importer-v2__notice is-error" role="alert">
+        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+        <div><strong>{{labels.assistanceRequired}}</strong></div>
+        <button type="button" data-action="open-settings"><i class="fa-solid fa-gears" aria-hidden="true"></i> {{labels.openSettings}}</button>
+      </aside>
+      {{/if}}
+
+      <div class="age-importer-v2__input-grid">
+        <section class="age-importer-v2__panel age-importer-v2__paste-panel">
+          <header class="age-importer-v2__panel-heading">
+            <div><span>{{labels.paste}}</span><h3>{{labels.sourceText}}</h3></div>
+            <i class="fa-regular fa-clipboard" aria-hidden="true"></i>
+          </header>
+          <label class="age-importer-v2__textarea-label" for="age-importer-source-{{activeKind}}">{{labels.sourceText}}</label>
+          <textarea id="age-importer-source-{{activeKind}}" data-import-text="{{activeKind}}"
+                    class="age-importer-v2__source {{#if isNpc}}text-to-import{{else}}talent-to-import{{/if}}"
+                    aria-describedby="age-importer-source-help" spellcheck="false" {{#if busy}}disabled{{/if}}>{{importingText}}</textarea>
+          <p id="age-importer-source-help" class="age-importer-v2__help">{{labels.sourceHelp}}</p>
+        </section>
+
+        <aside class="age-importer-v2__panel age-importer-v2__options">
+          <header class="age-importer-v2__panel-heading">
+            <div><span>{{labels.configure}}</span><h3>{{labels.options}}</h3></div>
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          </header>
+          <label>
+            <span>{{labels.gameSetting}}</span>
+            <select data-import-mode="{{activeKind}}" {{#if busy}}disabled{{/if}}>
+              {{#each modes as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <div class="age-importer-v2__normalization">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <div><strong>{{labels.normalization}}</strong><p>{{normalizedNotice}}</p></div>
+          </div>
+          <button type="button" data-action="preview"
+                  class="age-importer-v2__primary {{#if isNpc}}preview-npc-importing{{else}}preview-talent-importing{{/if}}"
+                  {{#if busy}}disabled{{/if}}>
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{labels.preview}}
+          </button>
+        </aside>
+      </div>
     </section>
     {{/if}}
 
-    <!-- Separator -->
-    <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd; max-height: 2px; height: 2px;">
+    {{#if activeReview}}
+    <section class="age-importer-v2__stage" aria-labelledby="age-importer-review-heading">
+      <header class="age-importer-v2__section-heading">
+        <div><span>{{labels.step}} 2</span><h2 id="age-importer-review-heading" data-step-heading="review" tabindex="-1">{{labels.reviewStep}}</h2></div>
+        <div data-importer-freshness class="age-importer-v2__freshness {{state.statusClass}}">{{state.status}}</div>
+      </header>
 
-    <!-- Talent Importer Section -->
-    <div class="importer-section flexrow" style="gap: 15px;">
-        <div class="parser-text flexcol" style="flex: 1;">
-            <h4 style="margin: 5px 0; font-size: 14px; font-weight: bold; color: #666; max-height: 20px; overflow: hidden;">{{localize "age-system.talentImporter"}}</h4>
-            <p style="margin: 5px 0; font-size: 12px; max-height: 30px; overflow: hidden;">{{localize "age-system.talentImporterInstruction"}}</p>
-            <textarea class="talent-to-import" placeholder="{{localize 'age-system.talentImporterPlaceholder'}}" style="min-height: 120px;">{{talentImportingText}}</textarea>
+      <div class="age-importer-v2__metrics" aria-label="{{labels.reviewTotals}}">
+        <div><span>{{labels.validEntries}}</span><strong>{{state.validCount}}</strong></div>
+        <div><span>{{labels.unresolved}}</span><strong>{{unresolvedCount}}</strong></div>
+        <div><span>{{labels.blockers}}</span><strong>{{blockerCount}}</strong></div>
+        {{#if state.remainingSeconds}}<div><span>{{labels.previewExpires}}</span><strong>{{state.remainingSeconds}}s</strong></div>{{/if}}
+      </div>
+
+      {{#if state.assistanceDisabled}}
+      <aside class="age-importer-v2__notice is-error" role="alert">
+        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+        <div><strong>{{labels.assistanceRequired}}</strong></div>
+        <button type="button" data-action="open-settings"><i class="fa-solid fa-gears" aria-hidden="true"></i> {{labels.openSettings}}</button>
+      </aside>
+      {{/if}}
+
+      <aside class="age-importer-v2__notice {{#if normalizationChanged}}is-info{{else}}is-neutral{{/if}}">
+        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+        <div>
+          <strong>{{labels.normalization}}</strong>
+          <p>{{normalizedNotice}}</p>
+          {{#if hasNormalizationChanges}}
+          <ul class="age-importer-v2__normalization-list">
+            {{#each normalizationChanges as |change|}}<li>{{change.name}} × {{change.count}}</li>{{/each}}
+          </ul>
+          {{/if}}
         </div>
-        <div class="options" style="flex: 0 0 250px; margin-left: 0;">
-            <h3 style="margin: 5px 0; font-size: 14px; max-height: 20px; overflow: hidden;">{{localize "age-system.settings.options"}}</h3>
-            <div class="flexcol">
-                <h4 style="margin: 5px 0; font-size: 12px; max-height: 18px; overflow: hidden;">{{localize "age-system.selectGameSetting"}}</h4>
-                {{radioBoxes talentRadioB.name talentRadioB.choices talentRadioB.options}}
+      </aside>
+
+      {{#if hasErrors}}
+      <section class="age-importer-v2__message-list is-error" role="alert">
+        <h3><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> {{labels.errors}}</h3>
+        <ul>{{#each errors as |error|}}<li>{{#if error.number}}#{{error.number}} {{/if}}<strong>{{error.name}}</strong> {{error.message}}</li>{{/each}}</ul>
+      </section>
+      {{/if}}
+      {{#if hasWarnings}}
+      <section class="age-importer-v2__message-list is-warning">
+        <h3><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{labels.warnings}}</h3>
+        <ul>{{#each warnings as |warning|}}<li>{{warning}}</li>{{/each}}</ul>
+      </section>
+      {{/if}}
+
+      <section class="age-importer-v2__entries" aria-label="{{labels.batch}}">
+        {{#each entries as |entry|}}
+        <article class="age-importer-v2__entry">
+          <header class="age-importer-v2__entry-heading">
+            <div><span>{{../labels.entry}} {{entry.number}}</span><h3>{{entry.name}}</h3></div>
+            <div class="age-importer-v2__entry-counts">
+              <span><i class="fa-solid fa-link" aria-hidden="true"></i> {{entry.matchedCount}}</span>
+              <span><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i> {{entry.unresolvedCount}}</span>
             </div>
-            {{#if importerV2}}
-            <button type="button" class="default-button preview-talent-importing" style="margin-top: 10px;">
-                <i class="fa-solid fa-magnifying-glass"></i> {{localize "age-system.AUTOMATION.previewImport"}}
-            </button>
-            <button type="button" class="default-button start-talent-importing" style="margin-top: 5px;" {{#if talentPreview.created}}disabled{{/if}}>
-                <i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.createVerified"}}
-            </button>
-            {{else}}
-            <button type="button" class="default-button start-talent-importing" style="margin-top: 10px;">{{localize "age-system.createTalent"}}</button>
-            {{/if}}
-        </div>
-    </div>
+          </header>
 
-    {{#if talentPreview}}
-    <section class="import-preview">
-        <h4>{{localize "age-system.AUTOMATION.importPreview"}}</h4>
-        <p class="notes">{{localize "age-system.AUTOMATION.importPreviewCounts" valid=talentPreview.validCount errors=talentPreview.errorCount}}</p>
-        {{#if talentPreview.normalization.changed}}
-        <p class="notification info import-normalization-note">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            {{localize "age-system.AUTOMATION.clipboardCleaned"}}
-        </p>
-        {{/if}}
-        <ul>
-            {{#each talentPreview.entries as |entry|}}
-            <li class="import-preview-entry">
-                <strong>{{entry.name}}</strong> — {{localize "age-system.AUTOMATION.importMatchCounts" matched=entry.matchedCount unresolved=entry.unresolvedCount}}
-                <div class="import-match-list">
-                    {{#each entry.matches as |match|}}
-                    <div class="import-match-row" data-status="{{match.status}}">
-                        <div class="import-match-heading">
-                            <strong>{{match.name}}</strong>
-                            <span class="tag">{{match.type}}</span>
-                            {{#if match.options.length}}<span class="notes">{{localize "age-system.AUTOMATION.bestConfidence" confidence=match.confidencePercent}}</span>{{/if}}
-                        </div>
-                        <div class="import-match-controls">
-                            <select class="import-match-resolution"
-                                data-kind="talent" data-session-id="{{@root.talentPreview.id}}"
-                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}">
-                                <option value="create" {{#if match.createSelected}}selected{{/if}}>{{localize "age-system.AUTOMATION.createMissingItem"}}</option>
-                                {{#each match.options as |option|}}
-                                <option value="{{option.uuid}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
-                                {{/each}}
-                            </select>
-                            <input class="import-match-search" type="search" value="{{match.searchQuery}}" placeholder="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
-                            <button type="button" class="import-match-search-button icon"
-                                data-kind="talent" data-session-id="{{@root.talentPreview.id}}"
-                                data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
-                                title="{{localize 'age-system.AUTOMATION.searchItemSources'}}">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {{/each}}
+          {{#if entry.parsed}}
+          <details class="age-importer-v2__parsed" open>
+            <summary>{{../labels.parsedSummary}}</summary>
+            {{#if ../isNpc}}
+            <div class="age-importer-v2__summary-grid">
+              {{#if entry.parsed.abilities.length}}
+              <section><h4>{{../labels.abilities}}</h4><div class="age-importer-v2__stat-grid">
+                {{#each entry.parsed.abilities as |ability|}}<span><b>{{ability.value}}</b> {{ability.name}}</span>{{/each}}
+              </div></section>
+              {{/if}}
+              {{#if entry.parsed.derived.length}}
+              <section><h4>{{../labels.derived}}</h4><div class="age-importer-v2__stat-grid">
+                {{#each entry.parsed.derived as |stat|}}<span><b>{{stat.value}}</b> {{stat.label}}</span>{{/each}}
+              </div></section>
+              {{/if}}
+            </div>
+            {{#if entry.parsed.foci.length}}<section class="age-importer-v2__inline-summary"><h4>{{../labels.foci}}</h4><p>{{#each entry.parsed.foci as |focus|}}<span>{{focus}}</span>{{/each}}</p></section>{{/if}}
+            {{#if entry.parsed.attacks.length}}
+            <section><h4>{{../labels.attacks}}</h4><div class="age-importer-v2__compact-list">
+              {{#each entry.parsed.attacks as |attack|}}<div><strong>{{attack.name}}</strong><span>{{attack.roll}}</span><span>{{attack.damage}}{{#if attack.damageInjury}} · {{../../labels.injuryDamage}} {{attack.damageInjury}}{{/if}}</span></div>{{/each}}
+            </div></section>
+            {{/if}}
+            {{#if entry.parsed.features.length}}
+            <section><h4>{{../labels.features}}</h4><div class="age-importer-v2__feature-list">
+              {{#each entry.parsed.features as |feature|}}<details><summary>{{feature.name}}</summary><p>{{feature.description}}</p></details>{{/each}}
+            </div></section>
+            {{/if}}
+            {{else}}
+            <div class="age-importer-v2__talent-list">
+              {{#each entry.parsed.talents as |talent|}}
+              <article><h4>{{talent.name}}</h4>
+                {{#if talent.requirement}}<p><strong>{{../../labels.requirement}}:</strong> {{talent.requirement}}</p>{{/if}}
+                {{#if talent.classes}}<p><strong>{{../../labels.classes}}:</strong> {{talent.classes}}</p>{{/if}}
+                {{#if talent.description}}<p>{{talent.description}}</p>{{/if}}
+                {{#if talent.degrees.length}}<details><summary>{{../../labels.degrees}}</summary><ol>
+                  {{#each talent.degrees as |degree|}}<li><strong>{{degree.id}}</strong> {{degree.description}}</li>{{/each}}
+                </ol></details>{{/if}}
+              </article>
+              {{/each}}
+            </div>
+            {{/if}}
+          </details>
+          {{/if}}
+
+          <section class="age-importer-v2__resolutions">
+            <h4>{{../labels.resolutions}}</h4>
+            {{#if entry.hasMatches}}
+            <p class="age-importer-v2__help">{{../labels.unresolvedHelp}}</p>
+            <div class="age-importer-v2__resolution-list">
+              {{#each entry.matches as |match|}}
+              <article class="age-importer-v2__resolution {{match.statusClass}} {{#if match.ambiguous}}is-blocking{{/if}}">
+                <header>
+                  <div><strong>{{match.name}}</strong><small>{{match.type}}</small></div>
+                  <span class="age-importer-v2__status">{{match.statusLabel}}</span>
+                </header>
+                <dl>
+                  <div><dt>{{../../labels.source}}</dt><dd>{{match.sourceLabel}}</dd></div>
+                  <div><dt>{{../../labels.confidence}}</dt><dd>{{match.confidence}}</dd></div>
+                  {{#each match.requestedUsage as |usage|}}
+                  <div><dt>{{usage.label}}</dt><dd>{{usage.value}}</dd></div>
+                  {{/each}}
+                  {{#if match.injuryRequired}}
+                  {{#if match.injurySourceBacked}}
+                  <div><dt>{{../../labels.parsedDamageFormula}}</dt><dd>{{match.parsedDamageFormula}}</dd></div>
+                  <div><dt>{{../../labels.sourceDamageFormula}}</dt><dd>{{#if match.sourceDamageFormula}}{{match.sourceDamageFormula}}{{else}}—{{/if}}</dd></div>
+                  {{else}}
+                  <div><dt>{{../../labels.ordinaryDamage}}</dt><dd>{{match.parsedDamageFormula}}</dd></div>
+                  {{/if}}
+                  <div><dt>{{../../labels.injuryDamage}}</dt><dd>{{#if match.damageInjury}}{{match.damageInjury}}{{else}}—{{/if}}</dd></div>
+                  <div><dt>{{../../labels.injuryProvenance}}</dt><dd>{{match.injuryProvenanceLabel}}</dd></div>
+                  {{/if}}
+                </dl>
+                {{#if match.injuryCustom}}
+                <fieldset class="age-importer-v2__injury-review" data-injury-controls
+                          data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                          {{#if match.resolutionDisabled}}disabled{{/if}}>
+                  <legend>{{../../labels.injuryDamage}}</legend>
+                  <label>
+                    <span>{{../../labels.injuryReviewHint}}</span>
+                    <input type="number" min="1" max="40" step="1" value="{{match.damageInjury}}"
+                           data-injury-review data-injury-value>
+                  </label>
+                  <label class="age-importer-v2__injury-confirm">
+                    <input type="checkbox" data-injury-review data-injury-confirm {{#if match.damageInjuryConfirmed}}checked{{/if}}>
+                    <span>{{../../labels.injuryConfirm}}</span>
+                  </label>
+                </fieldset>
+                {{else if match.injurySourceBacked}}
+                <p class="age-importer-v2__injury-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{../../labels.sourceInjuryLocked}}</p>
+                {{/if}}
+                <div class="age-importer-v2__resolution-search">
+                  <label for="age-importer-search-{{match.key}}">{{../../labels.search}}</label>
+                  <div>
+                    <input id="age-importer-search-{{match.key}}" type="search" value="{{match.search.query}}"
+                           data-resolution-search="{{match.key}}" {{#if match.resolutionDisabled}}disabled{{/if}}>
+                    <button type="button" data-action="search" data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                            {{#if match.resolutionDisabled}}disabled{{/if}}>
+                      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{../../labels.find}}
+                    </button>
+                  </div>
                 </div>
-            </li>
-            {{/each}}
-            {{#each talentPreview.errors as |error|}}
-            <li class="notification error"><strong>#{{error.index}}</strong> {{error.message}}</li>
-            {{/each}}
-        </ul>
+                <div class="age-importer-v2__drop-zone" data-importer-item-drop
+                     data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                     data-disabled-reason="{{match.resolutionDisabledReason}}"
+                     role="region" aria-label="{{../../labels.dropItem}}" aria-disabled="{{#if match.resolutionDisabled}}true{{else}}false{{/if}}">
+                  <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
+                  <span><strong>{{../../labels.dropItem}}</strong><small>{{#if match.resolutionDisabled}}{{match.resolutionDisabledReason}}{{else}}{{../../labels.dropItemHint}}{{/if}}</small></span>
+                </div>
+                {{#if match.search.hasResults}}
+                <ul class="age-importer-v2__candidate-list">
+                  {{#each match.search.results as |candidate|}}
+                  <li class="{{#if candidate.selected}}is-selected{{/if}}">
+                    <div><strong>{{candidate.name}}</strong><small>{{candidate.sourceLabel}} · {{candidate.confidence}}</small></div>
+                    <button type="button" data-action="select-candidate" data-entry-index="{{entry.index}}"
+                            data-match-index="{{../matchIndex}}" data-uuid="{{candidate.uuid}}"
+                            {{#if candidate.disabled}}disabled title="{{candidate.injuryDamageReason}}"{{else}}{{#if ../resolutionDisabled}}disabled{{/if}}{{/if}}
+                            {{#if candidate.selected}}aria-pressed="true"{{else}}aria-pressed="false"{{/if}}>
+                      {{#if candidate.selected}}{{../../../labels.selected}}{{else}}{{../../../labels.select}}{{/if}}
+                    </button>
+                  </li>
+                  {{/each}}
+                </ul>
+                {{/if}}
+                <button type="button" class="age-importer-v2__create-choice" data-action="create-from-parsed"
+                        data-entry-index="{{entry.index}}" data-match-index="{{match.matchIndex}}"
+                        aria-pressed="{{#if match.createSelected}}true{{else}}false{{/if}}"
+                        {{#if match.resolutionDisabled}}disabled{{/if}}>
+                  <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
+                  {{../../labels.createFromParsed}}{{#if match.createSelected}} · {{../../labels.selected}}{{/if}}
+                </button>
+              </article>
+              {{/each}}
+            </div>
+            {{else}}
+            <p class="age-importer-v2__empty">{{../labels.noItems}}</p>
+            {{/if}}
+          </section>
+        </article>
+        {{/each}}
+      </section>
     </section>
     {{/if}}
-</div>
+
+    {{#if activeResult}}
+    <section class="age-importer-v2__stage age-importer-v2__result" aria-labelledby="age-importer-result-heading">
+      <div class="age-importer-v2__result-mark"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+      <div>
+        <span class="age-importer-v2__kicker">{{labels.step}} 3</span>
+        <h2 id="age-importer-result-heading" data-step-heading="result" tabindex="-1">{{labels.resultTitle}}</h2>
+        <p>{{labels.resultHelp}}</p>
+      </div>
+      {{#if hasResultDocuments}}
+      <div class="age-importer-v2__created-list">
+        {{#each resultDocuments as |document|}}
+        <article>
+          <img src="{{document.img}}" alt="">
+          <div><strong>{{document.name}}</strong><small>{{document.type}}</small></div>
+          <button type="button" data-action="open-document" data-uuid="{{document.uuid}}"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> {{../labels.open}}</button>
+        </article>
+        {{/each}}
+      </div>
+      {{/if}}
+      <button type="button" data-action="go-input"><i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i> {{labels.newImport}}</button>
+    </section>
+    {{/if}}
+  </div>
+
+  <footer class="age-importer-v2__footer">
+    <p data-importer-live role="status" aria-live="polite" aria-atomic="true">
+      <i class="fa-solid {{#if busy}}fa-spinner fa-spin{{else}}fa-circle-info{{/if}}" aria-hidden="true"></i>
+      <span>{{announcement}}</span>
+    </p>
+    <div>
+      {{#if activeReview}}
+      <button type="button" data-action="go-input"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> {{labels.back}}</button>
+      <button type="button" data-action="preview" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> {{labels.refresh}}</button>
+      <button type="button" data-action="commit"
+              class="age-importer-v2__primary {{#if isNpc}}start-npc-importing{{else}}start-talent-importing{{/if}}"
+              {{#unless canCommit}}disabled{{/unless}}>
+        <i class="fa-solid fa-check" aria-hidden="true"></i> {{#if isNpc}}{{labels.commitNpc}}{{else}}{{labels.commitTalent}}{{/if}}
+      </button>
+      {{else if activeInput}}
+      <button type="button" data-action="preview" class="age-importer-v2__primary" {{#if busy}}disabled{{/if}}>
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{labels.preview}}
+      </button>
+      {{/if}}
+    </div>
+  </footer>
+</section>

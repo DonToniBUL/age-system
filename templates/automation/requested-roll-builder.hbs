@@ -1,13 +1,70 @@
-<section class="age-requested-roll-builder flexcol" style="height:100%;min-height:0;gap:.55rem;padding:.35rem">
-  <form class="age-request-roll-form flexcol" style="height:100%;min-height:0;gap:.55rem">
-    <div class="form-group"><label>{{localize "age-system.AUTOMATION.requestTitle"}}</label><input type="text" name="title" placeholder="{{localize 'age-system.AUTOMATION.requestTitlePlaceholder'}}"></div>
-    <div class="form-group"><label>{{localize "age-system.AUTOMATION.ability"}}</label><select name="ability">{{#each abilities as |ability|}}<option value="{{ability.value}}">{{ability.label}}</option>{{/each}}</select></div>
-    <div class="form-group"><label>{{localize "age-system.AUTOMATION.focusOptional"}}</label><input type="text" name="focus"></div>
-    <div class="form-group"><label>{{localize "age-system.AUTOMATION.targetNumberOptional"}}</label><input type="number" name="targetNumber" min="1" step="1"></div>
-    <div class="flexrow" style="gap:.35rem"><strong style="flex:1">{{localize "age-system.AUTOMATION.requestRecipients"}}</strong><button type="button" class="age-request-select-all">{{localize "age-system.AUTOMATION.selectAll"}}</button><button type="button" class="age-request-select-none">{{localize "age-system.AUTOMATION.selectNone"}}</button></div>
-    <ol class="directory-list" style="flex:1;min-height:0;overflow:auto;border:1px solid rgba(0,0,0,.2)">
-      {{#each actors as |actor|}}<li class="directory-item flexrow" style="align-items:center;gap:.5rem;padding:.35rem .45rem"><input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}} style="flex:0 0 auto"><img src="{{actor.img}}" width="32" height="32"><div style="min-width:0"><strong>{{actor.name}}</strong>{{#if actor.owners}}<div class="notes">{{actor.owners}}</div>{{/if}}</div></li>{{else}}<li class="directory-item notes" style="padding:.6rem">{{localize "age-system.AUTOMATION.noCharacterActors"}}</li>{{/each}}
-    </ol>
-    <button type="submit"><i class="fa-solid fa-paper-plane"></i> {{localize "age-system.AUTOMATION.postRollRequest"}}</button>
+<section class="age-roll-workflow__surface age-requested-roll-builder colorset-selection {{colorScheme}}" aria-labelledby="age-requested-roll-builder-title">
+  <form class="age-request-roll-form age-requested-roll-form">
+    <header class="age-roll-workflow__header colorset-first-tier">
+      <div>
+        <span class="age-roll-workflow__kicker"><i class="fa-solid fa-dice" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.requestedRoll"}}</span>
+        <h2 id="age-requested-roll-builder-title">{{localize "age-system.AUTOMATION.requestedRolls"}}</h2>
+      </div>
+    </header>
+
+    <div class="age-roll-workflow__scroll">
+      <section class="age-roll-workflow__panel age-requested-roll-fields" aria-labelledby="age-requested-roll-details-heading">
+        <div class="age-roll-workflow__heading">
+          <h3 id="age-requested-roll-details-heading">{{localize "age-system.AUTOMATION.requestedRoll"}}</h3>
+        </div>
+        <div class="age-roll-workflow__grid">
+          <label class="age-roll-workflow__field age-roll-workflow__field--wide" for="age-requested-roll-title">
+            <span>{{localize "age-system.AUTOMATION.requestTitle"}}</span>
+            <input id="age-requested-roll-title" type="text" name="title" placeholder="{{localize 'age-system.AUTOMATION.requestTitlePlaceholder'}}" autocomplete="off">
+          </label>
+          <label class="age-roll-workflow__field" for="age-requested-roll-ability">
+            <span>{{localize "age-system.AUTOMATION.ability"}}</span>
+            <select id="age-requested-roll-ability" name="ability">
+              {{#each abilities as |ability|}}
+              <option value="{{ability.value}}">{{ability.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label class="age-roll-workflow__field" for="age-requested-roll-focus">
+            <span>{{localize "age-system.AUTOMATION.focusOptional"}}</span>
+            <input id="age-requested-roll-focus" type="text" name="focus" autocomplete="off">
+          </label>
+          <label class="age-roll-workflow__field" for="age-requested-roll-target-number">
+            <span>{{localize "age-system.AUTOMATION.targetNumberOptional"}}</span>
+            <input id="age-requested-roll-target-number" type="number" name="targetNumber" min="1" step="1" inputmode="numeric">
+          </label>
+        </div>
+      </section>
+
+      <section class="age-roll-workflow__panel age-requested-roll-recipients" aria-labelledby="age-requested-roll-recipients-heading">
+        <div class="age-roll-workflow__heading">
+          <h3 id="age-requested-roll-recipients-heading">{{localize "age-system.AUTOMATION.requestRecipients"}}</h3>
+          <div class="age-roll-workflow__actions age-requested-roll-recipient-actions">
+            <button type="button" class="age-request-select-all" data-requested-roll-action="select-all"><i class="fa-solid fa-check-double" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.selectAll"}}</button>
+            <button type="button" class="age-request-select-none" data-requested-roll-action="select-none"><i class="fa-solid fa-xmark" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.selectNone"}}</button>
+          </div>
+        </div>
+        <ol class="age-requested-roll-recipient-list">
+          {{#each actors as |actor|}}
+          <li class="age-roll-workflow__card age-requested-roll-recipient">
+            <label>
+              <input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}}>
+              <img src="{{actor.img}}" alt="">
+              <span class="age-requested-roll-recipient__identity">
+                <strong>{{actor.name}}</strong>
+                {{#if actor.owners}}<small>{{actor.owners}}</small>{{/if}}
+              </span>
+            </label>
+          </li>
+          {{else}}
+          <li class="age-roll-workflow__empty">{{localize "age-system.AUTOMATION.noCharacterActors"}}</li>
+          {{/each}}
+        </ol>
+      </section>
+    </div>
+
+    <footer class="age-roll-workflow__actions age-requested-roll-builder__footer">
+      <button type="submit" class="age-roll-workflow__primary"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.postRollRequest"}}</button>
+    </footer>
   </form>
 </section>

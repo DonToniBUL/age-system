@@ -1,3 +1,453 @@
+# 5.4.1-rc.3 — V2 character sheet switch (2026-11-02)
+
+Adds a title-bar button to switch between the Full and Stat Block V2 character sheets. The choice is saved for that Actor using Foundry's sheet selector; world defaults are unchanged. The button respects ownership, sheet locks and locked compendia, and waits for pending control and rich-text saves before switching.
+
+# 5.4.1-rc.2 — Live-tested stabilization candidate (2026-11-01)
+
+Preserves API 1.4.0 payment rollback and transaction access, routes owner/other-GM execution through the shared PP authority, and coordinates general PP Undo with spending and refunds. Includes the rc.1 safety fixes below.
+
+37 offline regressions passed. Live Foundry 14.366 targeted checks passed; real player concurrency, non-owner secret filtering and no-GM refusal were verified. Full harness:54 pass,5 warning,1 unchanged System5.4.0 version-gate failure; zero functional failures and cleanup errors. Two verification races were corrected only in the isolated harness copy; installed harness and Foundry core were not changed.
+
+# 5.4.1-rc.1 — Stabilization candidate (2026-11-01)
+
+Prepared outside the installed Foundry system. Offline regression and package checks only; live Foundry 14.366 acceptance is pending. See the current README candidate notes for behavior changes and limits.
+
+# AGE System 5.4.0 - Utility Workflow AppV2 Presentation
+
+## Unified utility presentation
+
+- Moves **Stunt Assistant**, **Recovery Assistant**, **Unified AGE Search**, **Combat Economy**, **Rule Profiles**, **Quick Settings**, **Advanced Settings**, **Breather Settings**, and **Conditions Workshop** onto native Foundry 14 `HandlebarsApplicationMixin(ApplicationV2)` windows.
+- Gives all nine workflows the same responsive, palette-aware visual language used by the newer AGE sheets and roll workflows: clear headers, grouped surfaces, readable semantic colours, explicit controls, bounded internal scrolling, and narrow floating-window layouts.
+- Exposes the application classes under `game.ageSystem.applications` for supported Harness and integration inspection without adding to or changing the frozen public gameplay API.
+
+## Conditions Workshop
+
+- Converts the GM-facing Conditions Workshop to native AppV2 while retaining its AGE Toolbox, scene-control, chat-command, import, export, and direct-construction entry points.
+- Keeps source selection, custom conditions, icons, descriptions, ordering, and Active Effect changes in an in-memory draft. Opening, editing, importing, switching source, cancelling, or closing does not write world settings; only the explicit Save action does.
+- Validates exactly one `dead` condition, unique non-empty IDs and images, and normalized Foundry 14 Active Effect changes before either setting is written.
+- Saves `inUseConditions` and `customTokenEffects` as one recoverable operation. If a write fails, the prior settings and runtime `CONFIG` mirrors are restored and the workshop remains open.
+
+## Corrected-candidate runtime hardening
+
+- Uses Foundry 14's supported `foundry.utils.equals` helper for Rule Profile and setting-value comparisons, retaining a guarded compatibility fallback only for older environments.
+- Filters registered settings by the AGE System namespace before reading them into Quick or Advanced Settings. Core and third-party settings are no longer read merely because their keys share a name.
+- Test Harness 0.1.42 replaces the rejected 0.1.41 trial harness. It restores Requested Roll ownership with a complete non-recursive ownership-map update, cleans only still-live tracked chat messages, scopes the intentional stale-Actor refusal correctly, and applies the actual console-failure filter to utility-window trials.
+- Harness Audit and Full coverage now includes Conditions Workshop as the ninth AppV2 utility window. The Full trial also performs a reversible live custom-draft probe and rejects any draft or setting drift.
+
+## Compatibility boundary
+
+- This release changes utility presentation and corrects compatibility/test instrumentation only. The established service calls, permissions, setting keys and values, stored schemas and flags, roll math, action behavior, search/profile semantics, and entry points are retained.
+- Public API 1.4.0, progression capability 2, DefinitionV1/V2, Class v3, Profiles 0.3.0, Actor and Item data, and compendia remain unchanged.
+- No data migration runs. The stable AppV2 document-sheet migration marker remains `5.3.2`, and the verified AppV1 Actor and Item fallback sheets remain registered and selectable.
+- Genuine player/GM multi-client concurrency and permission hardening is outside this presentation milestone and is explicitly deferred to System 5.4.1.
+
+## Verification boundary
+
+- Test Harness 0.1.42 targets System 5.4.0 and accepted comparison baseline 5.3.3. Audit requires all nine retained services/application contracts and their native AppV2 templates.
+- Full live UI coverage opens each workflow, checks palette and contrast, bounded scrolling and narrow-window reflow, closes it cleanly, and proves that every captured AGE System setting remains unchanged. Console cleanliness remains a release gate.
+- The first installed 5.4.0 / Harness 0.1.41 copied-world trial is retained as a failed trial, not acceptance evidence. The corrected candidate requires freshly rebuilt artifacts and new Audit, Smoke, and Full reports before promotion.
+- AGE System 5.3.3 remains accepted and 5.3.2 remains the sole System rollback until the exact 5.4.0 candidate passes copied-world Foundry 14.366 acceptance.
+
+# AGE System 5.3.3 - Advanced Tests and Requested Rolls AppV2
+
+## Roll-workflow presentation
+
+- Replaces the legacy Advanced Test tracker and Requested Roll builder windows with native Foundry 14 `HandlebarsApplicationMixin(ApplicationV2)` applications.
+- Uses one responsive Force-inspired visual language with clear headers and panels, bounded internal scrolling, accessible labels, explicit actions, and narrow-window layouts.
+- Applies the current world's user palette to both windows. Newly posted Requested Roll cards carry the concrete palette active at creation so their foreground/background pairing remains readable later.
+- Exposes the two application classes as `game.ageSystem.applications.AdvancedTestTracker` and `game.ageSystem.applications.RequestedRollBuilder` for supported integration and Harness inspection.
+
+## Advanced Tests
+
+- Shows party and opposition totals with native progress elements, explicit add/subtract actions, current status, and up to ten visible recent history entries.
+- Adds a direct opposition-decrement action while retaining create, advance, chat-derived progress, last-change undo, close, and remove behavior.
+- Keeps the existing `age-system.advancedTestState` version-1 setting, serialized tracker records, GM mutation gate, and automation service methods unchanged.
+
+## Requested Rolls
+
+- Presents title, ability, optional Focus/TN, recipient selection, owner names, target/controlled-token preselection, select-all/none, and posting in one scroll-safe builder.
+- Posts a structured recipient card with test summary and completion count. Pending/completed presentation is derived from the existing attributed result-message flags; completed recipients may reroll as before.
+- Retains the version-1 `flags.age-system.automation.requestedRoll` and `requestedRollResult` contracts, Character ownership and recipient membership checks, actual AGE roll path, and historical card/button selectors.
+- Keeps Requested Roll result bookkeeping observational: its pre-update and pre-delete adapters never return the service boolean, so ordinary message updates and Foundry's Clear Chat workflow cannot be vetoed.
+
+## Compatibility and verification
+
+- This release changes presentation only. Public API 1.4.0, progression capability 2, DefinitionV1/V2, Profiles 0.3.0, roll math, Actors, Items, and compendia are unchanged.
+- No data migration runs. The stable AppV2 document-sheet migration marker remains `5.3.2`.
+- Test Harness 0.1.40 targets System 5.3.3. Audit checks both retained services, schemas, exported AppV2 classes, templates, and class contracts. Smoke isolates/restores Advanced Test state and exercises Requested Roll creation, ordinary chat update, explicit disposable bulk deletion, recipient/stale refusal, real result attribution, exact undo, source stability, cleanup, and console cleanliness. Full opens, inspects, scroll-checks, and closes both real AppV2 workflows.
+- AGE System 5.3.2 remains the accepted release and 5.3.0 the retained rollback until the exact 5.3.3 candidate passes copied-world Foundry 14.366 acceptance.
+
+# AGE System 5.3.2 - Mass Battle Forces and World-Isolated Palettes
+
+## Mass Battle Force Actor
+
+- Adds a dedicated `force` Actor and AppV2 sheet for Fantasy AGE 1e/2e and Dragon AGE mass battles. Organization Actors remain separate campaign entities rather than being repurposed as armies.
+- Force description, player notes, and secret GM notes use always-visible native editors so an empty field can be clicked and edited immediately.
+- Tracks current and starting troop strength as a Token-compatible resource, a primary troop test difficulty, specialists, an optional linked enemy Force, and an optional linked Character commander.
+- Fantasy AGE command tests use Intelligence (Military Lore); Dragon AGE uses Cunning (Military Lore). Communication (Leadership) drives the Main Engagement, and the GM chooses the command ability used for Finishing Moves.
+- Resolves Opening Moves, Main Engagement, and Finishing Moves as advanced-test stages. The sheet records progress, manual stage results, specialist and situational modifiers, and the rules' +5 Crisis Point contribution.
+- Calculates the suggested stage threshold from combined force size: 5, 10, 15, 20, or 25. A linked opponent supplies its primary troop test TN; a visible fallback TN remains available without a link.
+
+## Casualty safety
+
+- Casualties are always rolled into a signed-in-practice preview stored against exact Force, enemy, troop, stage-result, specialist, TN, and modifier state before any troop strength changes.
+- Changed state makes the preview stale and blocks application. Apply records a transaction and audit entry; Undo restores the exact prior troop strength only if no later troop edit conflicts with it.
+- Successful casualty tests use the Stunt Die degree; failed tests use the failure margin. The result shows total casualties, the approximate one-third dead/two-thirds wounded split, and survivors before confirmation.
+- Force stage tests, Crisis Points, previews, applications, and reversals post compact palette-aware chat cards.
+
+## Palette isolation and contrast
+
+- A user's selected AGE palette is now stored on that User inside the current world. Changing palette in one world no longer changes the same client's palette in every other world.
+- GMs can set the default palette received by new users in each world. An existing client preference is imported once into the first world opened after this update so current users do not unexpectedly lose their chosen palette.
+- The Force sheet and its persistent chat cards use the same semantic foreground/background pairs as all ten shipped AGE palettes.
+
+## Verification boundary
+
+- Test Harness 0.1.38 targets Foundry 14.366 and System 5.3.2. Audit adds the Force contracts; Smoke adds stage/Crisis/casualty/stale-preview/apply/exact-undo coverage; Full adds the complete Force AppV2 surface and ten-palette computed contrast coverage.
+- API 1.4.0, DefinitionV1/DefinitionV2, progression capability 2, Profiles 0.3.0, and existing Character/Item data remain compatible.
+- AGE System 5.3.0 remains accepted and 5.2.3 remains rollback until the exact checksummed 5.3.2 candidate passes copied-world Foundry acceptance.
+
+# AGE System 5.3.1 - Importer and NPC Studio Hardening
+
+## Modern AGE Injury damage
+
+- Routes the `mage-mastery-injury` profile through the supported Modern AGE parser while preserving the separate Major/Minor NPC layout choice.
+- Removes the fixed imported `damageInjury` placeholder. A bounded, non-evaluating helper suggests Injury damage only for conventional sums of `d3` and `d6` dice plus one optional non-negative flat bonus and fails closed for variables, other dice, subtraction, operators, prose, malformed, or excessive formulas.
+- Carries the active rule profile into both signed service previews and parser-only previews so ordinary Modern AGE imports retain ordinary damage behavior.
+- Signs each Importer attack's ordinary formula, Injury value, provenance, and confirmation; custom suggestions are editable but cannot commit until explicitly confirmed, and changing the value clears its prior confirmation.
+- Signs each entry's canonical parsed output and checks it before the first write and again per parser. Source-backed weapons display the pasted formula separately from the exact source formula that will be copied.
+- Preserves explicit reviewed world/compendium Injury values. Missing, zero/placeholder, non-integer, or out-of-range source values are not silently repaired.
+
+## NPC Studio review contract
+
+- Adds `custom.damageInjury` to the normalized draft, compiler, signed plan, review summary, and weapon source produced for Modern AGE Mastery/Injury.
+- Shows formula-derived values as editable suggestions and requires explicit `custom.damageInjuryConfirmed` confirmation before a custom Injury weapon can enter signed Review.
+- Clears confirmation when the ordinary formula or Injury value changes and blocks null, invalid, or unconfirmed values.
+- Leaves reusable world/compendium and cloned source Item values authoritative and source-immutable.
+
+## Importer lifecycle and drag-and-drop
+
+- Exposes the supported Importer AppV2 class beside NPC Studio for integrations and the live Test Harness.
+- Uses Foundry's document drop resolver for legacy/compendium payloads while retaining service-side permission, visibility, profile, type/subtype, and digest validation.
+- Explains stale, expired, completed, assistance-disabled, and busy drop targets instead of silently ignoring them.
+- Reports expected invalid/mismatched drops as bounded user warnings rather than unexpected console errors.
+- Classifies expected preview, selection, stale-state, and confirmation refusals as visible user warnings while retaining strict console errors for unexpected parser, cleanup, rollback, or runtime faults.
+- Cancels unused user-owned preview sessions when the window closes, including after Assist mode was switched off.
+
+## Verification boundary
+
+- Test Harness 0.1.37 targets Foundry 14.366, System 5.3.1, API 1.4.0, Profiles 0.3.0, and accepted comparison baseline 5.3.0.
+- Adds live Audit/Smoke/Full checks for tool opening, source reuse, duplicates, drag-and-drop, creation, stale previews, NPC exact undo, Importer rollback/cleanup, Injury damage, and console cleanliness.
+- API 1.4.0, DefinitionV1/DefinitionV2, progression capability 2, Profiles 0.3.0, and the world-data schema are unchanged. No migration runs.
+- AGE System 5.3.0 remains accepted and 5.2.3 remains rollback until the exact checksummed 5.3.1 candidate passes copied-world Foundry acceptance.
+
+# AGE System 5.3.0 - Core NPC Studio
+
+## Blank, paste, and clone creation
+
+- Adds a native AppV2 NPC Studio to AGE System; no companion module is required.
+- Provides guided Blank NPC, Paste Stat Block, and Clone Actor routes for the five canonical DAGE, FAGE 1e, FAGE 2e, MAGE Core, and MAGE Mastery/Injury profiles.
+- Keeps profile-specific abilities, identity vocabulary, combat fields, armor, and resources visible while hiding irrelevant game-line fields.
+- Adds searchable visible Actor and Item sources plus bounded custom embedded content.
+- Renders parser, custom Focus, and custom Power selections with native conditional option markup, avoiding a Foundry Handlebars helper collision when the Paste route opens.
+
+## Corrected candidate behavior
+
+- Prevents the Importer and NPC Studio AppV2 busy wrapper from blocking their own signed commit after the user confirms creation.
+- Accepts both official score-first Fantasy AGE 2e ability lines such as `2 ACCURACY (Bite)` and name-first lines such as `Accuracy 2 (Bite)`, including comma-, semicolon-, newline-, and PDF-whitespace-separated layouts. Missing abilities now produce a clear blocker instead of silently becoming zero.
+- Adds secure Item drag-and-drop to NPC Studio and unresolved Importer matches. Dropped documents are resolved through Foundry, permission/type checked, pinned to the signed preview, and revalidated immediately before creation.
+- Retries readable compendium indexes without projected fields when an older or module-provided pack rejects Foundry's projected-index request, so Item search degrades safely instead of appearing empty.
+
+## Reuse-first Character content
+
+- Extends the Importer and NPC Studio reuse path across the safe Character Item set: Equipment, Focus, Weapon, Power, Talent, Stunt, Relationship, Honorific, and Membership.
+- Prefers a sole compatible exact world match before visible profile-compatible compendium candidates. Duplicate exact matches require the GM to select an explicit source or **Create custom instead**; fuzzy suggestions never auto-select.
+- Keeps parsed Focus ability/bonus and Talent degree as signed Actor-specific overlays on the embedded copy without modifying the world or compendium source. Talent degree is bounded by the active profile, and a Specialization remains a `talent` Item with subtype `spec`.
+- Re-resolves every chosen source before creation and rechecks visibility, Item type/subtype, active-profile compatibility, signed source digest, and requested overlay data. A changed, hidden, missing, or cross-profile source makes the preview stale before any write.
+
+## Bounded searchable-PDF tolerance
+
+- Applies NFKC normalization, including compatibility ligatures, plus conservative spacing, invisible-character, soft-hyphen, dash, bullet, and word-wrap repairs without rewriting arbitrary prose.
+- Repairs only known AGE headings, table labels, wrapped heading/value lines, and Talent or Specialization rank labels; every normalization remains visible for review.
+- Recognizes exact Relationship(s), Membership(s), and Honorifics sections as native embedded Item types instead of generic Powers.
+- Fails closed when a mandatory ability-score block remains malformed or incomplete after repair rather than supplying unseen zeroes.
+
+## Signed creation and exact undo
+
+- Drafting and preview create no documents and never accept arbitrary raw Actor or Item source from callers.
+- Binds each short-lived preview to its user, active profile, normalized draft, source Actors/Items, compiled plan, and expiry.
+- Creates one Actor with embedded Items, revalidates the persisted result, and removes an incomplete Actor after an injected post-write failure.
+- Clone reads raw persisted source, excludes Class/Progression Items and operational data, and always creates a separate Actor.
+- Stores a durable creation receipt and permits targeted undo only while the created Actor remains exactly unchanged.
+- Deliberately omits update-original and delete-and-recreate editing.
+
+## API and compatibility
+
+- Adds API 1.4.0 capability `npcStudio` and the frozen `game.ageSystem.api.npcStudio` integration namespace.
+- Preserves progression capability 2 and the existing DefinitionV1/DefinitionV2 progression method surface.
+- Retains all AGE System 5.2.4 importer hardening and requires no world-data migration.
+- Records adapted AGE Creature Forge concepts and their MIT license in `THIRD-PARTY-NOTICES.md`.
+
+## Release boundary
+
+- AGE System 5.3.0 was accepted on 2026-08-30 after the final 56-file root suite, freshly extracted source archive, package-safety gates, byte parity, checksums, and owner Foundry 14.366 confirmation passed.
+- AGE System 5.2.3 is the rollback release, and AGE Progression Profiles 0.3.0 is reused unchanged.
+
+# AGE System 5.2.4 - Guided Importer Hardening
+
+## Clearer preview and source resolution
+
+- Replaces the fixed legacy NPC/Talent importer window with a responsive AppV2 workflow for paste, review, and result stages.
+- Normalizes common searchable-PDF clipboard artifacts before parsing and discloses every repair in preview.
+- Shows each parsed document, proposed embedded/world Item, source, confidence, warning, and blocker before creating anything.
+- Adds deterministic source search and explicit per-Item selection; ambiguous fuzzy suggestions are never accepted silently.
+
+## Commit safety
+
+- Binds short-lived previews to the initiating user, normalized input, parser mode, active rule profile, relevant settings, and source selections.
+- Rejects expired, cancelled, stale, or source-changed previews and coalesces rapid duplicate commit activation.
+- Revalidates every selected Item immediately before commit and removes candidate-created Actors or Items when a batch fails.
+- Keeps existing parser exports and the AGE Toolbox entry compatible. No data-model, progression-contract, or migration change is introduced.
+
+## Candidate boundary
+
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the target.
+- AGE System 5.2.3 remains accepted until automated and copied-world manual acceptance completes.
+- AGE Progression Profiles 0.3.0 is reused unchanged.
+
+# AGE System 5.2.3 - Beginner Progression Handbook
+
+## Beginner-facing documentation
+
+- Adds the illustrated **AGE Character Creation and Advancement Handbook** for players and Game Masters who are completely new to Foundry VTT and AGE System.
+- Explains Manual / Local installation, rule profiles, guided Character creation, rank advancement, conflict-aware undo, Classes, and Progression Definition authoring in plain language.
+- Provides separate step-by-step walkthroughs for Dragon AGE, Fantasy AGE 1e, Fantasy AGE 2e, and Modern AGE, with screenshots of Character Builder, Advancement Center, signed review/apply, undo, and Definition Authoring Studio.
+- Documents that the System, AGE Progression Profiles, and content libraries are separate packages. The System manifest must be directly at `Data/systems/age-system/system.json`; the Profiles manifest must be directly at `Data/modules/age-progression-profiles/module.json`.
+- Clarifies that Manual / Local packages do not install or update one another and do not update automatically.
+
+## Compatibility boundary
+
+- This is a documentation-only System patch. It changes no runtime JavaScript, DefinitionV1 or DefinitionV2 schema, public API 1.3.0 contract, progression capability, preview signature, commit, receipt, undo, migration, or world data.
+- AGE Progression Profiles remains at 0.3.0 and is not rebuilt.
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the verified target.
+
+# AGE System 5.2.2 - AppV2 Usability Hardening
+
+## Character and Vehicle usability
+
+- Restores a bounded vertical scroll region to every Full Character tab while keeping the sheet header and tab navigation visible; AppV2's part lifecycle retains the active tab's scroll position.
+- Renders Stat Block Power descriptions as permission-aware enriched display content relative to the actual embedded Item, without opening an editor, submitting an Item field through the Actor form, or mutating Item/source data.
+- Adds explicit AppV2 palette foreground/background tokens for primary and secondary surfaces, controls, disabled values, rich text, and links across the bundled colour schemes.
+- Makes the Vehicle description a larger, always-visible native editor so existing formatted descriptions are visible and editable.
+- Keeps the Vehicle GM-notes textarea on the opaque AppV2 control surface so its text meets the same contrast contract instead of inheriting the legacy translucent background.
+
+## Compatibility boundary
+
+- This is the accepted System-only AppV2 usability release. AppV1 fallback sheets remain unchanged and selectable.
+- DefinitionV1, DefinitionV2, public API 1.3.0, progression capability 2, Profiles 0.3.0, signed previews, commits, receipts, and conflict-aware undo remain unchanged.
+- No data migration is required. Automated validation and copied-world Foundry 14.366 acceptance completed before promotion.
+
+# AGE System 5.2.1 - Definition Authoring Studio Hardening
+
+## Safer, clearer GM authoring
+
+- Promotes the Progression Definition sheet into a guided Definition Authoring Studio with an always-visible schema badge and compact lifecycle, provider, and unsaved-draft status.
+- Keeps locked-compendium and otherwise read-only definitions inspectable while offering an explicit **Create editable world copy** path; opening or browsing a source document never mutates it.
+- Adds save preflight for stable definition identity, profile continuity, and semantic-version changes before a document write is attempted.
+- Guards draft-replacing and close/navigation actions so an in-memory definition cannot be discarded without an explicit decision.
+- Organizes the long authoring surface through keyboard-operable section navigation, connects validation findings to their corresponding controls, moves focus to the first actionable problem, and exposes status changes with accessible labels and live feedback.
+
+## Compatibility boundary
+
+- DefinitionV1, DefinitionV2, public API 1.3.0, progression capability 2, Profiles 0.3.0, signed previews, commits, receipts, and conflict-aware undo remain contract-compatible with 5.2.0.
+- This is an unverified candidate scope. Automated and copied-world Foundry 14.366 acceptance must complete before promotion.
+
+# AGE System 5.2.0 - Complete Guided Progression Contract
+
+## Additive DefinitionV2
+
+- Adds DefinitionV2 without removing or rewriting DefinitionV1. Generic validation, registration, compilation, preview, commit, receipts, and undo accept both schema versions; existing providers remain compatible, Fantasy AGE 1e guided creation uses DefinitionV2, and its advancement retains the DefinitionV1/Class-v3 route.
+- Adds typed `text`, `longText`, `integer`, and `select` inputs; authored workflow stages; conditional choice groups; input-backed identity/ability/language values; `ability.set`; `language.add`; expanded identity fields; normalized Resources/currency initialization; and bounded ability/formula handling.
+- Keeps the contract closed and provider-neutral. FAGE, DAGE, MAGE, modules, world Items, compendia, imports, and the legacy Class adapter are optional content sources, not dependencies or privileged execution paths.
+- Keeps public API 1.3.0 while raising the progression capability to 2 and advertising latest schema 2 plus supported schemas `[1, 2]` for additive feature detection.
+
+## Character Builder and Advancement Center
+
+- Character Builder renders definition-authored stages and typed controls, applies starting abilities before dependent formulas, and compiles the selected path into one complete Character creation transaction.
+- Advancement Center uses the same normalized definition data for Class-backed and Actor-backed ranks, with source/profile/track continuity and explicit readiness blockers.
+- Creation and advancement remain preview-first. Formulas resolve once and are signed with inputs, choices, sources, Actor/base state, user, expiry, and plan digest. Commit accepts only the preview identity and digest.
+- Failed commits roll back; successful commits store durable receipts. Creation reversal and advancement undo remain separate, previewed, exact/conflict-aware operations which refuse to overwrite later play.
+
+## AGE Progression Profiles 0.3.0 integration
+
+- Supports full guided Dragon AGE Mage/Rogue/Warrior creation and audited rank 1-20 Class advancement, full guided Fantasy AGE 1e Mage/Rogue/Warrior DefinitionV2 creation with retained DefinitionV1/Class-v3 advancement, full guided Fantasy AGE 2e Envoy/Mage/Rogue/Warrior creation with retained rank 1-20 Class routes, and full guided Modern AGE Gritty/Pulpy/Cinematic creation plus Actor-backed ranks through 20 for Core Health and Mastery/Injury.
+- Keeps incomplete, ambiguous, prose-only, or unmapped Fantasy AGE 1e details within the same explicit manual-review boundary as the other game lines; DefinitionV2 creation does not turn those details into guessed automation.
+- Automates only exact normalized mappings. Ambiguous, prose-only, incomplete, or unmapped source rules remain visible manual-review summaries in the signed preview; the system and provider do not guess rules, Items, RollTable results, or Actor paths.
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the verified target.
+
+# AGE System 5.1.5 - Progression Hardening
+
+## Executor-safe previews
+
+- Separates portable DefinitionV1 validation from trigger-filtered execution readiness. Creation, Class-backed, and Actor-backed paths now fail closed before preview when they request unsupported resources, choices, Item traits, source ordering, duplicate initialization, or rank effects.
+- Exposes the additive `validateExecutability(definition, {trigger})` operation and `executabilityValidation` capability while retaining DefinitionV1 schema 1 and public API 1.3.0.
+- Creation Item advancement accepts the normalized plain traits used by the Class/Actor executors as well as the retained dotted creation aliases, eliminating a contract-valid but non-materializing Item path.
+- Direct API preview calls run the same executor preflight before Actor/user/profile/base/source/formula resolvers, compiler work, preview IDs, or preview-store writes; module and macro callers cannot bypass the UI readiness gate.
+- Actor-backed creation and advancement require exactly one matching `track.setRank` on every legal choice path. Conditional alternatives remain valid, while missing, optional, repeated, or multiple rank effects fail closed.
+- Creation-time Item advancement uses prototype-safe trait dispatch, enforces Talent versus Specialization subtype, preserves normal numeric degree/maximum and Relationship intensity invariants, and requires one unambiguous preceding quantity-one acquisition.
+
+## Builder and Advancement Center usability
+
+- Disabled Create and Apply buttons now have visible, specific reasons, including unresolved module/compendium dependencies and incomplete required selections.
+- Workflow stages are clickable and indicate current/completed state. Large choice groups add search, selected-only filtering, clear controls, and visible/selected counts.
+- Advancement Center clears stale busy state after refresh and gives a clean no-next-rank state after rank 20.
+- Character Builder coalesces concurrent Create and exact-reversal requests, preventing a rapid double click from producing a false failure or clearing busy state while the first transaction remains active.
+- Dark workflow and technical-summary bars use explicit high-contrast light text and icons in both Builder and Center without changing their surrounding palette.
+
+## Profiles 0.2.3 validation
+
+- Adds a copy-on-read matrix across 16 advancement definitions and every rank from 2 through 20: 304 signed executor-bound previews, 304 exact apply/reverse checks, 2,687 resolved effects, 387 deterministic formula resolutions, 780 source bindings, and 24 owned-item target bindings.
+- Source LevelDB packs remain byte-identical to accepted Profiles 0.2.2. Version 0.2.3 hardens validation and compatibility metadata; it does not silently rewrite progression content or change source-reference revisions.
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the verified target. AGE System 5.1.4 and Profiles 0.2.2 remain accepted while this candidate receives manual Foundry verification; 5.1.3 and Profiles 0.2.1 remain rollback artifacts.
+
+# AGE System 5.1.4 - Progression Path Continuity
+
+## Character creation and advancement
+
+- Actor-backed character creation now persists the selected Definition id and rules profile on the signed Actor progression track. Classless MAGE-style Characters therefore continue through the same progression path in the Character sheet and Advancement Center instead of choosing again.
+- Actor-track advancement rejects a different Definition attempting to reuse an already bound track. Existing pre-5.1.4 Actor transactions remain compatible through their signed definition/profile provenance, and undo restores the exact prior binding state.
+- Class-backed FAGE/DAGE creation and advancement retain their established Class Item transaction path and Actor/Class rank synchronization.
+- Formula amounts may carry an optional `rollId`. Effects sharing the same formula and `rollId` consume one signed preview result, so paired current/maximum Health or Power gains cannot diverge.
+- Modern AGE Actor-backed ability allocation now exposes and accepts only abilities in the active profile even when module Definitions retain the legacy Class-adapter capability; harmless zero-valued dormant fields are discarded, while nonzero ineligible allocations still fail closed.
+- Persisted creation and advancement receipts are hydrated into the new runtime immediately after reload, restoring visible recent-history and undo actions without a prior id lookup.
+- Split Foundry Actor updates suppress the expected intermediate rank mismatch only during the active transaction; a persisted mismatch still fails closed.
+- Legacy `icons/svg/skill.svg` acquisition sources use Foundry 14's available `icons/svg/book.svg` fallback without changing source-digest validation.
+
+## Player-facing clarity
+
+- Character Builder and Advancement Center now share one label resolver which prefers authored source names and selected option labels. Generated `grant:…` identifiers stay confined to collapsed technical diagnostics.
+- Choice groups where every option sets the same identity field are automatically presented as Ancestry, Background, Social Class, or Class stages. This is provider-neutral presentation metadata; no FAGE, DAGE, or MAGE content dependency was added.
+- Character creation receipts now show a readable result, Character name, creation path, status, and date while retaining the exact receipt id internally for audit and safe reversal.
+- Level effects read as “Start at level” or “Advance to level,” and raw ability keys are no longer displayed beside normal Builder ability names.
+- Unresolved semantic name inputs show a neutral placeholder instead of `[object Object]`, and Actor-backed summaries say “Character level” rather than “Class level.”
+
+## Retained safety boundary
+
+- DefinitionV1 remains schema version 1 and the public integration API remains 1.3.0. Preview signing, identifier-only commits, source/base/profile/user checks, durable receipts, partial-write recovery, and conflict-safe undo/reversal are unchanged.
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the verified target. AGE System 5.1.3 remains the accepted rollback-safe baseline while this candidate is tested.
+
+# AGE System 5.1.3 - Guided Progression Usability
+
+## Easier GM authoring
+
+- Adds four guided Progression Definition starting points: Character creation, creation plus Actor ranks, Class-backed advancement, and classless Actor-backed advancement.
+- Generates the selected rank timeline, track binding, milestone ids, triggers, rank effects, and capabilities as an unsaved preview-only draft. Existing persisted data is not changed until the GM validates and saves.
+- Replaces the free-text rules-profile field with a localized profile selector and adds a plain-language readiness checklist.
+- Keeps world/compendium Item search, drag-and-drop sources, full semantic editing, validation, import/export, and the advanced normalized JSON escape hatch intact.
+
+## Easier player workflow
+
+- Rewords Character Builder and Advancement Center around player choices and outcomes rather than contract internals.
+- Adds a visible three-step guide to each application, keeps technical provenance/formula details collapsed by default, and presents a clear final change review before commit.
+- Adds a prominent **Open Advancement Center** action to owned Class sheets in both AppV2 and the selectable AppV1 fallback.
+- Retains the Character-sheet Advancement Center entry for Class-backed FAGE/DAGE paths and classless Actor-backed MAGE paths.
+
+## Retained safety boundary
+
+- Definition authoring, character creation, and advancement remain preview-first. Commit still receives only a signed preview id and plan digest.
+- No DefinitionV1, API 1.3.0, transaction, receipt, undo, migration, gameplay, roll, socket, or persistence contract changes in this release.
+- Foundry VTT 14.365 remains the minimum and 14.366 remains the verified target. AGE System 5.1.2 remains accepted until copied-world QA accepts this candidate.
+
+# AGE System 5.1.2 - Foundry VTT 14.366 Compatibility
+
+## Compatibility update
+
+- Raises the manifest's verified Foundry version from 14.365 to 14.366 while retaining 14.365 as the minimum supported v14 build.
+- Retains the accepted 5.1.1 progression lifecycle, Definition Item authoring, Character Builder, Advancement Center, AppV2 defaults, selectable AppV1 fallbacks, gameplay automation, and API 1.3.0 without a data migration or contract change.
+- Re-audits AGE's complete raw-source `ForcedReplacement` update boundary against Foundry 14.366's corrected replacement diffing and synthetic-Actor propagation.
+- Adds copied-world acceptance checks for synthetic-token updates and token resource-bar selection alongside Health, Power Points, damage/healing, modifier, Class-backed, Actor-backed, receipt, rollback, compendium, and AppV2 persistence paths.
+- Confirms AGE templates do not use the `<file-picker>` or `<formula-input>` controls whose change-event target behavior changed in Foundry 14.366.
+
+## Release boundary
+
+- This is a temporary Manual / Local compatibility candidate until Audit, Smoke, Full, Operations & Diagnostics, and manual copied-world checks pass on Foundry 14.366.
+- AGE System 5.1.1 remains the accepted release and 5.1.0 remains the rollback release during validation.
+- DAGE, FAGE, the separate AGE Test Harness, and companion-module compatibility metadata are maintained in their own release tasks and are not changed by this System-only package.
+
+# AGE System 5.1.1 - Progression Lifecycle and Usability Hardening
+
+## Corrected and clarified
+
+- Progression Definition Items now have explicit Draft, Valid/Disabled, Valid/Active, and Invalid lifecycle states. A blank new Item remains a safe non-runnable draft, produces one concise content-audit warning, and never enters the active registry.
+- Definition validation suppresses derivative child errors beneath structurally invalid containers and delays digest diagnostics until DefinitionV1 itself is valid. Strict leaf, graph, source-reference, binding, and semantic-effect validation remains unchanged.
+- The AppV2 Definition sheet now shows lifecycle, save state, concise validation severity, and clear launch gating. A generated starter definition remains in memory until the GM explicitly saves it.
+- The Advancement Center keeps compatible but currently unavailable definitions visible, explains missing ranks, prerequisites, Class bindings, maximum rank, stale preview/source/profile states, and distinguishes provider origin in player-readable language.
+- Preview effects, commit receipts, reload-safe recovery, and targeted undo are presented more clearly. Duplicate commit or undo gestures coalesce to one service operation.
+- Full and compact AppV2 Character sheets now show progression availability/current-to-target rank and open the same Definition-driven Center for Class-backed FAGE/DAGE and Actor-backed MAGE tracks.
+- Known validation and unavailable-progression responses use Foundry notifications without duplicating expected AGE domain errors into the console. Unexpected exceptions remain logged.
+- Class-backed rollback now restores the complete pre-advancement summary array and the original nullable Class progression base level. Undo no longer leaves a serialized sparse-array `null` or converts an original `baseLevel: null` to `0`.
+- Class rollback equality checks now use Foundry 14's supported `foundry.utils.equals` helper instead of the deprecated `objectsEqual` alias.
+
+## Retained safety boundary
+
+- Commit still accepts only `previewId` plus `planDigest`; definition/profile/source/base/user/expiry bindings are rechecked before mutation.
+- Class and Actor track advancement retain durable receipts, reload hydration, conflict-safe latest undo, partial-write recovery, source preservation, and cross-client duplicate protection.
+- No schema, socket, transaction, roll API, AppV1 fallback, gameplay, or third-party integration contract is redesigned by this maintenance candidate.
+
+# AGE System 5.1.0 - Provider-neutral Creation and Advancement
+
+## Added
+
+- Added the normalized, closed DefinitionV1 progression contract with canonical digests, path-specific validation, provider provenance, profile adapters, source references, milestones, inputs, choices, evaluations, semantic effects, and explicit Class bindings.
+- Added one shared progression registry for system/module registrations, world-created Progression Definition Items, readable Item compendia, JSON imports, and the legacy Class-v3 adapter. Provider origin grants no execution trust.
+- Added a GM-only AppV2 Progression Definition sheet. Its semantic editor supports identity/profile/version/coverage/rank/capabilities, Class binding, source references, milestones, triggers, inputs, choice groups/options, evaluations, and effects; source Items can be found through world/compendium search or drag-and-drop, while raw normalized JSON remains an advanced validated escape hatch.
+- Added Character Builder and Advancement Center AppV2 applications powered by the same definition, compiler, preview, receipt, and executor contracts.
+- Added API 1.3.0 progression registration, validation, discovery, signed creation/advancement preview, commit, receipt lookup, undo preview, undo, status, and capability methods.
+- Added persistent receipt journaling and hydration so committed creation and advancement receipts remain available after reload.
+- Added progression Item model, icon, sheet registration, content-audit validation, world/compendium scanning, provider reconciliation hooks, import/export, enable/disable, duplication, and GM/top-level mutation guards.
+- Extended the AGE System 5 guided tour and documentation for core-only authoring, Character Builder, Advancement Center, provider integration, migration boundaries, and copied-world acceptance.
+
+## Safety and execution boundary
+
+- Corrected the Foundry v14 startup boundary: init registration is fully synchronous, template loading is captured without suspending init, and the progression runtime/API are constructed during setup after the current User and world Actor collection exist. This prevents one slow template/font request from cascading into missing settings, helpers, or ready-state data.
+- Corrected progression Definition Item lifecycle authorization for Foundry v14, whose `_preCreate`, `_preUpdate`, and `_preDelete` methods pass the initiating `User` object rather than a user-id string. Real GMs can now create and maintain definitions while non-GM and embedded-Item mutations remain blocked.
+- Restored Foundry Token resource selection for compatibility-first Actor models by explicitly declaring per-type trackable attributes. Character Health, Power Points, and Conviction; Vehicle Part Health; and useful Spaceship/Organization numeric tracks are selectable without migrating or rewriting Actor source.
+- Creation and advancement are preview-first. A preview binds the canonical definition/profile/source/base/user/Actor state, resolved choices and semantic inputs, one-time formula results, expiry, and plan digest.
+- Commit accepts only the preview id and plan digest. It never accepts client-supplied document update paths or a replacement plan.
+- Character creation uses one complete Actor creation call with preassigned embedded Item ids. Reversal requires a separate destructive undo preview, explicit confirmation, and an exact current-source digest match.
+- Advancement retains the specialized Class transaction/rollback boundary, duplicate/concurrent protection, latest-safe rollback, and conflict refusal for later edits.
+- Invalid, disabled, checksum-mismatched, stale, or ambiguous definitions fail closed at execution. Embedded definitions are excluded and locked packs are read-only. Draft validation, cancellation, failed preview, and failed commit leave no temporary documents.
+- Corrected the first 5.1.0 candidate's Foundry-only persistence edges: Definition creation now gives Foundry a mutable source clone; creation receipts bind the authoritative cleaned Actor source; Actor-track level updates preserve simultaneous flag operators; exact recovery removes an otherwise empty system flag namespace; and receipt/source pinning reads raw persisted data.
+- Weapon and Power full-form preservation now includes the configured attack ability (`useAbl`), so unrelated AppV1 or AppV2 edits cannot normalize it from `acc` to `no-abl`.
+- Runtime replacement/deletion updates invoke Foundry v14 data-field operator factories with their required constructor binding. Progression commit, rollback, and lock cleanup therefore avoid both deprecated legacy deletion syntax and the detached-factory `this is not a constructor` failure.
+- Explicit atomic system-branch operator proxies survive Actor pre-update normalization by identity. Class advancement also verifies the persisted Actor journal and Class marker before returning success, preventing a rejected Class transaction from being recorded as committed.
+- Actor-backed advancement journals encode managed snapshot paths with Foundry-safe keys. Foundry can no longer reinterpret keys such as `system.level` while cleaning flag data, so classless level/resource transactions persist, reload, and undo through the same signed registry as non-level tracks.
+- Progression Definition Item drag-and-drop now reads Foundry's namespaced TextEditor implementation and emits no deprecated global-TextEditor warning.
+
+## Content-provider boundary
+
+- The core system supports fully user-authored progression without a content module. FAGE, DAGE, MAGE, and other modules are optional DefinitionV1 content providers, not dependencies of the engine, Builder, or Center.
+- The shipped FAGE/DAGE/MAGE validation fixtures are copyright-neutral **synthetic structural coverage**. They prove the normalized contract and profile adapters can represent the required shapes; they are not complete rules payloads and do not imply that the existing modules already deliver DefinitionV1 content.
+- Complete module-specific progression definitions remain separate provider-content deliverables and must pass the same contract as world, compendium, and imported definitions.
+
+## Interface cleanup
+
+- Removed the AGE Toolbox's redundant generic dice shortcuts. It no longer exposes 1d6, 2d6, 3d6, d66, or d666 actions; Foundry's normal dice roller and the underlying AGE dice/roll APIs remain unchanged.
+- Requested Rolls, recovery, Advanced Tests, Operations & Diagnostics, Character Builder, and every other Toolbox workflow remain available.
+
+## Compatibility
+
+- Retains the accepted 5.0.7 AppV2 atomic-source corrections, AppV2 defaults, selectable legacy AppV1 fallbacks, gameplay automation, Argon/Ammo Belt integration boundaries, content validator, and preview-only typed-data migration.
+- Targets Foundry VTT 14.365. No bulk typed Actor/Item migration executor is introduced in 5.1.0.
+- The accepted 5.0.7 release and 5.0.0-rc.3 rollback artifacts remain historical recovery points; this section does not alter them.
+
+## Validation
+
+- Startup regressions assert that init contains no await, progression cannot initialize before the Actor collection exists, setup constructs progression before `ageSystemApiReady`, and ready observes the captured template promise.
+- Contract tests cover canonical stability, closed-graph validation, semantic authoring, document persistence/security, provider arbitration, source and base staleness, formula pinning, creation/advancement planning, commits, receipt hydration, conflict-safe undo/reversal, and legacy Class adaptation.
+- Synthetic DAGE, FAGE 1e/2e, and MAGE Core/Mastery fixtures provide structural profile coverage without embedding published advancement content.
+- Release checks cover constructor-bound data operators, explicit branch-operator identity, Class journal postconditions, namespaced drag-data parsing, mutable Foundry document creation inputs, cleaned-source receipt binding, Actor-track mixed system/flag updates, exact namespace recovery, provider-neutral capability reporting, searchable/drop-enabled source authoring, the progression Item in content validation, AppV2 applications and templates, API 1.3.0, guided-tour content, documentation, and absence of the five generic Toolbox shortcuts while retaining the AGE roll engine.
+
 # AGE System 5.0.7 - AppV2 Item Canonical-field Preservation
 
 ## Corrected

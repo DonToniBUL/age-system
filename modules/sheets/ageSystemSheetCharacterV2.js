@@ -13,6 +13,9 @@ import {runActorSheetAction} from "./v2-actions.js";
 import {applyColorSchemeToElement} from "../color-scheme.js";
 import {hidePrimaryAblCheckbox, prepSheet} from "../setup.js";
 import {characterControlAuthorizedPaths} from "../data/source-guard.js";
+import {characterAdvancementSummary, openActorAdvancementCenter} from "../progression/advancement-center.js";
+import {MassBattleService} from "../mass-battle.js";
+import {showConfirmDialog} from "../dialogs.js";
 
 const {ApplicationV2, HandlebarsApplicationMixin} = foundry.applications.api;
 const {ActorSheetV2} = foundry.applications.sheets;
@@ -38,6 +41,9 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
         classes: ["age-system", "sheet", "age-v5-parity-sheet"],
         position: {width: 700, height: 800},
         window: {resizable: true},
+        actions: {
+            toggleCharacterSheet: function(event, button) { return this._onToggleSheet(event, button); }
+        },
         form: {closeOnSubmit: false, submitOnChange: true}
     };
 
@@ -46,6 +52,7 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
         this._ageActivePrimaryTab = "main";
         this._ageSubmitQueue = Promise.resolve();
         this._ageSubmitDeltas = new WeakMap();
+        this._ageSubmitErrors = new Map();
     }
 
     get object() {
@@ -56,9 +63,65 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
         return game.settings.get("age-system", "observerRoll");
     }
 
-    async _prepareContext(options) {
-        const context = await super._prepareContext(options);
-        return Object.assign(context, await prepareActorV2Context(this));
+    _canToggleSheet() {
+        return this.actor.type === "char"
+            && (this instanceof ageSystemSheetCharacterV2 || this instanceof ageSystemSheetCharStatBlockV2)
+            && this.options.sheetConfig && this.isEditable
+            && this.actor.collection?.has(this.actor.id)
+            && !this.actor.getFlag("core", "sheetLock");
+    }
+
+    _getFrameButtons(options) {
+        const buttons = super._getFrameButtons(options);
+        if (this._canToggleSheet()) buttons.push({
+            action: "toggleCharacterSheet",
+            icon: "fa-regular fa-id-badge",
+            label: this instanceof ageSystemSheetCharStatBlockV2
+                ? "age-system.switchToFullSheet" : "age-system.switchToBlockSheet"
+        });
+        return buttons;
+    }
+
+    async _onToggleSheet(event, button) {
+        event?.preventDefault();
+        if (this._ageSheetSwitchPromise) return this._ageSheetSwitchPromise;
+        if (!this._canToggleSheet() || this.actor.sheet !== this) return null;
+        if (button) button.disabled = true;
+        this._ageSheetSwitchPromise = (async () => {
+            // Commit the active control and rich text before Foundry closes this form.
+            const active = this.element?.ownerDocument.activeElement;
+            if (this.element?.contains(active)) active.blur();
+            for (const editor of this.element?.querySelectorAll("prose-mirror") ?? []) {
+                if (editor.isDirty()) editor.save();
+            }
+            await this._ageSubmitQueue;
+            if (this._ageSubmitErrors.size) {
+                ui.notifications.warn(game.i18n.localize("age-system.sheetSwitchSaveFailed"), {console: false});
+                return null;
+            }
+            if (!this._canToggleSheet() || this.actor.sheet !== this) return null;
+            const target = this instanceof ageSystemSheetCharStatBlockV2
+                ? "age-system.ageSystemSheetCharacterV2" : "age-system.ageSystemSheetCharStatBlockV2";
+            // The native sheetClass update handles closing and reopening the sheet.
+            return await this.actor.setFlag("core", "sheetClass", target);
+        })().catch(error => {
+            console.error("AGE System | Character sheet switch failed.", error);
+            ui.notifications.error(error.message, {console: false});
+            return null;
+        }).finally(() => {
+            this._ageSheetSwitchPromise = null;
+            if (button) button.disabled = false;
+        });
+        return this._ageSheetSwitchPromise;
+    }
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    const prepared = await prepareActorV2Context(this);
+    if (this.actor.type === "char" && this.actor.isOwner) {
+      prepared.progressionSummary = characterAdvancementSummary({actor: this.actor});
+    }
+    return Object.assign(context, prepared);
     }
 
     _processFormData(event, form, formData) {
@@ -104,8 +167,15 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
                 }
             );
         };
+        return this._queueCharacterSubmit(submit, event?.target?.name);
+    }
+
+    _queueCharacterSubmit(submit, control) {
         const pending = this._ageSubmitQueue.then(submit, submit);
-        this._ageSubmitQueue = pending.catch(() => undefined);
+        this._ageSubmitQueue = pending.then(() => {
+            if (control) this._ageSubmitErrors.delete(control);
+            else this._ageSubmitErrors.clear();
+        }, error => { this._ageSubmitErrors.set(control ?? "", error); });
         return pending;
     }
 
@@ -136,6 +206,7 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
             case "vehicle": this.#bindVehicle(root); break;
             case "spaceship": this.#bindSpaceship(root); break;
             case "organization": this.#bindOrganization(root); break;
+            case "force": this.#bindForce(root); break;
         }
         // Preserve the generic V1-era integration hook while modules migrate
         // to renderActorSheetV2 or this sheet's class-specific AppV2 hook.
@@ -222,11 +293,25 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
         if (this.actor.isOwner) {
             new foundry.applications.ux.ContextMenu.implementation(root, ".focus-options", this.focusContextMenu, {jQuery: false});
             new foundry.applications.ux.ContextMenu.implementation(root, ".item-card .main-data img", this.itemContextMenu, {jQuery: false});
+            bindAll(root, ".open-advancement-center", "click", event => this._openAdvancementCenter(event));
             bindAll(root, ".item-equip", "click", call("_onItemActivate"));
             bindAll(root, ".item-card .main-data", "click", event => this._openOwnedItem(event));
             bindAll(root, ".conditions .item-name", "click", call("_onChangeCondition"));
             bindAll(root, ".mod-active.icon", "click", call("_onToggleItemMod"));
             bindAll(root, ".trait-item", "click", call("_onTraitGroupToggle"));
+        }
+    }
+
+    async _openAdvancementCenter(event) {
+        event?.preventDefault?.();
+        try {
+            return await openActorAdvancementCenter({actor: this.actor});
+        } catch (error) {
+            if (!error?.code && !String(error?.name ?? "").startsWith("AgeProgression")) {
+                console.warn("AGE System | Character advancement is unavailable.", error);
+            }
+            ui.notifications.warn(error?.message ?? "AGE advancement is unavailable.", {console: false});
+            return null;
         }
     }
 
@@ -246,9 +331,7 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
                 }
             );
         };
-        const pending = this._ageSubmitQueue.then(submit, submit);
-        this._ageSubmitQueue = pending.catch(() => undefined);
-        return pending;
+        return this._queueCharacterSubmit(submit, target.name);
     }
 
     #bindVehicle(root) {
@@ -300,7 +383,73 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
         }
     }
 
+    #bindForce(root) {
+        const perform = async (event, callback) => {
+            event.preventDefault();
+            const button = event.currentTarget;
+            button.disabled = true;
+            try {
+                await callback();
+            } catch (error) {
+                console.error("AGE System | Mass Battle Force action failed.", error);
+                ui.notifications.error(error.message, {console: false});
+            } finally {
+                button.disabled = false;
+            }
+        };
+        for (const zone of root.querySelectorAll("[data-force-drop]")) {
+            zone.addEventListener("dragenter", event => event.currentTarget.classList.add("dragover"));
+            zone.addEventListener("dragleave", event => event.currentTarget.classList.remove("dragover"));
+            zone.addEventListener("drop", event => event.currentTarget.classList.remove("dragover"));
+        }
+        bindAll(root, ".mass-battle-roll-stage", "click", event => perform(event,
+            () => MassBattleService.rollStage(this.actor, event.currentTarget.dataset.stage)));
+        bindAll(root, ".mass-battle-crisis", "click", event => perform(event,
+            () => MassBattleService.applyCrisisPoint(this.actor, event.currentTarget.dataset.stage)));
+        bindAll(root, ".mass-battle-use-threshold", "click", event => perform(event,
+            () => MassBattleService.useSuggestedThreshold(this.actor)));
+        bindAll(root, ".mass-battle-preview-casualties", "click", event => perform(event,
+            () => MassBattleService.previewCasualties(this.actor)));
+        bindAll(root, ".mass-battle-apply-casualties", "click", event => perform(event,
+            () => MassBattleService.applyCasualties(this.actor, event.currentTarget.dataset.previewId)));
+        bindAll(root, ".mass-battle-undo-casualties", "click", event => perform(event,
+            () => MassBattleService.undoLastCasualties(this.actor, event.currentTarget.dataset.historyId)));
+        bindAll(root, ".mass-battle-reset", "click", event => perform(event, async () => {
+            const confirmed = await showConfirmDialog({
+                title: game.i18n.localize("age-system.MASS_BATTLE.resetProgress"),
+                content: `<p>${game.i18n.localize("age-system.MASS_BATTLE.resetProgressConfirm")}</p>`
+            });
+            if (confirmed) await MassBattleService.resetBattle(this.actor);
+        }));
+        bindAll(root, "[data-force-clear]", "click", event => perform(event, async () => {
+            const kind = event.currentTarget.dataset.forceClear;
+            if (kind === "commander") await this.actor.update({
+                "system.commander.uuid": "",
+                "system.commander.name": ""
+            });
+            if (kind === "opponent") await this.actor.update({"system.battle.opponentUuid": ""});
+        }));
+    }
+
     async _onDropActor(event, actor) {
+        if (this.actor.type === "force") {
+            const dropZone = event.target?.closest?.("[data-force-drop]");
+            const kind = dropZone?.dataset?.forceDrop;
+            if (kind === "commander" && actor?.type === "char") {
+                await this.actor.update({
+                    "system.commander.uuid": actor.uuid,
+                    "system.commander.name": actor.name,
+                    "system.commander.useLinked": true
+                });
+                return actor;
+            }
+            if (kind === "opponent" && actor?.type === "force" && actor.uuid !== this.actor.uuid) {
+                await this.actor.update({"system.battle.opponentUuid": actor.uuid});
+                return actor;
+            }
+            ui.notifications.warn(game.i18n.localize("age-system.MASS_BATTLE.invalidDrop"));
+            return null;
+        }
         if (!["vehicle", "spaceship"].includes(this.actor.type)) return super._onDropActor(event, actor);
         return await dropChar(event, this.actor) ? actor : null;
     }
@@ -397,7 +546,7 @@ class AgeSystemActorSheetV2Base extends HandlebarsApplicationMixin(ActorSheetV2)
 
 export class ageSystemSheetCharacterV2 extends AgeSystemActorSheetV2Base {
     static DEFAULT_OPTIONS = {classes: ["char-sheet-alt"], position: {width: 700, height: 875}};
-    static PARTS = {main: {template: "systems/age-system/templates/sheets/v2/parity/actor-character.hbs", scrollable: [".sheet-main-content"]}};
+    static PARTS = {main: {template: "systems/age-system/templates/sheets/v2/parity/actor-character.hbs", scrollable: [".sheet-tab-section"]}};
 }
 
 export class ageSystemSheetCharStatBlockV2 extends AgeSystemActorSheetV2Base {
@@ -425,6 +574,19 @@ export class ageSystemSheetSpaceshipV2 extends AgeSystemActorSheetV2Base {
 export class ageSystemSheetOrgV2 extends AgeSystemActorSheetV2Base {
     static DEFAULT_OPTIONS = {classes: ["char", "stat-block"], position: {width: 400, height: 650}};
     static PARTS = {main: {template: "systems/age-system/templates/sheets/v2/parity/actor-organization.hbs", scrollable: [""]}};
+}
+
+export class ageSystemSheetForceV2 extends AgeSystemActorSheetV2Base {
+    static DEFAULT_OPTIONS = {
+        classes: ["force", "age-v5-sheet", "mass-battle-force"],
+        position: {width: 880, height: 820}
+    };
+    static PARTS = {
+        main: {
+            template: "systems/age-system/templates/sheets/v2/parity/actor-force.hbs",
+            scrollable: [".mass-battle-force__body"]
+        }
+    };
 }
 
 export default ageSystemSheetCharacterV2;

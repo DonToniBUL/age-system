@@ -5,9 +5,12 @@ import {normalizeDamageSource} from "../damage-utils.js";
 import {focusList} from "../settings.js";
 import {modifiersList, sortObjArrayByName} from "../setup.js";
 import {validateClassDefinition} from "../class-advancement.js";
+import {enrichAgeRichText, enrichEmbeddedLongDescriptions} from "./embedded-description.js";
+import {prepareMassBattleContext} from "../mass-battle.js";
 
 const ACTOR_EDITOR_PATHS = Object.freeze({
     char: ["system.features"],
+    force: ["system.description", "system.notes", "system.gmNotes"],
     organization: ["system.description"],
     spaceship: ["system.description"],
     vehicle: ["system.description"]
@@ -25,15 +28,9 @@ const ITEM_EDITOR_PATHS = Object.freeze([
 
 async function enrichFields(document, paths) {
     const enriched = {};
-    const textEditor = foundry.applications.ux.TextEditor.implementation;
     for (const path of paths) {
         const raw = String(foundry.utils.getProperty(document, path) ?? "");
-        const html = await textEditor.enrichHTML(raw, {
-            async: true,
-            secrets: document.isOwner,
-            relativeTo: document
-        });
-        foundry.utils.setProperty(enriched, path, html?.trim() ? html : raw);
+        foundry.utils.setProperty(enriched, path, await enrichAgeRichText(raw, document));
     }
     return enriched;
 }
@@ -70,6 +67,7 @@ async function prepareCharacterContext(sheet) {
     for (const type of ["weapon", "talent", "power", "focus", "stunts", "equipment", "honorifics", "relationship", "membership"]) {
         data[type] = itemSorted.filter(item => item.type === type);
     }
+    await enrichEmbeddedLongDescriptions(data.power, sheet.actor);
     data.stunts.sort((a, b) => a.system.stuntPoints - b.system.stuntPoints);
     for (const [key, collection] of Object.entries({
         favWeapon: "weapon", favPower: "power", favEquip: "equipment", favStunt: "stunts",
@@ -134,6 +132,15 @@ function prepareOrganizationContext(sheet) {
     };
 }
 
+async function prepareForceContext(sheet) {
+    const data = sheet.actor.toObject(false);
+    return {
+        ...baseActorContext(sheet, data),
+        config: CONFIG.ageSystem,
+        massBattle: await prepareMassBattleContext(sheet.actor)
+    };
+}
+
 export async function prepareActorV2Context(sheet) {
     let context;
     switch (sheet.actor.type) {
@@ -141,6 +148,7 @@ export async function prepareActorV2Context(sheet) {
         case "vehicle": context = prepareVehicleContext(sheet); break;
         case "spaceship": context = prepareSpaceshipContext(sheet); break;
         case "organization": context = prepareOrganizationContext(sheet); break;
+        case "force": context = await prepareForceContext(sheet); break;
         default: throw new Error(`AGE System | No native AppV2 context for Actor type ${sheet.actor.type}.`);
     }
     context.ageEditors = await enrichFields(sheet.actor, ACTOR_EDITOR_PATHS[sheet.actor.type] ?? []);

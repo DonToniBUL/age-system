@@ -1,30 +1,43 @@
-<form class="game-settings-window feature-controls">
-    <h1>{{localize "SETTINGS.advSettings"}}</h1>
-    {{#each advSettings as |setting|}}
-    {{#with (lookup ../settings [setting])~}}
-    <div class="form-group">
-        <label>{{name}}</label>
-        <div class="form-fields">
-            {{#if isSelect}}
-            {{log this}}
-            <select name="{{key}}">
-                {{selectOptions choices selected=value localize=true}}
-            </select>
-            {{else}}
-            {{#if (eq type 'Boolean')}}
-            <input type="checkbox" name="{{key}}" {{#if value}}checked{{/if}} data-dtype="Boolean">
-            {{else}}
-            <input type="{{#if (eq type 'String')}}text{{else}}number{{/if}}" name="{{key}}" value="{{value}}" data-dtype="{{type}}">
-            {{/if}}
-            {{/if}}
+<form class="age-utility-workflow__surface age-advanced-settings colorset-selection game-settings-window age-advanced-settings-form" aria-labelledby="age-advanced-settings-title" autocomplete="off">
+    <header class="age-utility-workflow__header colorset-first-tier">
+      <div>
+        <span class="age-utility-workflow__kicker">{{localize "SETTINGS.advSettings"}}</span>
+        <h1 id="age-advanced-settings-title">{{localize "SETTINGS.advSettings"}}</h1>
+      </div>
+      <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+    </header>
+
+    <div class="age-utility-workflow__scroll">
+      <section class="age-utility-workflow__panel colorset-second-tier feature-controls" aria-labelledby="age-advanced-settings-fields-title">
+        <div class="age-utility-workflow__heading">
+          <h2 id="age-advanced-settings-fields-title">{{localize "SETTINGS.advSettings"}}</h2>
         </div>
-        <p class="notes">{{hint}}</p>
+        <div class="age-utility-workflow__grid age-utility-workflow__grid--two">
+        {{#each advSettings as |setting|}}
+        {{#with (lookup ../settings [setting])~}}
+        <div class="form-group">
+          <label for="advanced-setting-{{key}}">{{name}}</label>
+          <div class="form-fields">
+            {{#if isSelect}}
+            <select id="advanced-setting-{{key}}" name="{{key}}">
+              {{selectOptions choices selected=value localize=true}}
+            </select>
+            {{else if (eq type "Boolean")}}
+            <input id="advanced-setting-{{key}}" type="checkbox" name="{{key}}" {{checked value}} data-dtype="Boolean">
+            {{else}}
+            <input id="advanced-setting-{{key}}" type="{{#if (eq type "String")}}text{{else}}number{{/if}}" name="{{key}}" value="{{value}}" data-dtype="{{type}}">
+            {{/if}}
+          </div>
+          <p class="notes">{{hint}}</p>
+        </div>
+        {{/with}}
+        {{/each}}
+        </div>
+      </section>
     </div>
-    {{/with}}
-    {{/each}}
+
+    <footer class="age-utility-workflow__footer sheet-footer">
+      <button type="button" class="default-button close" data-action="cancel">{{localize "age-system.cancel"}}</button>
+      <button type="button" class="default-button accept-settings" data-action="save">{{localize "age-system.saveSettings"}}</button>
+    </footer>
 </form>
-<hr>
-<footer class="sheet-footer flexrow">
-    <button type="button" class="default-button close">{{localize "age-system.cancel"}}</button>
-    <button type="button" class="default-button accept-settings">{{localize "age-system.saveSettings"}}</button>
-</footer>

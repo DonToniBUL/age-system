@@ -14,14 +14,15 @@ export const APPV2_ITEM_SHEET_CLASSES = Object.freeze({
     weapon: "age-system.ageSystemSheetWeaponV2"
 });
 
-export const STABLE_APPV2_DEFAULT_VERSION = "5.0.0";
+export const STABLE_APPV2_DEFAULT_VERSION = "5.3.2";
 
 export const STABLE_APPV2_SHEET_DEFAULTS = Object.freeze({
     Actor: Object.freeze({
         char: "age-system.ageSystemSheetCharacterV2",
         vehicle: "age-system.ageSystemSheetVehicleV2",
         spaceship: "age-system.ageSystemSheetSpaceshipV2",
-        organization: "age-system.ageSystemSheetOrgV2"
+        organization: "age-system.ageSystemSheetOrgV2",
+        force: "age-system.ageSystemSheetForceV2"
     }),
     Item: APPV2_ITEM_SHEET_CLASSES
 });

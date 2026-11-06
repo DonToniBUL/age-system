@@ -3,12 +3,34 @@ import { refreshAgeItemPilesCurrencies } from "./item-piles.js";
 import BreatherSettings from "./breather.js";
 import { AdvancedSettings, QuickSettings } from "./settings-helper.js";
 import { localizePower } from "./setup.js";
-import {applyColorScheme} from "./color-scheme.js";
+import {
+  COLOR_SCHEMES,
+  applyColorScheme,
+  persistCurrentWorldColorScheme
+} from "./color-scheme.js";
 import {registerAutomationSettings} from "./automation/settings.js";
 
 // const debouncedReload = debounce(() => window.location.reload(), 250);
 const debouncedReload = () => foundry.utils.debounce(window.location.reload(), 250)
-export const registerSystemSettings = async function() {
+const equal = (left, right) => {
+  if (foundry.utils.equals) return foundry.utils.equals(left, right);
+  if (foundry.utils.objectsEqual) return foundry.utils.objectsEqual(left, right);
+  return JSON.stringify(left) === JSON.stringify(right);
+};
+export const registerSystemSettings = function() {
+
+  const colorChoices = {
+    "modern-blue": "SETTINGS.colorModernBlue",
+    "fantasy-blue": "SETTINGS.colorFantasyBlue",
+    "dragon-red": "SETTINGS.colorDragonRed",
+    "ronin-green": "SETTINGS.colorRoninGreen",
+    "expanded-blue": "SETTINGS.colorExpandedBlue",
+    "folded-purple": "SETTINGS.colorFoldedPurple",
+    "select-one": "SETTINGS.colorSelectOne",
+    "the-grey": "SETTINGS.colorTheGrey",
+    "red-warrior": "SETTINGS.colorRedWarrior",
+    "never-dead": "SETTINGS.colorNeverDead"
+  };
 
   /**
    * Register Breather Parameters
@@ -72,25 +94,37 @@ export const registerSystemSettings = async function() {
     config: true,
     default: "fantasy-blue",
     type: String,
-    choices: {
-      "modern-blue": "SETTINGS.colorModernBlue",
-      "fantasy-blue": "SETTINGS.colorFantasyBlue",
-      "dragon-red": "SETTINGS.colorDragonRed",
-      "ronin-green": "SETTINGS.colorRoninGreen",
-      "expanded-blue": "SETTINGS.colorExpandedBlue",
-      "folded-purple": "SETTINGS.colorFoldedPurple",
-      "select-one": "SETTINGS.colorSelectOne",
-      "the-grey": "SETTINGS.colorTheGrey",
-      "red-warrior": "SETTINGS.colorRedWarrior",
-      "never-dead": "SETTINGS.colorNeverDead"
-      // "black-white": "SETTINGS.blackWhite"
-    },
+    choices: colorChoices,
     onChange: async value => {
-      const newColor = applyColorScheme(value);
-      await game.user.setFlag("age-system", "colorScheme", newColor);
+      const newColor = await persistCurrentWorldColorScheme(value);
       if (game.settings.get("age-system", "serendipity") || game.settings.get("age-system", "complication")) game.ageSystem.ageTracker.refresh();
       refreshSheets();
     },
+  });
+
+  game.settings.register("age-system", "worldColorScheme", {
+    name: "SETTINGS.worldColorScheme",
+    hint: "SETTINGS.worldColorSchemeHint",
+    scope: "world",
+    requiresReload: false,
+    config: true,
+    restricted: true,
+    default: "fantasy-blue",
+    type: String,
+    choices: colorChoices,
+    onChange: value => {
+      if (!COLOR_SCHEMES.includes(game.user?.getFlag?.("age-system", "colorScheme"))) {
+        applyColorScheme(value);
+        refreshSheets();
+      }
+    }
+  });
+
+  game.settings.register("age-system", "colorSchemePreferenceMigrated", {
+    scope: "client",
+    config: false,
+    default: false,
+    type: Boolean
   });
 
   /**
@@ -351,7 +385,7 @@ export const registerSystemSettings = async function() {
   });
 
   /**
-   * Record the one-time 5.0 transition of world default sheets to AppV2.
+   * Record versioned, settings-only additions to the stable AppV2 defaults.
    * Per-document sheet selections are not part of this setting.
    */
   game.settings.register("age-system", "appV2DefaultMigrationVersion", {
@@ -654,7 +688,7 @@ export async function updateFocusCompendia() {
 
   // Identify if Item Compendipia were added or deleted and warn user that new option will appear only after System Refresh (F5)
   // TODO - add dynamic choices for System Setting
-  if (!foundry.utils.objectsEqual(list, actualChoices)) {
+  if (!equal(list, actualChoices)) {
     const newPacks = [];
     const oldPacks = [];
     for (const p in actualChoices) if (!list[p]) oldPacks.push(actualChoices[p]);

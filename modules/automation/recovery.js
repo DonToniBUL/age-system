@@ -1,9 +1,15 @@
 import {ageSystem} from "../config.js";
+import {applyColorSchemeToElement} from "../color-scheme.js";
 import {AgeTransactionService} from "./action-transactions.js";
 import {automationFeatureEnabled} from "./mode.js";
 
 const SYSTEM_ID = "age-system";
 const RECOVERY_PATH = `flags.${SYSTEM_ID}.automation.recovery`;
+const ApplicationV2 = globalThis.foundry?.applications?.api?.ApplicationV2
+  ?? globalThis.foundry?.appv1?.api?.FormApplication
+  ?? class {};
+const HandlebarsApplicationMixin = globalThis.foundry?.applications?.api?.HandlebarsApplicationMixin
+  ?? (Base => Base);
 
 function values(collection) {
   if (!collection) return [];
@@ -150,30 +156,52 @@ export class RecoveryService {
 
   static open() {
     if (!this.enabled) return false;
-    return new RecoveryAssistant().render(true);
+    const application = new RecoveryAssistant();
+    try {
+      const renderResult = application.render({force: true});
+      if (renderResult?.then instanceof Function) {
+        void renderResult.catch(error => console.error("AGE System | Recovery Assistant failed to open.", error));
+      }
+    } catch (error) {
+      console.error("AGE System | Recovery Assistant failed to open.", error);
+    }
+    return application;
   }
 }
 
-export class RecoveryAssistant extends foundry.appv1.api.FormApplication {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "age-recovery-assistant",
-      template: "systems/age-system/templates/automation/recovery-assistant.hbs",
-      classes: ["age-system", "dialog"],
-      title: game.i18n.localize("age-system.AUTOMATION.recoveryAssistant"),
-      width: 620,
-      height: 620,
+export class RecoveryAssistant extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "age-recovery-assistant",
+    classes: ["age-system", "age-v5-parity-sheet", "age-utility-workflow", "age-recovery-assistant-v2"],
+    position: {width: 620, height: 620},
+    window: {
+      title: "age-system.AUTOMATION.recoveryAssistant",
+      icon: "fa-solid fa-bed",
       resizable: true,
-      minimizable: true,
-      closeOnSubmit: false
-    });
+      minimizable: true
+    },
+    actions: {
+      apply: RecoveryAssistant._apply
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/age-system/templates/automation/recovery-assistant.hbs",
+      scrollable: [".age-utility-workflow__scroll"]
+    }
+  };
+
+  /** Preserve the boolean render signature used by the automation service. */
+  render(options = {}) {
+    if (typeof options === "boolean") options = {force: options};
+    return super.render(options ?? {});
   }
 
-  getData() {
+  _buildContext() {
     const selected = selectedActorUuids();
     const gameMode = game.settings.get(SYSTEM_ID, "gameMode");
     return {
-      ...super.getData(),
       gameMode,
       isGritty: gameMode === "gritty",
       isCinematic: gameMode === "cinematic",
@@ -188,23 +216,56 @@ export class RecoveryAssistant extends foundry.appv1.api.FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    html.find(".age-recovery-form").on("submit", async event => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new foundry.applications.ux.FormDataExtended(form).object;
-      const actorUuids = Array.from(form.querySelectorAll("input[name='actorUuid']:checked"), input => input.value);
-      if (!actorUuids.length) return ui.notifications.warn(game.i18n.localize("age-system.AUTOMATION.requestActorsRequired"));
-      await RecoveryService.recoverMany(actorUuids, data.kind, {
-        grittyWoundDamage: data.grittyWoundDamage === true,
-        cinematicOnlyStun: data.cinematicOnlyStun === true
-      });
-      this.render(false);
+  getData() {
+    const base = typeof super.getData === "function" ? super.getData() : {};
+    return {...base, ...this._buildContext()};
+  }
+
+  async _prepareContext(options) {
+    const context = typeof super._prepareContext === "function"
+      ? await super._prepareContext(options)
+      : {};
+    return Object.assign(context, this._buildContext());
+  }
+
+  async _onFirstRender(context, options) {
+    if (typeof super._onFirstRender === "function") await super._onFirstRender(context, options);
+    this.element?.addEventListener("submit", event => {
+      if (!event.target?.matches?.(".age-recovery-form")) return;
+      void this._submitRecovery(event, event.target);
     });
   }
 
-  _updateObject() {}
+  async _onRender(context, options) {
+    if (typeof super._onRender === "function") await super._onRender(context, options);
+    applyColorSchemeToElement(this.element);
+    applyColorSchemeToElement(this.element?.querySelector?.(".colorset-selection"));
+  }
+
+  async _submitRecovery(event, form) {
+    event.preventDefault();
+    if (!form) return false;
+    if (form.checkValidity?.() === false) {
+      form.reportValidity?.();
+      return false;
+    }
+    const data = new foundry.applications.ux.FormDataExtended(form).object;
+    const actorUuids = Array.from(form.querySelectorAll("input[name='actorUuid']:checked"), input => input.value);
+    if (!actorUuids.length) {
+      ui.notifications.warn(game.i18n.localize("age-system.AUTOMATION.requestActorsRequired"));
+      return false;
+    }
+    const result = await RecoveryService.recoverMany(actorUuids, data.kind, {
+      grittyWoundDamage: data.grittyWoundDamage === true,
+      cinematicOnlyStun: data.cinematicOnlyStun === true
+    });
+    await this.render({force: true});
+    return result;
+  }
+
+  static async _apply(event, target) {
+    return this._submitRecovery(event, target?.closest?.(".age-recovery-form"));
+  }
 }
 
 export default RecoveryService;

@@ -1,0 +1,814 @@
+/* AGE 5.4.0 utility workflows
+   AppV2 replacements for the remaining GM/player utility windows use only
+   semantic palette tokens. Their services, settings, and stored data are
+   intentionally outside this presentation layer. */
+
+.application.age-system.age-utility-workflow .window-content {
+    container-name: age-utility-workflow;
+    container-type: inline-size;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+}
+
+.application.age-system.age-utility-workflow .window-content > .age-utility-workflow__surface,
+.application.age-system.age-utility-workflow .window-content > section > .age-utility-workflow__surface {
+    height: 100%;
+}
+
+.age-utility-workflow__surface {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    overflow: hidden;
+}
+
+.age-utility-workflow__header {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.85rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 0.8rem 1rem;
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-bottom: 3px solid var(--age-v5-gold, #d1a52b);
+}
+
+.age-utility-workflow__header > :first-child {
+    min-width: 0;
+}
+
+.age-utility-workflow__header :where(h1, h2, h3, p, span, small) {
+    margin: 0;
+    color: inherit;
+}
+
+.age-utility-workflow__header :where(h1, h2) {
+    font: 700 1.55rem/1.12 Georgia, serif;
+}
+
+.age-utility-workflow__header > i {
+    flex: 0 0 auto;
+    font-size: 1.75rem;
+    opacity: 0.92;
+}
+
+.age-utility-workflow__kicker {
+    display: block;
+    margin-bottom: 0.12rem;
+    color: inherit;
+    font-size: 0.67rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.age-utility-workflow__scroll {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+    min-height: 0;
+    padding: 0.75rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.age-utility-workflow__panel {
+    min-width: 0;
+    padding: 0.75rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+    border-radius: var(--age-v5-radius, 8px);
+    box-shadow: 0 2px 8px rgb(18 29 32 / 9%);
+}
+
+.age-utility-workflow__heading,
+.age-utility-workflow__card-header,
+.age-utility-workflow__actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.age-utility-workflow__heading {
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 25%, transparent);
+}
+
+.age-utility-workflow__heading :where(h2, h3),
+.age-utility-workflow__card-header :where(h2, h3) {
+    min-width: 0;
+    margin: 0;
+    color: inherit;
+    font-family: Georgia, serif;
+}
+
+.age-utility-workflow__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.age-utility-workflow__grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.age-utility-workflow__field {
+    display: grid;
+    gap: 0.22rem;
+    min-width: 0;
+    color: inherit;
+}
+
+.age-utility-workflow__field > span,
+.age-utility-workflow__label {
+    font-size: 0.72rem;
+    font-weight: 750;
+}
+
+.age-utility-workflow__field--wide {
+    grid-column: 1 / -1;
+}
+
+.age-utility-workflow :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border-color: color-mix(in srgb, var(--age-v5-theme-primary) 42%, transparent);
+}
+
+.age-utility-workflow :where(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--age-v5-theme-primary);
+}
+
+.age-utility-workflow button {
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-color: color-mix(in srgb, var(--age-v5-theme-on-primary) 36%, transparent);
+    font-weight: 700;
+}
+
+.age-utility-workflow button:hover:not(:disabled),
+.age-utility-workflow button:focus-visible {
+    box-shadow: 0 0 0 2px var(--age-v5-gold, #d1a52b);
+}
+
+.age-utility-workflow button:disabled {
+    color: var(--age-v5-theme-disabled-fg, #354246);
+    background: var(--age-v5-theme-disabled-bg, #d6d8d5);
+    cursor: not-allowed;
+}
+
+.age-utility-workflow button.danger {
+    color: #fff;
+    background: #8c252a;
+}
+
+.age-utility-workflow__list {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.age-utility-workflow__card,
+.age-utility-workflow__row {
+    min-width: 0;
+    padding: 0.65rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: color-mix(in srgb, var(--age-v5-theme-editor-bg) 92%, var(--age-v5-theme-primary));
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 24%, transparent);
+    border-radius: 6px;
+}
+
+.age-utility-workflow__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.age-utility-workflow__empty {
+    display: grid;
+    place-items: center;
+    min-height: 5.5rem;
+    margin: 0;
+    padding: 1rem;
+    color: var(--age-v5-theme-editor-fg);
+    border: 1px dashed color-mix(in srgb, var(--age-v5-theme-primary) 50%, transparent);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.age-utility-workflow__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.8rem;
+    padding: 0.22rem 0.48rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.age-utility-workflow__footer {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.55rem;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: 0.6rem 0.75rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border-top: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+}
+
+.age-utility-workflow__footer > :first-child:not(:last-child) {
+    margin-right: auto;
+}
+
+.age-utility-workflow :where(.notes, .hint) {
+    color: color-mix(in srgb, var(--age-v5-theme-editor-fg) 78%, transparent);
+}
+
+/* Stunt Assistant */
+
+.age-stunt-summary .age-stunt-stat {
+    display: grid;
+    gap: 0.2rem;
+    align-content: center;
+    min-height: 4.25rem;
+    text-align: center;
+}
+
+.age-stunt-summary .age-stunt-stat strong {
+    font-size: 1.25rem;
+}
+
+.age-stunt-filter {
+    grid-template-columns: minmax(12rem, 2fr) minmax(10rem, 1fr) auto auto;
+    align-items: end;
+}
+
+.age-stunt-checkbox,
+.age-recovery-option {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    min-height: var(--form-field-height, 2rem);
+}
+
+.age-stunt-copy,
+.age-recovery-actor-copy {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.age-stunt-row.unaffordable {
+    opacity: 0.72;
+}
+
+.age-stunt-cost {
+    grid-template-columns: 4.25rem auto;
+    align-items: center;
+}
+
+.age-stunt-cost input {
+    text-align: center;
+}
+
+.age-stunt-spent {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Recovery Assistant */
+
+.age-recovery-actor {
+    display: block;
+}
+
+.age-recovery-actor > label {
+    justify-content: flex-start;
+}
+
+.age-recovery-actor img {
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    object-fit: cover;
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+    border-radius: 50%;
+}
+
+/* Unified AGE Search */
+
+.age-library-controls {
+    flex: 0 0 auto;
+    margin: 0.75rem 0.75rem 0;
+}
+
+.age-library-toolbar {
+    grid-template-columns: minmax(12rem, 1.6fr) minmax(10rem, 1fr) auto;
+    align-items: end;
+}
+
+.age-library-result {
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+}
+
+.age-library-icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    overflow: hidden;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 6px;
+}
+
+.age-library-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+}
+
+.age-library-result-copy {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.age-library-result-copy > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Rule Profiles */
+
+.age-profile-selection-panel {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.age-profile-selector {
+    align-items: center;
+}
+
+.age-profile-table-scroll {
+    max-width: 100%;
+    overflow: auto;
+}
+
+.age-profile-table-scroll table {
+    width: 100%;
+    min-width: 34rem;
+    border-collapse: collapse;
+}
+
+.age-profile-table-scroll :where(th, td) {
+    padding: 0.45rem 0.55rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 20%, transparent);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.age-profile-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+}
+
+.age-profile-table-scroll tr.is-changed {
+    background: color-mix(in srgb, var(--age-v5-gold, #d1a52b) 16%, transparent);
+}
+
+/* Combat Economy */
+
+.age-combat-economy__total {
+    display: grid;
+    gap: 0.2rem;
+    text-align: center;
+}
+
+.age-combat-economy__total strong {
+    font-size: 1.35rem;
+}
+
+.age-combat-economy__history-entry {
+    grid-template-columns: minmax(5rem, auto) minmax(0, 1fr) auto;
+}
+
+/* System settings utilities */
+
+.age-utility-workflow .form-group {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.9fr) minmax(8rem, 1.1fr);
+    gap: 0.35rem 0.65rem;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+    padding: 0.65rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: color-mix(in srgb, var(--age-v5-theme-editor-bg) 92%, var(--age-v5-theme-primary));
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 22%, transparent);
+    border-radius: 6px;
+}
+
+.age-utility-workflow .form-group > label {
+    min-width: 0;
+    font-weight: 700;
+}
+
+.age-utility-workflow .form-group .form-fields {
+    min-width: 0;
+}
+
+.age-utility-workflow .form-group .notes,
+.age-utility-workflow .form-group .hint {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.age-quick-settings__preset {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: start;
+}
+
+.age-quick-settings__preset > .game-preset {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+}
+
+.age-quick-settings__preset > .game-preset img {
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: contain;
+    border: 0;
+}
+
+.age-quick-settings__preset > p {
+    min-width: 0;
+    margin: 0;
+}
+
+.age-quick-settings__preset > a {
+    color: var(--age-v5-theme-primary);
+}
+
+.age-quick-settings__preset.opacity-low {
+    opacity: 0.76;
+}
+
+/* Conditions Workshop */
+
+.age-condition-source-panel {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.age-condition-source {
+    display: flex;
+    gap: 0.6rem 1.25rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.age-condition-source legend {
+    width: 100%;
+    margin-bottom: 0.4rem;
+    font-weight: 750;
+}
+
+.age-condition-source label,
+.age-condition-checkbox {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.age-condition-source :where(input[type="radio"], label),
+.age-condition-checkbox :where(input[type="checkbox"], span) {
+    margin: 0;
+}
+
+.age-condition-source-actions {
+    justify-content: flex-start;
+}
+
+.age-condition-list,
+.age-condition-change-list {
+    list-style: none;
+}
+
+.age-condition-card {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.age-condition-card__header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 25%, transparent);
+}
+
+.age-condition-card__header > strong {
+    overflow: hidden;
+    color: inherit;
+    font: 700 1.15rem/1.25 Georgia, serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.age-condition-card__header button,
+.age-condition-order button,
+.age-condition-changes .effect-control {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 2rem;
+    margin: 0;
+}
+
+.age-condition-order {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.age-condition-identity {
+    display: grid;
+    grid-template-columns: 7.25rem minmax(0, 1fr);
+    gap: 0.75rem;
+    min-width: 0;
+    align-items: start;
+}
+
+.age-condition-image {
+    position: relative;
+    display: block;
+    width: 7.25rem;
+    height: 7.25rem;
+    min-width: 0;
+    padding: 0.22rem;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.age-condition-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+    border-radius: 5px;
+}
+
+.age-condition-image > span {
+    position: absolute;
+    right: 0.42rem;
+    bottom: 0.42rem;
+    display: grid;
+    place-items: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 50%;
+}
+
+.age-condition-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.55rem 0.7rem;
+    min-width: 0;
+    align-items: end;
+}
+
+.age-condition-fields textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+}
+
+.age-condition-checkbox {
+    min-height: var(--form-field-height, 2rem);
+    padding-bottom: 0.25rem;
+    font-weight: 700;
+}
+
+.age-condition-changes {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.age-condition-changes > .age-utility-workflow__heading {
+    margin: 0;
+}
+
+.age-condition-change-list {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.age-condition-change {
+    display: grid;
+    grid-template-columns: minmax(9rem, 2fr) minmax(7rem, 1.15fr) minmax(8rem, 1.35fr) auto;
+    gap: 0.5rem;
+    min-width: 0;
+    align-items: end;
+    padding: 0.55rem;
+    background: color-mix(in srgb, var(--age-v5-theme-editor-bg) 90%, var(--age-v5-theme-primary));
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 20%, transparent);
+    border-radius: 6px;
+}
+
+.age-condition-change > button {
+    min-height: var(--form-field-height, 2rem);
+}
+
+.age-condition-change-list > .age-utility-workflow__empty {
+    min-height: 3.5rem;
+}
+
+.age-condition-portability {
+    justify-content: flex-start;
+}
+
+@container age-utility-workflow (max-width: 680px) {
+    .age-utility-workflow__grid,
+    .age-utility-workflow__grid--two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .age-utility-workflow__heading,
+    .age-utility-workflow__card-header,
+    .age-utility-workflow__actions {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .age-stunt-filter,
+    .age-library-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .age-condition-identity {
+        grid-template-columns: 6rem minmax(0, 1fr);
+    }
+
+    .age-condition-image {
+        width: 6rem;
+        height: 6rem;
+    }
+
+    .age-condition-change {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .age-condition-change > button {
+        justify-self: end;
+    }
+
+    .age-stunt-filter > button,
+    .age-library-toolbar > button {
+        width: 100%;
+    }
+}
+
+@container age-utility-workflow (max-width: 520px) {
+    .age-utility-workflow__header {
+        align-items: flex-start;
+        padding: 0.7rem 0.75rem;
+    }
+
+    .age-utility-workflow__header :where(h1, h2) {
+        font-size: 1.35rem;
+    }
+
+    .age-utility-workflow__scroll {
+        padding: 0.55rem;
+        scrollbar-gutter: auto;
+    }
+
+    .age-utility-workflow__grid,
+    .age-utility-workflow__grid--two,
+    .age-utility-workflow__row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .age-stunt-filter,
+    .age-library-toolbar,
+    .age-library-result,
+    .age-combat-economy__history-entry,
+    .age-utility-workflow .form-group {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .age-condition-source,
+    .age-condition-identity,
+    .age-condition-fields,
+    .age-condition-change {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .age-condition-source {
+        display: grid;
+    }
+
+    .age-condition-image {
+        width: 5.5rem;
+        height: 5.5rem;
+    }
+
+    .age-condition-change > button {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .age-library-result {
+        justify-items: stretch;
+    }
+
+    .age-library-result .age-library-icon {
+        display: none;
+    }
+
+    .age-library-result .age-library-open {
+        width: 100%;
+    }
+
+    .age-utility-workflow .form-group .notes,
+    .age-utility-workflow .form-group .hint {
+        grid-column: auto;
+    }
+
+    .age-stunt-spent {
+        white-space: normal;
+    }
+
+    .age-utility-workflow__field--wide {
+        grid-column: auto;
+    }
+
+    .age-utility-workflow__actions,
+    .age-utility-workflow__footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .age-utility-workflow__footer > :first-child:not(:last-child) {
+        margin-right: 0;
+    }
+
+    .age-utility-workflow__actions > button,
+    .age-utility-workflow__footer > button {
+        width: 100%;
+    }
+}

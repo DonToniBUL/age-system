@@ -1,4 +1,6 @@
 import {normalizeActiveEffectData, statusEffectArray} from "../compat.js";
+import {automationFeatureEnabled} from "./mode.js";
+import {isAuthoritativeGm} from "./authority.js";
 
 const SYSTEM_ID = "age-system";
 
@@ -67,6 +69,11 @@ function actorIsAvailable(actor) {
 }
 
 export class ConditionLifecycleService {
+  static get enabled() {
+    return automationFeatureEnabled("enableCombatLifecycle")
+      && game.settings.get(SYSTEM_ID, "combatLifecycleMode") !== "off";
+  }
+
   static duration(timing, {sourceUuid = null, label = null, combat = game.combat} = {}) {
     return normalizeAgeDuration({
       timing,
@@ -99,7 +106,7 @@ export class ConditionLifecycleService {
     if (existing?.update) {
       const update = {disabled: false};
       if (normalizedDuration) update[`flags.${SYSTEM_ID}.automation.duration`] = normalizedDuration;
-      await existing.update(update);
+      await existing.update(update, {ageAutomation: true});
       return existing;
     }
 
@@ -172,7 +179,8 @@ export class ConditionLifecycleService {
   }
 
   static async onActorUpdate(actor, changed, options = {}) {
-    if (options.ageAutomation === true || actor?.type !== "char") return false;
+    if (!this.enabled || !isAuthoritativeGm()
+      || options.ageAutomation === true || actor?.type !== "char") return false;
     const healthBranch = foundry.utils.getProperty(changed, "system.health");
     const Operator = foundry.data?.operators?.DataFieldOperator;
     const health = typeof Operator?.get === "function"
@@ -180,7 +188,7 @@ export class ConditionLifecycleService {
       : healthBranch?.value;
     if (!Number.isFinite(Number(health))) return false;
     await new Promise(resolve => globalThis.setTimeout(resolve, 75));
-    if (!actorIsAvailable(actor)) return false;
+    if (!this.enabled || !isAuthoritativeGm() || !actorIsAvailable(actor)) return false;
     try {
       if (Number(actor.system?.health?.value) !== Number(health)) return false;
       const existingDying = this.statusEffect(actor, "dying");
@@ -196,7 +204,8 @@ export class ConditionLifecycleService {
         await actor.update({[`flags.${SYSTEM_ID}.automation.dying`]: null, [promptPath]: null}, {ageAutomation: true});
         return true;
       }
-      if (Number(health) > 0 && foundry.utils.getProperty(actor, promptPath) !== null) {
+      const lastHealthPrompt = foundry.utils.getProperty(actor, promptPath);
+      if (Number(health) > 0 && lastHealthPrompt !== undefined && lastHealthPrompt !== null) {
         await actor.update({[promptPath]: null}, {ageAutomation: true});
       }
     } catch (error) {
@@ -209,11 +218,14 @@ export class ConditionLifecycleService {
   static async resolvePrompt(messageOrId) {
     const message = typeof messageOrId === "string" ? game.messages?.get?.(messageOrId) : messageOrId;
     const state = message?.flags?.[SYSTEM_ID]?.automation?.conditionPrompt;
-    if (!state) return false;
+    if (!state || !this.enabled) return false;
     const actor = await foundry.utils.fromUuid(state.actorUuid);
     const resolved = actor?.actor ?? actor;
     if (!resolved || !(game.user?.isGM || resolved.isOwner)) return false;
-    if (state.action === "apply") return this.applyStatus(resolved, state.statusId);
+    if (state.action === "apply") {
+      if (Number(resolved.system?.health?.value) > 0) return false;
+      return this.applyStatus(resolved, state.statusId);
+    }
     const effect = this.statusEffect(resolved, state.statusId);
     if (!effect) return false;
     await effect.update({disabled: true}, {ageAutomation: true});
@@ -221,6 +233,7 @@ export class ConditionLifecycleService {
   }
 
   static async onTurnStart(actor, combat) {
+    if (!this.enabled || !isAuthoritativeGm()) return false;
     const existingDying = this.statusEffect(actor, "dying");
     const dying = existingDying?.disabled === true ? null : existingDying;
     if (!dying || !game.user?.isGM) return false;

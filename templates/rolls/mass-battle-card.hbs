@@ -1,0 +1,23 @@
+<article class="age-system age-v5-chat-card mass-battle-chat-card {{colorScheme}}">
+    <header class="colorset-first-tier">
+        <img src="{{force.img}}" alt="{{force.name}}">
+        <div><small>{{localize "age-system.MASS_BATTLE.actorType"}}</small><h3>{{force.name}}</h3></div>
+    </header>
+    {{#if isStage}}
+    <section><strong>{{labels.stage}}</strong><p>{{#if success}}{{localize "age-system.MASS_BATTLE.testSucceeded"}}{{else}}{{localize "age-system.MASS_BATTLE.testFailed"}}{{/if}} · {{total}} vs TN {{targetNumber}}</p><p>{{localize "age-system.MASS_BATTLE.progress"}}: {{progressBefore}} → {{progressAfter}} / {{threshold}}</p></section>
+    {{/if}}
+    {{#if isCrisis}}
+    <section><strong>{{labels.stage}}</strong><p>{{localize "age-system.MASS_BATTLE.crisisApplied"}} +{{amount}} · {{progressAfter}} / {{threshold}}</p></section>
+    {{/if}}
+    {{#if isCasualtyPreview}}
+    <section><strong>{{localize "age-system.MASS_BATTLE.casualtyPreview"}}</strong><p>{{preview.outcome.rate}}% · {{preview.outcome.casualties}} {{localize "age-system.MASS_BATTLE.totalCasualties"}} · {{preview.outcome.survivors}} {{localize "age-system.MASS_BATTLE.survivors"}}</p></section>
+    {{#if canApply}}<button type="button" data-mass-battle-action="apply"><i class="fa-solid fa-check"></i> {{localize "age-system.MASS_BATTLE.applyCasualties"}}</button>{{/if}}
+    {{/if}}
+    {{#if isCasualtyApplied}}
+    <section><strong>{{localize "age-system.MASS_BATTLE.casualtiesApplied"}}</strong><p>{{history.before}} → {{history.after}}</p></section>
+    {{#if canApply}}<button type="button" data-mass-battle-action="undo"><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.MASS_BATTLE.undoCasualties"}}</button>{{/if}}
+    {{/if}}
+    {{#if isCasualtyUndone}}
+    <section><strong>{{localize "age-system.MASS_BATTLE.casualtiesUndone"}}</strong><p>{{history.after}} → {{history.before}}</p></section>
+    {{/if}}
+</article>

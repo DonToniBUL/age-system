@@ -1,20 +1,9 @@
 import { ClassAdvancementService } from "../class-advancement.js";
 
 export function normalizeFreeTextFields(html, actor) {
-    const updates = {};
-    const freeText = html.find("textarea.free-text");
-    for (const area of freeText) {
-        if (!area.name) continue;
-        const normalized = area.value.replace(/^\s+|\s+$/gm, "");
-        area.value = normalized;
-        if (foundry.utils.getProperty(actor, area.name) !== normalized) updates[area.name] = normalized;
-    }
-    if (foundry.utils.isEmpty(updates)) return Promise.resolve(actor);
-    return actor.update(updates).catch(error => {
-        console.error("AGE System | Failed to normalize sheet text fields.", error);
-        ui.notifications.error(game.i18n.localize("age-system.WARNING.sheetTextUpdateFailed"));
-        return false;
-    });
+    // Retain the legacy integration entry point without changing source or DOM
+    // during rendering. Whitespace, including indentation, is authored content.
+    return Promise.resolve(actor);
 }
 
 /**Prevent Items to be created on non campatible Actor types

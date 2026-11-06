@@ -142,6 +142,32 @@
     min-height: 0;
 }
 
+/* Keep the full Character header and tab navigation stationary while the
+   active tab owns the vertical scroll region. Foundry's PARTS scrollable
+   option restores scroll position but does not create CSS overflow itself. */
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .second-column > .sheet-main-content {
+    flex: 1 1 0;
+    overflow: hidden;
+}
+
+.application.age-system.age-v5-parity-sheet.char-sheet-alt .sheet-main-content > .sheet-tab-section {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+/* Stat-block Power text is display-only but must remain visible without
+   opening each embedded Item. Limit very long entries to a local scroll area. */
+.application.age-system.age-v5-parity-sheet.stat-block .stat-block-power-description {
+    max-height: 12rem;
+    margin-top: 3px;
+    padding: 3px 5px;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
 /* V14's form-associated editor replaces AppV1's activated editor container. */
 .application.age-system.age-v5-parity-sheet prose-mirror.editor {
     display: flex;
@@ -296,6 +322,47 @@
     line-height: 1.15;
 }
 
+/* Keep the Vehicle description visibly editable. The legacy sheet reserved a
+   fixed 200px row for an image and a hover-only editor; AppV2's native editor
+   needs an explicit, responsive editing measure of its own. */
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .image-description {
+    height: auto;
+    min-height: 15rem;
+    max-height: none;
+    gap: 8px;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .image-description > .vehicle-image {
+    flex: 0 1 14rem;
+    width: min(100%, 14rem);
+    height: auto;
+    min-height: 10rem;
+    max-height: 14rem;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle section.vehicle > .image-description > .editor-container {
+    flex: 1 1 22rem;
+    min-width: min(100%, 22rem);
+    min-height: 14rem;
+    padding: 6px;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .image-description prose-mirror.editor {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 11rem;
+    padding: 4px;
+    background: var(--age-v5-theme-editor-bg, #fffdf7);
+    border: 1px solid rgb(0 0 0 / 25%);
+    border-radius: 5px;
+}
+
+.application.age-system.age-v5-parity-sheet.vehicle .image-description prose-mirror.editor > .editor-container {
+    min-height: 8rem;
+}
+
 .application.age-system.age-v5-parity-sheet.spaceship section.spaceship h3 {
     font-size: 1.05rem;
     line-height: 1.15;
@@ -398,202 +465,594 @@
     min-width: 100px;
 }
 
-/* Foundry 14.366 AppV2 editor and form accessibility corrections. These
-   overrides intentionally retain the established AGE palette on surrounding
-   panels while giving editable values a stable, readable surface. */
+/* AGE_V5_PARITY_CONTRAST_START
+   AppV2 contrast hardening. Palette backgrounds stay identical to the
+   accepted themes; semantic foregrounds make their content readable. */
 .application.age-system.age-v5-parity-sheet {
-    --age-editor-surface: #f7f9fb;
-    --age-editor-surface-active: #ffffff;
-    --age-editor-ink: #18212a;
-    --age-editor-muted: #52606d;
-    --age-editor-line: #52606d;
-    --age-editor-focus: #007da7;
-    --age-editor-toolbar: #e7edf1;
+    --age-v5-theme-primary: #0f5f68;
+    --age-v5-theme-secondary: #c9c4b6;
+    --age-v5-theme-surface: #f5f2e9;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #182225;
+    --age-v5-theme-on-surface: #182225;
+    --age-v5-theme-editor-bg: #fffdf7;
+    --age-v5-theme-editor-fg: #182225;
+    --age-v5-theme-control-bg: #fffdf7;
+    --age-v5-theme-control-fg: #182225;
+    --age-v5-theme-disabled-bg: #e5e2da;
+    --age-v5-theme-disabled-fg: #354246;
 }
 
-.application.age-system.age-v5-parity-sheet :is(
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not(.colorset-first-tier),
-    select,
-    textarea
-) {
-    color: var(--age-editor-ink) !important;
-    background-color: rgb(255 255 255 / 76%) !important;
-    border-color: rgb(51 65 75 / 68%) !important;
+.application.age-system.age-v5-parity-sheet.colorset-modern-blue {
+    --age-v5-theme-primary: #007dad;
+    --age-v5-theme-secondary: #35a5ca;
+    --age-v5-theme-surface: #b9dbeb;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #101416;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet :is(input, select, textarea)::placeholder {
-    color: var(--age-editor-muted);
-    opacity: 1;
+.application.age-system.age-v5-parity-sheet.colorset-fantasy-blue {
+    --age-v5-theme-primary: #0f4f5b;
+    --age-v5-theme-secondary: #0f0f0f;
+    --age-v5-theme-surface: #91b6d4;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet :is(input, select, textarea):focus-visible {
-    border-color: var(--age-editor-focus) !important;
-    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 55%, transparent);
-    outline-offset: 1px;
-    box-shadow: 0 0 0 1px rgb(255 255 255 / 85%) !important;
+.application.age-system.age-v5-parity-sheet.colorset-dragon-red {
+    --age-v5-theme-primary: #83272a;
+    --age-v5-theme-secondary: #979899;
+    --age-v5-theme-surface: #e0beb1;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #101416;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet :is(input, select, textarea):disabled,
-.application.age-system.age-v5-parity-sheet :is(input, textarea)[readonly] {
-    color: #34414c !important;
-    background-color: rgb(235 239 242 / 82%) !important;
-    opacity: 1;
+.application.age-system.age-v5-parity-sheet.colorset-ronin-green {
+    --age-v5-theme-primary: #155f0e;
+    --age-v5-theme-secondary: #92b65f;
+    --age-v5-theme-surface: #c2f5aa;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #101416;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor {
-    box-sizing: border-box;
-    min-height: 2.5rem;
-    overflow: hidden;
-    color: var(--age-editor-ink);
-    color-scheme: light;
-    background: var(--age-editor-surface);
-    border: 1px solid var(--age-editor-line);
-    border-radius: 5px;
-    box-shadow: inset 0 1px 2px rgb(15 23 42 / 8%);
+.application.age-system.age-v5-parity-sheet.colorset-expanded-blue {
+    --age-v5-theme-primary: #005971;
+    --age-v5-theme-secondary: #112339;
+    --age-v5-theme-surface: #e6e7e8;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor > .editor-content {
-    padding: 0.5rem 0.65rem;
-    color: var(--age-editor-ink);
-    background: var(--age-editor-surface);
+.application.age-system.age-v5-parity-sheet.colorset-folded-purple {
+    --age-v5-theme-primary: #565183;
+    --age-v5-theme-secondary: #625b68;
+    --age-v5-theme-surface: #cfccde;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > .editor-content {
-    padding-right: 2.75rem;
+.application.age-system.age-v5-parity-sheet.colorset-select-one {
+    --age-v5-theme-primary: #273249;
+    --age-v5-theme-secondary: #4d627a;
+    --age-v5-theme-surface: #768d9f;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle {
-    display: inline-grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    margin: 0.25rem;
-    color: #ffffff;
-    background: #334e5c;
-    border: 1px solid #ffffff;
-    border-radius: 4px;
-    opacity: 0.9;
+.application.age-system.age-v5-parity-sheet.colorset-the-grey {
+    --age-v5-theme-primary: #3d3e3f;
+    --age-v5-theme-secondary: #6b6a6a;
+    --age-v5-theme-surface: #b4b6b3;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:hover,
-.application.age-system.age-v5-parity-sheet prose-mirror.editor.inactive:not([disabled]) > button.toggle:focus-visible {
-    color: #ffffff;
-    background: var(--age-editor-focus);
-    opacity: 1;
+.application.age-system.age-v5-parity-sheet.colorset-red-warrior {
+    --age-v5-theme-primary: #751119;
+    --age-v5-theme-secondary: #b22126;
+    --age-v5-theme-surface: #d1635b;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor.active {
-    color: var(--age-editor-ink);
-    background: var(--age-editor-surface-active);
-    border-color: var(--age-editor-focus);
-    outline: 2px solid color-mix(in srgb, var(--age-editor-focus) 45%, transparent);
-    outline-offset: 1px;
+.application.age-system.age-v5-parity-sheet.colorset-never-dead {
+    --age-v5-theme-primary: #663322;
+    --age-v5-theme-secondary: #58705a;
+    --age-v5-theme-surface: #eeddcd;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #ffffff;
+    --age-v5-theme-on-surface: #101416;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor :is(.ProseMirror, .source-editor) {
-    color: var(--age-editor-ink);
-    background: var(--age-editor-surface-active);
-    caret-color: var(--age-editor-ink);
+.application.age-system.age-v5-parity-sheet .window-content,
+.application.age-system.age-v5-parity-sheet .sheet-main-content,
+.application.age-system.age-v5-parity-sheet .sheet-tab-section,
+.application.age-system.age-v5-parity-sheet .item-card-stats,
+.application.age-system.age-v5-parity-sheet .mod-card {
+    color: var(--age-v5-theme-on-surface);
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor .ProseMirror {
-    box-sizing: border-box;
-    min-height: 4rem;
-    padding: 0.55rem 0.65rem;
-    border-top: 1px solid #c1cad1;
-    outline: 0;
+.application.age-system.age-v5-parity-sheet .colorset-first-tier {
+    color: var(--age-v5-theme-on-primary);
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor menu {
-    color: var(--age-editor-ink);
-    background: var(--age-editor-toolbar);
-    border-bottom: 1px solid #aeb9c2;
+.application.age-system.age-v5-parity-sheet .colorset-second-tier {
+    color: var(--age-v5-theme-on-surface);
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor menu :is(button, select, input) {
-    color: var(--age-editor-ink) !important;
+.application.age-system.age-v5-parity-sheet .colorset-third-tier {
+    color: var(--age-v5-theme-on-secondary);
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor :is(a.content-link, a.inline-roll) {
-    color: #004f78;
-    background: #dcecf5;
-    border-color: #7aa9bf;
+.application.age-system.age-v5-parity-sheet .colorset-first-tier :where(h1, h2, h3, h4, label, span, p, a, strong, small, .title, .labels, .item-name),
+.application.age-system.age-v5-parity-sheet .colorset-second-tier :where(h1, h2, h3, h4, label, span, p, a, strong, small, .title, .labels, .item-name),
+.application.age-system.age-v5-parity-sheet .colorset-third-tier :where(h1, h2, h3, h4, label, span, p, a, strong, small, .title, .labels, .item-name) {
+    color: inherit;
 }
 
-.application.age-system.age-v5-parity-sheet prose-mirror.editor[disabled] {
-    color: var(--age-editor-ink);
-    background: #edf1f4;
-    border-style: dashed;
-}
-
-/* Every selected AGE palette receives explicit semantic ink colours with
-   WCAG-AA contrast on its established first-, second-, and third-tier fills. */
-.application.age-system.age-v5-parity-sheet.colorset-modern-blue { --age-ink-first: #ffffff; --age-ink-second: #00516f; --age-ink-third: #231f20; }
-.application.age-system.age-v5-parity-sheet.colorset-fantasy-blue { --age-ink-first: #ffffff; --age-ink-second: #083b43; --age-ink-third: #dbdada; }
-.application.age-system.age-v5-parity-sheet.colorset-dragon-red { --age-ink-first: #ffffff; --age-ink-second: #83272a; --age-ink-third: #000000; }
-.application.age-system.age-v5-parity-sheet.colorset-ronin-green { --age-ink-first: #ffffff; --age-ink-second: #155f0e; --age-ink-third: #000000; }
-.application.age-system.age-v5-parity-sheet.colorset-expanded-blue { --age-ink-first: #dde2e2; --age-ink-second: #005971; --age-ink-third: #dde2e2; }
-.application.age-system.age-v5-parity-sheet.colorset-folded-purple { --age-ink-first: #ffffff; --age-ink-second: #565183; --age-ink-third: #ffffff; }
-.application.age-system.age-v5-parity-sheet.colorset-select-one { --age-ink-first: #e7ccc3; --age-ink-second: #172033; --age-ink-third: #ffffff; }
-.application.age-system.age-v5-parity-sheet.colorset-the-grey { --age-ink-first: #ccc9c9; --age-ink-second: #3d3e3f; --age-ink-third: #ffffff; }
-.application.age-system.age-v5-parity-sheet.colorset-red-warrior { --age-ink-first: #f7b755; --age-ink-second: #1a0000; --age-ink-third: #ffffff; }
-.application.age-system.age-v5-parity-sheet.colorset-never-dead { --age-ink-first: #ffffff; --age-ink-second: #663322; --age-ink-third: #ffffff; }
-
-.application.age-system.age-v5-parity-sheet .colorset-first-tier,
-.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .values,
-.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .list-sub-header,
-.application.age-system.age-v5-parity-sheet input.colorset-first-tier,
-.application.age-system.age-v5-parity-sheet .sheet-main-content nav a.active,
-.application.age-system.age-v5-parity-sheet .stunt-points.stunted {
-    color: var(--age-ink-first) !important;
-}
-
-.application.age-system.age-v5-parity-sheet .colorset-second-tier,
 .application.age-system.age-v5-parity-sheet .colorset-first-tier.resource .list-sub-header,
-.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .values,
-.application.age-system.age-v5-parity-sheet .colorset-first-tier :is(a.content-link, a.inline-roll),
-.application.age-system.age-v5-parity-sheet .char-sheet input.colorset-second-tier {
-    color: var(--age-ink-second) !important;
+.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .values {
+    color: var(--age-v5-theme-on-surface);
 }
 
-.application.age-system.age-v5-parity-sheet .colorset-third-tier,
 .application.age-system.age-v5-parity-sheet .colorset-first-tier.resource .values,
-.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .list-sub-header,
-.application.age-system.age-v5-parity-sheet .colorset-second-tier :is(a.content-link, a.inline-roll),
-.application.age-system.age-v5-parity-sheet .item-summary label,
-.application.age-system.age-v5-parity-sheet .sheet-main-content nav a:not(.active) {
-    color: var(--age-ink-third) !important;
+.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .list-sub-header {
+    color: var(--age-v5-theme-on-secondary);
 }
 
-/* Keep the full Character header/sidebar in place while the selected tab
-   scrolls inside the AppV2 window. The compact stat block remains unchanged. */
-.application.age-system.age-v5-parity-sheet.char-sheet-alt .sheet-main-content {
-    flex: 1 1 auto;
+.application.age-system.age-v5-parity-sheet .colorset-second-tier.resource .values,
+.application.age-system.age-v5-parity-sheet .colorset-third-tier.resource .list-sub-header {
+    color: var(--age-v5-theme-on-primary);
+}
+
+.application.age-system.age-v5-parity-sheet .colorset-first-tier a.content-link,
+.application.age-system.age-v5-parity-sheet .colorset-first-tier a.inline-roll {
+    color: var(--age-v5-theme-on-surface);
+    background-color: var(--age-v5-theme-surface);
+}
+
+.application.age-system.age-v5-parity-sheet .colorset-second-tier a.content-link,
+.application.age-system.age-v5-parity-sheet .colorset-second-tier a.inline-roll {
+    color: var(--age-v5-theme-on-secondary);
+    background-color: var(--age-v5-theme-secondary);
+}
+
+.application.age-system.age-v5-parity-sheet .colorset-third-tier a.content-link,
+.application.age-system.age-v5-parity-sheet .colorset-third-tier a.inline-roll {
+    color: var(--age-v5-theme-on-primary);
+    background-color: var(--age-v5-theme-primary);
+}
+
+.application.age-system.age-v5-parity-sheet .sheet-main-content nav a {
+    color: var(--age-v5-theme-on-secondary);
+}
+
+.application.age-system.age-v5-parity-sheet .sheet-main-content nav a.active {
+    color: var(--age-v5-theme-on-primary);
+}
+
+.application.age-system.age-v5-parity-sheet .item-summary label {
+    color: var(--age-v5-theme-on-secondary);
+}
+
+.application.age-system.age-v5-parity-sheet .window-content input:not([type="checkbox"]):not([type="radio"]),
+.application.age-system.age-v5-parity-sheet .window-content select,
+.application.age-system.age-v5-parity-sheet .window-content textarea {
+    color: var(--age-v5-theme-control-fg);
+    background-color: var(--age-v5-theme-control-bg);
+}
+
+/* The accepted Vehicle sheet gives GM notes a translucent background with a
+   selector more specific than the generic AppV2 control rule above. Restore
+   the opaque semantic control pair for this AppV2 field only. */
+.application.age-system.age-v5-parity-sheet.vehicle .window-content .gm-secret-notes.gm-secret-notes textarea.free-text {
+    color: var(--age-v5-theme-control-fg);
+    background-color: var(--age-v5-theme-control-bg);
+}
+
+.application.age-system.age-v5-parity-sheet .window-content input:not([type="checkbox"]):not([type="radio"]):disabled,
+.application.age-system.age-v5-parity-sheet .window-content select:disabled,
+.application.age-system.age-v5-parity-sheet .window-content textarea:disabled {
+    color: var(--age-v5-theme-disabled-fg);
+    background-color: var(--age-v5-theme-disabled-bg);
+    opacity: 1;
+}
+
+.application.age-system.age-v5-parity-sheet .window-content input.colorset-first-tier {
+    color: var(--age-v5-theme-on-primary);
+    background-color: var(--age-v5-theme-primary);
+}
+
+.application.age-system.age-v5-parity-sheet .window-content input.colorset-second-tier {
+    color: var(--age-v5-theme-on-surface) !important;
+    background-color: var(--age-v5-theme-surface) !important;
+}
+
+.application.age-system.age-v5-parity-sheet .window-content input.colorset-third-tier {
+    color: var(--age-v5-theme-on-secondary);
+    background-color: var(--age-v5-theme-secondary);
+}
+
+.application.age-system.age-v5-parity-sheet .top-banner .header-details input {
+    color: var(--age-v5-theme-on-primary) !important;
+    background-color: transparent !important;
+}
+
+.application.age-system.age-v5-parity-sheet .top-banner .header-details label {
+    color: var(--age-v5-theme-on-primary) !important;
+}
+
+.application.age-system.age-v5-parity-sheet prose-mirror.editor,
+.application.age-system.age-v5-parity-sheet prose-mirror.editor > .editor-container,
+.application.age-system.age-v5-parity-sheet prose-mirror.editor > .editor-content,
+.application.age-system.age-v5-parity-sheet .item-card-desc,
+.application.age-system.age-v5-parity-sheet .stat-block-power-description {
+    color: var(--age-v5-theme-editor-fg);
+    background-color: var(--age-v5-theme-editor-bg);
+}
+/* AGE_V5_PARITY_CONTRAST_END */
+
+/* Persistent Force chat cards carry the concrete scheme active at creation.
+   Keep their semantic tokens separate from the AppV2-only parity block above. */
+.mass-battle-chat-card {
+    --age-v5-theme-primary: #0f5f68;
+    --age-v5-theme-secondary: #c9c4b6;
+    --age-v5-theme-surface: #f5f2e9;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #182225;
+    --age-v5-theme-on-surface: #182225;
+    --age-v5-theme-editor-bg: #fffdf7;
+    --age-v5-theme-editor-fg: #182225;
+}
+
+.mass-battle-chat-card.colorset-modern-blue { --age-v5-theme-primary: #007dad; --age-v5-theme-secondary: #35a5ca; --age-v5-theme-surface: #b9dbeb; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-fantasy-blue { --age-v5-theme-primary: #0f4f5b; --age-v5-theme-secondary: #0f0f0f; --age-v5-theme-surface: #91b6d4; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-dragon-red { --age-v5-theme-primary: #83272a; --age-v5-theme-secondary: #979899; --age-v5-theme-surface: #e0beb1; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-ronin-green { --age-v5-theme-primary: #155f0e; --age-v5-theme-secondary: #92b65f; --age-v5-theme-surface: #c2f5aa; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-expanded-blue { --age-v5-theme-primary: #005971; --age-v5-theme-secondary: #112339; --age-v5-theme-surface: #e6e7e8; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-folded-purple { --age-v5-theme-primary: #565183; --age-v5-theme-secondary: #625b68; --age-v5-theme-surface: #cfccde; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-select-one { --age-v5-theme-primary: #273249; --age-v5-theme-secondary: #4d627a; --age-v5-theme-surface: #768d9f; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-the-grey { --age-v5-theme-primary: #3d3e3f; --age-v5-theme-secondary: #6b6a6a; --age-v5-theme-surface: #b4b6b3; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-red-warrior { --age-v5-theme-primary: #751119; --age-v5-theme-secondary: #b22126; --age-v5-theme-surface: #d1635b; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+.mass-battle-chat-card.colorset-never-dead { --age-v5-theme-primary: #663322; --age-v5-theme-secondary: #58705a; --age-v5-theme-surface: #eeddcd; --age-v5-theme-on-primary: #ffffff; --age-v5-theme-on-secondary: #ffffff; --age-v5-theme-on-surface: #101416; }
+
+/* Mass Battle Force -------------------------------------------------------
+   This sheet is intentionally built only from the semantic palette tokens
+   above. Every shipped AGE colour scheme therefore keeps the same readable
+   foreground/background pairing without Force-specific theme overrides. */
+.application.age-system.age-v5-parity-sheet.mass-battle-force .window-content {
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+}
+
+.application.age-system.age-v5-parity-sheet.mass-battle-force .window-content > section.mass-battle-force-sheet {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+}
+
+.mass-battle-force__header {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    gap: 0.8rem;
+    align-items: center;
+    min-width: 0;
+    padding: 0.8rem 1rem;
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-bottom: 3px solid var(--age-v5-gold);
+}
+
+.mass-battle-force__header > img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border: 2px solid color-mix(in srgb, var(--age-v5-theme-on-primary) 75%, transparent);
+    border-radius: 50%;
+    box-shadow: 0 3px 12px rgb(0 0 0 / 28%);
+}
+
+.mass-battle-force__identity {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.mass-battle-force__kicker,
+.mass-battle-kicker {
+    color: var(--age-v5-gold);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.mass-battle-force__identity > input[name="name"] {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    color: var(--age-v5-theme-on-primary) !important;
+    background: transparent !important;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-on-primary) 42%, transparent);
+    border-radius: 0;
+    font: 700 1.6rem/1.15 Georgia, serif;
+}
+
+.mass-battle-force__identity > select {
+    width: min(16rem, 100%);
+}
+
+.mass-battle-force__troops {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 10.5rem;
+    padding: 0.55rem 0.7rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: var(--age-v5-radius);
+    text-align: center;
+}
+
+.mass-battle-force__troops > span {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mass-battle-force__troops > div {
+    display: grid;
+    grid-template-columns: minmax(3.6rem, 1fr) auto minmax(3.6rem, 1fr);
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.mass-battle-force__troops input {
+    width: 100%;
+    text-align: center;
+}
+
+.mass-battle-force__body {
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
     min-height: 0;
+    padding: 0.75rem;
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
 
-.application.age-system.age-v5-parity-sheet.item .sheet-main-content prose-mirror.editor {
-    min-height: 6rem;
+.mass-battle-panel {
+    min-width: 0;
+    padding: 0.75rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+    border-radius: var(--age-v5-radius);
+    box-shadow: 0 2px 8px rgb(18 29 32 / 9%);
 }
 
-.application.age-system.age-v5-parity-sheet.stat-block .organization-sheet > prose-mirror.editor {
-    min-height: 10rem;
-    background: var(--age-editor-surface);
-}
-
-.application.age-system.age-v5-parity-sheet.vehicle .image-description .editor-container,
-.application.age-system.age-v5-parity-sheet.spaceship .image-description .ship-desc {
+.mass-battle-panel__heading {
     display: flex;
-    flex-direction: column;
-    min-height: 0;
+    gap: 0.75rem;
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 25%, transparent);
 }
 
-.application.age-system.age-v5-parity-sheet.vehicle .image-description prose-mirror.editor,
-.application.age-system.age-v5-parity-sheet.spaceship .image-description prose-mirror.editor {
-    flex: 1 1 auto;
-    height: auto;
-    min-height: 7rem;
+.mass-battle-panel__heading h2,
+.mass-battle-panel__heading h3,
+.mass-battle-panel h2,
+.mass-battle-panel h3 {
+    margin: 0;
+    color: inherit;
+    font-family: Georgia, serif;
+}
+
+.mass-battle-inline-check,
+.mass-battle-finishing-choice {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.mass-battle-finishing-choice {
+    margin-top: 0.6rem;
+}
+
+.mass-battle-link-grid,
+.mass-battle-grid,
+.mass-battle-stages,
+.mass-battle-stage__modifiers,
+.mass-battle-casualty-result {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.mass-battle-link-grid { grid-template-columns: minmax(0, 1fr) auto; }
+.mass-battle-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mass-battle-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mass-battle-grid--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mass-battle-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mass-battle-stage__modifiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mass-battle-casualty-result { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-block: 0.7rem; }
+
+.mass-battle-grid label,
+.mass-battle-stage label {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.mass-battle-grid label > span,
+.mass-battle-stage label > span,
+.mass-battle-casualty-result span {
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.mass-battle-drop-zone {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: center;
+    min-height: 54px;
+    padding: 0.55rem 0.7rem;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    border: 1px dashed var(--age-v5-theme-primary);
+    border-radius: 6px;
+}
+
+.mass-battle-drop-zone > i { color: var(--age-v5-theme-primary); font-size: 1.25rem; }
+.mass-battle-drop-zone > div { display: grid; min-width: 0; }
+.mass-battle-drop-zone small { opacity: 0.78; }
+.mass-battle-drop-zone button { width: 34px; min-width: 34px; margin: 0; padding: 0; }
+.mass-battle-drop-zone.dragover { outline: 3px solid var(--age-v5-gold); outline-offset: 2px; }
+.mass-battle-drop-zone--opponent { margin-block: 0.65rem; }
+
+.mass-battle-command-summary {
+    display: grid;
+    gap: 0.2rem;
+    align-content: center;
+    min-width: 13rem;
+    padding: 0.55rem 0.7rem;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    border-radius: 6px;
+}
+
+.mass-battle-badge {
+    padding: 0.28rem 0.5rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.mass-battle-stage {
+    display: grid;
+    gap: 0.55rem;
+    min-width: 0;
+    padding: 0.65rem;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    border-top: 4px solid var(--age-v5-theme-primary);
+    border-radius: 6px;
+}
+
+.mass-battle-stage > header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.mass-battle-stage > header span {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.mass-battle-stage > header select { width: 7rem; }
+.mass-battle-progress { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; }
+.mass-battle-progress progress { width: 100%; accent-color: var(--age-v5-theme-primary); }
+.mass-battle-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+
+.mass-battle-force-sheet button,
+.mass-battle-chat-card button {
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-color: color-mix(in srgb, var(--age-v5-theme-on-primary) 35%, transparent);
+    font-weight: 700;
+}
+
+.mass-battle-force-sheet button.mass-battle-secondary {
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+}
+
+.mass-battle-reset,
+.mass-battle-undo-casualties {
+    width: auto;
+    margin-top: 0.65rem;
+}
+
+.mass-battle-casualty-result > div {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.45rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 5px;
+    text-align: center;
+}
+
+.mass-battle-casualty-result strong { font-size: 1.1rem; }
+.mass-battle-panel prose-mirror.editor { min-height: 9rem; }
+.mass-battle-panel prose-mirror.editor > .editor-content { min-height: 7rem; }
+
+/* The card carries its own concrete palette class because chat messages are
+   persistent and may be viewed after the user's active scheme changes. */
+.mass-battle-chat-card {
+    overflow: hidden;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 30%, transparent);
+    border-radius: 6px;
+}
+
+.mass-battle-chat-card > header {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.45rem;
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+}
+
+.mass-battle-chat-card > header img { width: 42px; height: 42px; object-fit: cover; border-radius: 50%; }
+.mass-battle-chat-card > header :where(h3, small) { margin: 0; color: inherit; }
+.mass-battle-chat-card > section { padding: 0.55rem; }
+.mass-battle-chat-card > section p { margin: 0.25rem 0 0; }
+.mass-battle-chat-card > button { width: calc(100% - 1rem); margin: 0 0.5rem 0.5rem; }
+
+@media (max-width: 760px) {
+    .mass-battle-force__header { grid-template-columns: 60px minmax(0, 1fr); }
+    .mass-battle-force__header > img { width: 60px; height: 60px; }
+    .mass-battle-force__troops { grid-column: 1 / -1; }
+    .mass-battle-stages,
+    .mass-battle-grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mass-battle-casualty-result { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+    .mass-battle-link-grid,
+    .mass-battle-grid--two,
+    .mass-battle-grid--three,
+    .mass-battle-grid--four,
+    .mass-battle-stages,
+    .mass-battle-stage__modifiers { grid-template-columns: 1fr; }
+    .mass-battle-panel__heading { align-items: start; flex-direction: column; }
+    .mass-battle-command-summary { min-width: 0; }
 }

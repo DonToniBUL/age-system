@@ -883,7 +883,8 @@ export class ageSystemActor extends foundry.documents.Actor {
     }
 
     /**
-     * This function applies damage or healing to an Actor (Character or Organization only) and returns a summary with new values
+     * This function applies damage or healing to a Character, Organization,
+     * or Mass Battle Force and returns a summary with new values.
      * @param {number} newValue     Numeric value passed
      * @param {boolean} isHealing   Identify if newValue's modulus will Sum or Subtract from current HP
      * @param {boolean} isNewHP     Check new total Health will replace by newValue's modulus
@@ -909,6 +910,11 @@ export class ageSystemActor extends foundry.documents.Actor {
                 previousHP = charData.combat.stability.value;
                 updatePath = 'system.combat.stability.value';
                 break;
+            case 'force':
+                previousHP = charData.troops.value;
+                maxHP = charData.troops.max;
+                updatePath = 'system.troops.value';
+                break;
             default: return false;
         }
         const tokenImg = this.isToken ? this.parent?.texture?.src : this.prototypeToken?.texture?.src;
@@ -919,6 +925,8 @@ export class ageSystemActor extends foundry.documents.Actor {
             isHealing
         };
 
+        summary.newHP = previousHP;
+        if (!isNewHP && newValue === 0) return summary;
         if (isNewHP) {
             summary.newHP = newValue
         } else {

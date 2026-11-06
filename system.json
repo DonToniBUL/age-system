@@ -2,12 +2,12 @@
   "id": "age-system",
   "title": "AGE System (unofficial)",
   "description": "Unofficial AGE System implementation for most of AGE subsystems",
-  "version": "5.0.7",
+  "version": "5.4.1-rc.3",
   "compatibility": {
     "minimum": "14.365",
-    "verified": "14.365"
+    "verified": "14.366"
   },
-  "url": "https://github.com/DonToniBUL/age-system/tree/codex/5.0.7-automation-v14.366",
+  "url": "https://github.com/vkdolea/age-system",
   "authors": [
     {
       "name": "VK Dolea",
@@ -31,7 +31,14 @@
   "scripts": [],
   "styles": [
     "styles/age-system.css",
-    "styles/age-design-system.css"
+    "styles/age-design-system.css",
+    "styles/advancement-center.css",
+    "styles/character-builder.css",
+    "styles/progression-definition-sheet.css",
+    "styles/age-importer.css",
+    "styles/npc-studio.css",
+    "styles/roll-workflows.css",
+    "styles/utility-workflows.css"
   ],
   "esmodules": [
     "age-system.js"
@@ -65,7 +72,8 @@
       "char": {"htmlFields": ["features", "traits", "goals", "secretNote", "gmNotes"]},
       "vehicle": {"htmlFields": ["description", "gmNotes"]},
       "spaceship": {"htmlFields": ["description", "gmNotes"]},
-      "organization": {"htmlFields": ["description", "notes", "gmNotes"]}
+      "organization": {"htmlFields": ["description", "notes", "gmNotes"]},
+      "force": {"htmlFields": ["description", "notes", "gmNotes"]}
     },
     "Item": {
       "equipment": {"htmlFields": ["longDesc"]},
@@ -78,7 +86,8 @@
       "honorifics": {"htmlFields": ["longDesc"]},
       "membership": {"htmlFields": ["longDesc"]},
       "shipfeatures": {"htmlFields": ["longDesc"]},
-      "class": {"htmlFields": ["description"]}
+      "class": {"htmlFields": ["description"]},
+      "progression": {"htmlFields": []}
     }
   },
   "grid": {
@@ -86,6 +95,6 @@
     "units": "yd"
   },
   "initiative": "3d6 + @initiative",
-  "bugs": "https://github.com/DonToniBUL/age-system/issues",
-  "readme": "https://github.com/DonToniBUL/age-system/blob/codex/5.0.7-automation-v14.366/README.md"
+  "bugs": "https://github.com/vkdolea/age-system/issues",
+  "readme": "https://github.com/vkdolea/age-system/blob/main/README.md"
 }

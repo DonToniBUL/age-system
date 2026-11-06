@@ -1,60 +1,51 @@
-<section class="age-stunt-assistant flexcol">
-<style>
-  #age-stunt-assistant .window-content { overflow: hidden; padding: .6rem; }
-  #age-stunt-assistant .age-stunt-assistant { box-sizing: border-box; height: 100%; min-height: 0; gap: .45rem; overflow: hidden; }
-  #age-stunt-assistant .age-stunt-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45rem; }
-  #age-stunt-assistant .age-stunt-stat { padding: .4rem .55rem; border: 1px solid rgba(0,0,0,.22); border-radius: 4px; background: rgba(255,255,255,.2); }
-  #age-stunt-assistant .age-stunt-stat strong { display: block; font-size: 1.15rem; }
-  #age-stunt-assistant .age-stunt-filter { display: grid; grid-template-columns: minmax(10rem,1fr) minmax(9rem,13rem) auto auto; gap: .45rem; align-items: end; }
-  #age-stunt-assistant .age-stunt-filter label { display: grid; gap: .18rem; }
-  #age-stunt-assistant .age-stunt-filter input, #age-stunt-assistant .age-stunt-filter select, #age-stunt-assistant .age-stunt-filter button { height: 2rem; margin: 0; }
-  #age-stunt-assistant .age-stunt-checkbox { display: flex !important; align-items: center; white-space: nowrap; height: 2rem; }
-  #age-stunt-assistant .age-stunt-checkbox input { width: auto; height: auto; }
-  #age-stunt-assistant .age-stunt-results { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid rgba(0,0,0,.22); border-radius: 4px; }
-  #age-stunt-assistant .age-stunt-row { display: grid; grid-template-columns: minmax(0,1fr) 5.4rem auto auto; gap: .45rem; align-items: center; padding: .4rem .5rem; border-bottom: 1px solid rgba(0,0,0,.14); }
-  #age-stunt-assistant .age-stunt-row:last-child { border-bottom: 0; }
-  #age-stunt-assistant .age-stunt-row.unaffordable { opacity: .58; }
-  #age-stunt-assistant .age-stunt-copy { min-width: 0; overflow-wrap: anywhere; }
-  #age-stunt-assistant .age-stunt-copy strong { display: block; }
-  #age-stunt-assistant .age-stunt-cost { display: grid; grid-template-columns: 1fr auto; gap: .2rem; align-items: center; }
-  #age-stunt-assistant .age-stunt-cost input { width: 3.4rem; height: 1.8rem; text-align: center; }
-  #age-stunt-assistant .age-stunt-row button { width: auto; min-width: 2rem; margin: 0; }
-  #age-stunt-assistant .age-stunt-footer { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: center; }
-  #age-stunt-assistant .age-stunt-spent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-</style>
-  {{#unless enabled}}<p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>{{/unless}}
-  {{#unless messageAvailable}}<p class="notification warning">{{localize "age-system.AUTOMATION.stuntMessageUnavailable"}}</p>{{/unless}}
+<section class="age-utility-workflow__surface age-stunt-assistant colorset-selection" aria-labelledby="age-stunt-assistant-title">
+  <header class="age-utility-workflow__header colorset-first-tier">
+    <div>
+      <h1 id="age-stunt-assistant-title">{{localize "age-system.AUTOMATION.stuntAssistant"}}</h1>
+      {{#if state}}<p>{{state.actorName}}</p>{{/if}}
+    </div>
+    <i class="fa-solid fa-wand-sparkles" aria-hidden="true"></i>
+  </header>
 
-  {{#if state}}
-  <div class="age-stunt-summary">
-    <div class="age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.generatedSP"}}</span><strong>{{state.total}}</strong></div>
-    <div class="age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.spentSP"}}</span><strong>{{#each state.spends}}{{cost}}{{#unless @last}} + {{/unless}}{{else}}0{{/each}}</strong></div>
-    <div class="age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.remainingSP"}}</span><strong>{{state.remaining}}</strong></div>
-  </div>
-  {{/if}}
+  <main class="age-utility-workflow__scroll">
+    {{#unless enabled}}<p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>{{/unless}}
+    {{#unless messageAvailable}}<p class="notification warning">{{localize "age-system.AUTOMATION.stuntMessageUnavailable"}}</p>{{/unless}}
 
-  <form class="age-stunt-filter">
-    <label><span>{{localize "age-system.AUTOMATION.search"}}</span><input type="search" name="query" value="{{query}}"></label>
-    <label><span>{{localize "age-system.AUTOMATION.stuntCategory"}}</span><select name="category">{{#select category}}<option value="">{{localize "age-system.AUTOMATION.allCategories"}}</option>{{#each categories as |name|}}<option value="{{name}}">{{name}}</option>{{/each}}{{/select}}</select></label>
-    <label class="age-stunt-checkbox"><input type="checkbox" name="showUnaffordable" {{checked showUnaffordable}}> {{localize "age-system.AUTOMATION.showUnaffordable"}}</label>
-    <button type="submit"><i class="fa-solid fa-filter"></i> {{localize "age-system.AUTOMATION.filter"}}</button>
-  </form>
+    {{#if state}}
+      <section class="age-utility-workflow__grid age-stunt-summary">
+        <div class="age-utility-workflow__card age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.generatedSP"}}</span><strong>{{state.total}}</strong></div>
+        <div class="age-utility-workflow__card age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.spentSP"}}</span><strong>{{#each state.spends}}{{cost}}{{#unless @last}} + {{/unless}}{{else}}0{{/each}}</strong></div>
+        <div class="age-utility-workflow__card age-stunt-stat"><span class="notes">{{localize "age-system.AUTOMATION.remainingSP"}}</span><strong>{{state.remaining}}</strong></div>
+      </section>
+    {{/if}}
 
-  <ol class="directory-list age-stunt-results">
-    {{#each candidates as |stunt|}}
-    <li class="directory-item age-stunt-row {{#unless stunt.affordable}}unaffordable{{/unless}}" data-stunt-uuid="{{stunt.uuid}}">
-      <div class="age-stunt-copy"><strong>{{stunt.name}}{{#if stunt.recommended}} <i class="fa-solid fa-star" title="{{localize 'age-system.AUTOMATION.recommendedStunt'}}"></i>{{/if}}</strong><span class="notes">{{#if stunt.category}}{{stunt.category}} · {{/if}}{{stunt.sourceLabel}}</span></div>
-      <label class="age-stunt-cost"><input type="number" name="stuntCost" value="{{stunt.minimum}}" min="{{stunt.minimum}}" max="{{stunt.maximum}}" {{#unless stunt.variable}}readonly{{/unless}}> <span>SP</span></label>
-      <button type="button" class="age-stunt-open" title="{{localize 'age-system.AUTOMATION.open'}}"><i class="fa-solid fa-up-right-from-square"></i></button>
-      <button type="button" class="age-stunt-spend" {{#unless stunt.affordable}}disabled{{/unless}}><i class="fa-solid fa-coins"></i> {{localize "age-system.AUTOMATION.spend"}}</button>
-    </li>
-    {{else}}
-    <li class="directory-item" style="padding:.75rem"><p class="notes">{{localize "age-system.AUTOMATION.noStuntsFound"}}</p></li>
-    {{/each}}
-  </ol>
+    <form class="age-utility-workflow__panel age-utility-workflow__grid age-stunt-filter colorset-second-tier">
+      <label class="age-utility-workflow__field"><span>{{localize "age-system.AUTOMATION.search"}}</span><input type="search" name="query" value="{{query}}"></label>
+      <label class="age-utility-workflow__field"><span>{{localize "age-system.AUTOMATION.stuntCategory"}}</span><select name="category">{{#select category}}<option value="">{{localize "age-system.AUTOMATION.allCategories"}}</option>{{#each categories as |name|}}<option value="{{name}}">{{name}}</option>{{/each}}{{/select}}</select></label>
+      <label class="age-stunt-checkbox"><input type="checkbox" name="showUnaffordable" {{checked showUnaffordable}}> {{localize "age-system.AUTOMATION.showUnaffordable"}}</label>
+      <button type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.filter"}}</button>
+    </form>
 
-  <footer class="age-stunt-footer">
+    <ol class="directory-list age-utility-workflow__list age-stunt-results">
+      {{#each candidates as |stunt|}}
+        <li class="directory-item age-utility-workflow__card age-stunt-row {{#unless stunt.affordable}}unaffordable{{/unless}}" data-stunt-uuid="{{stunt.uuid}}">
+          <div class="age-utility-workflow__card-header">
+            <div class="age-stunt-copy"><strong>{{stunt.name}}{{#if stunt.recommended}} <i class="fa-solid fa-star" title="{{localize 'age-system.AUTOMATION.recommendedStunt'}}"></i>{{/if}}</strong><span class="notes">{{#if stunt.category}}{{stunt.category}} · {{/if}}{{stunt.sourceLabel}}</span></div>
+            <div class="age-utility-workflow__actions">
+              <label class="age-utility-workflow__field age-stunt-cost"><input type="number" name="stuntCost" value="{{stunt.minimum}}" min="{{stunt.minimum}}" max="{{stunt.maximum}}" {{#unless stunt.variable}}readonly{{/unless}}> <span>SP</span></label>
+              <button type="button" class="age-stunt-open" data-action="openStunt" title="{{localize 'age-system.AUTOMATION.open'}}" aria-label="{{localize 'age-system.AUTOMATION.open'}}"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i></button>
+              <button type="button" class="age-stunt-spend" data-action="spend" {{#unless stunt.affordable}}disabled{{/unless}}><i class="fa-solid fa-coins" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.spend"}}</button>
+            </div>
+          </div>
+        </li>
+      {{else}}
+        <li class="directory-item age-utility-workflow__empty age-stunt-empty"><p class="notes">{{localize "age-system.AUTOMATION.noStuntsFound"}}</p></li>
+      {{/each}}
+    </ol>
+  </main>
+
+  <footer class="age-utility-workflow__footer age-stunt-footer">
     <div class="age-stunt-spent notes">{{#each state.spends}}{{name}} ({{cost}} SP){{#unless @last}} · {{/unless}}{{else}}{{localize "age-system.AUTOMATION.noStuntsSpent"}}{{/each}}</div>
-    <button type="button" class="age-stunt-undo" {{#unless canUndo}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.undoLastSpend"}}</button>
+    <button type="button" class="age-stunt-undo" data-action="undo" {{#unless canUndo}}disabled{{/unless}}><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.undoLastSpend"}}</button>
   </footer>
 </section>

@@ -1,7 +1,15 @@
 import {showConfirmDialog} from "../dialogs.js";
+import {applyColorSchemeToElement} from "../color-scheme.js";
 import {isAssistMode, requireAssistMode} from "./mode.js";
 
 const SYSTEM_ID = "age-system";
+// Foundry v14 supplies the native AppV2 branch. The fallbacks keep profile
+// service tests able to evaluate this module without constructing a browser.
+const ApplicationV2 = globalThis.foundry?.applications?.api?.ApplicationV2
+  ?? globalThis.foundry?.appv1?.api?.FormApplication
+  ?? class {};
+const HandlebarsApplicationMixin = globalThis.foundry?.applications?.api?.HandlebarsApplicationMixin
+  ?? (Base => Base);
 
 const common = {
   healthMode: "health",
@@ -123,9 +131,11 @@ export const AGE_RULE_PROFILES = Object.freeze({
 });
 
 const clone = value => foundry.utils.deepClone(value);
-const equal = (left, right) => foundry.utils.objectsEqual
-  ? foundry.utils.objectsEqual(left, right)
-  : JSON.stringify(left) === JSON.stringify(right);
+const equal = (left, right) => {
+  if (foundry.utils.equals) return foundry.utils.equals(left, right);
+  if (foundry.utils.objectsEqual) return foundry.utils.objectsEqual(left, right);
+  return JSON.stringify(left) === JSON.stringify(right);
+};
 
 function settingDefinition(key) {
   return game.settings.settings.get(`${SYSTEM_ID}.${key}`);
@@ -266,28 +276,49 @@ export class RuleProfileService {
   }
 }
 
-export class RuleProfileManager extends foundry.appv1.api.FormApplication {
-  constructor(object = {}, options = {}) {
-    super(object, options);
+export class RuleProfileManager extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "age-rule-profile-manager",
+    classes: ["age-system", "dialog", "age-v5-parity-sheet", "age-utility-workflow", "age-rule-profile-manager-v2"],
+    position: {width: 760, height: 700},
+    window: {
+      title: "age-system.AUTOMATION.ruleProfiles",
+      icon: "fa-solid fa-sliders",
+      resizable: true,
+      minimizable: true
+    },
+    actions: {
+      applyProfile: RuleProfileManager._applyProfile,
+      revertProfile: RuleProfileManager._revertProfile
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/age-system/templates/automation/rule-profile-manager.hbs",
+      scrollable: [".age-utility-workflow__scroll"]
+    }
+  };
+
+  constructor(object = {}, options = undefined) {
+    // Accept both AppV2's (options) and the historical FormApplication
+    // (object, options) signature used by a few integrations.
+    super((options ?? object) || {});
+    this._legacyObject = options === undefined ? null : object;
     const active = game.settings.get(SYSTEM_ID, "activeRuleProfile");
     this.selectedProfileId = AGE_RULE_PROFILES[active] ? active : "dage";
+    this._busy = false;
+    this._operationError = "";
+    this._listenerAbort = null;
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "age-rule-profile-manager",
-      template: "systems/age-system/templates/automation/rule-profile-manager.hbs",
-      classes: ["age-system", "dialog"],
-      title: game.i18n.localize("age-system.AUTOMATION.ruleProfiles"),
-      width: 760,
-      height: 700,
-      resizable: true,
-      minimizable: true,
-      closeOnSubmit: false
-    });
+  /** Preserve the boolean render signature used by settings-menu entry points. */
+  render(options = {}) {
+    if (typeof options === "boolean") options = {force: options};
+    return super.render(options ?? {});
   }
 
-  getData() {
+  _buildContext() {
     const profiles = Object.values(AGE_RULE_PROFILES).map(profile => ({
       ...profile,
       localizedLabel: game.i18n.localize(profile.label)
@@ -298,8 +329,9 @@ export class RuleProfileManager extends foundry.appv1.api.FormApplication {
     const activeProfileId = game.settings.get(SYSTEM_ID, "activeRuleProfile");
     const activeProfile = AGE_RULE_PROFILES[activeProfileId];
     return {
-      ...super.getData(),
       automationEnabled,
+      busy: this._busy,
+      operationError: this._operationError,
       profiles,
       selectedProfileId: this.selectedProfileId,
       selectedLabel: game.i18n.localize(selected.label),
@@ -315,46 +347,102 @@ export class RuleProfileManager extends foundry.appv1.api.FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    html.find("select[name=profile]").on("change", event => {
-      this.selectedProfileId = event.currentTarget.value;
-      this.render(false);
+  /** Kept for integrations which inspected the former FormApplication data. */
+  getData() {
+    const base = typeof super.getData === "function" ? super.getData() : {};
+    return {...base, ...this._buildContext()};
+  }
+
+  async _prepareContext(options) {
+    const context = typeof super._prepareContext === "function"
+      ? await super._prepareContext(options)
+      : {};
+    return Object.assign(context ?? {}, this._buildContext());
+  }
+
+  async _onFirstRender(context, options) {
+    if (typeof super._onFirstRender === "function") await super._onFirstRender(context, options);
+    this._listenerAbort?.abort();
+    this._listenerAbort = new AbortController();
+    this.element?.addEventListener?.("change", event => {
+      const select = event.target?.closest?.("select[name='profile']");
+      if (!select || this._busy || !AGE_RULE_PROFILES[select.value]) return;
+      this.selectedProfileId = select.value;
+      void this._renderSafely();
+    }, {signal: this._listenerAbort.signal});
+  }
+
+  async _onRender(context, options) {
+    if (typeof super._onRender === "function") await super._onRender(context, options);
+    applyColorSchemeToElement(this.element);
+    applyColorSchemeToElement(this.element?.querySelector?.(".colorset-selection"));
+  }
+
+  async _onClose(options) {
+    this._listenerAbort?.abort();
+    this._listenerAbort = null;
+    if (typeof super._onClose === "function") await super._onClose(options);
+  }
+
+  async _renderSafely() {
+    try {
+      return await this.render({force: true});
+    } catch (error) {
+      console.error("AGE System | Rule Profile Manager failed to render.", error);
+      globalThis.ui?.notifications?.error?.(error?.message ?? String(error), {permanent: true});
+      return null;
+    }
+  }
+
+  async _perform(operation) {
+    if (this._busy) return null;
+    this._busy = true;
+    this._operationError = "";
+    await this._renderSafely();
+    let result = null;
+    try {
+      result = await operation();
+    } catch (error) {
+      this._operationError = error?.message ?? String(error);
+      globalThis.ui?.notifications?.error?.(this._operationError, {permanent: true});
+    } finally {
+      this._busy = false;
+      await this._renderSafely();
+    }
+    return result;
+  }
+
+  static async _applyProfile(event) {
+    event?.preventDefault?.();
+    return this._perform(async () => {
+      const selected = AGE_RULE_PROFILES[this.selectedProfileId];
+      if (!selected) throw new Error(`Unknown AGE rule profile: ${this.selectedProfileId}`);
+      const confirmed = await showConfirmDialog({
+        title: game.i18n.localize("age-system.AUTOMATION.applyProfile"),
+        content: `<p>${game.i18n.format("age-system.AUTOMATION.applyProfileConfirm", {profile: game.i18n.localize(selected.label)})}</p>`,
+        yesLabel: game.i18n.localize("age-system.AUTOMATION.applyProfile"),
+        noLabel: game.i18n.localize("age-system.cancel"),
+        defaultYes: false
+      });
+      if (!confirmed) return false;
+      const result = await RuleProfileService.apply(this.selectedProfileId);
+      globalThis.ui?.notifications?.info?.(game.i18n.format("age-system.AUTOMATION.profileApplied", {profile: game.i18n.localize(result.profile.label)}));
+      if (result.requiresReload) await globalThis.SettingsConfig?.reloadConfirm?.();
+      return result;
     });
-    html.find(".apply-rule-profile").on("click", async event => {
-      event.currentTarget.disabled = true;
-      try {
-        const confirmed = await showConfirmDialog({
-          title: game.i18n.localize("age-system.AUTOMATION.applyProfile"),
-          content: `<p>${game.i18n.format("age-system.AUTOMATION.applyProfileConfirm", {profile: game.i18n.localize(AGE_RULE_PROFILES[this.selectedProfileId].label)})}</p>`,
-          yesLabel: game.i18n.localize("age-system.AUTOMATION.applyProfile"),
-          noLabel: game.i18n.localize("age-system.cancel"),
-          defaultYes: false
-        });
-        if (!confirmed) return;
-        const result = await RuleProfileService.apply(this.selectedProfileId);
-        ui.notifications.info(game.i18n.format("age-system.AUTOMATION.profileApplied", {profile: game.i18n.localize(result.profile.label)}));
-        if (result.requiresReload) SettingsConfig.reloadConfirm();
-        this.render(false);
-      } catch (error) {
-        ui.notifications.error(error.message, {permanent: true});
-      } finally {
-        event.currentTarget.disabled = false;
+  }
+
+  static async _revertProfile(event) {
+    event?.preventDefault?.();
+    return this._perform(async () => {
+      const result = await RuleProfileService.revert();
+      if (!result) {
+        globalThis.ui?.notifications?.warn?.(game.i18n.localize("age-system.AUTOMATION.noProfileToRestore"));
+        return null;
       }
-    });
-    html.find(".revert-rule-profile").on("click", async event => {
-      event.currentTarget.disabled = true;
-      try {
-        const result = await RuleProfileService.revert();
-        if (!result) return ui.notifications.warn(game.i18n.localize("age-system.AUTOMATION.noProfileToRestore"));
-        ui.notifications.info(game.i18n.localize("age-system.AUTOMATION.profileRestored"));
-        if (result.requiresReload) SettingsConfig.reloadConfirm();
-        this.render(false);
-      } catch (error) {
-        ui.notifications.error(error.message, {permanent: true});
-      } finally {
-        event.currentTarget.disabled = false;
-      }
+      globalThis.ui?.notifications?.info?.(game.i18n.localize("age-system.AUTOMATION.profileRestored"));
+      if (result.requiresReload) await globalThis.SettingsConfig?.reloadConfirm?.();
+      return result;
     });
   }
 

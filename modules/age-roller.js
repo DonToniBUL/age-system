@@ -76,7 +76,7 @@ export class AgeRoller extends foundry.appv1.api.Application {
 	}
 
 	openAgeImporter(ev) {
-		return new AgeImporter().render(true);
+		return AgeImporter.open();
 	}
 
 	startR20Importer(ev) {

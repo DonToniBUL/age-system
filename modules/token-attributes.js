@@ -40,6 +40,16 @@ export const AGE_TOKEN_TRACKABLE_ATTRIBUTES = Object.freeze({
             "abilities.intrigue.total",
             "abilities.phenomena.total"
         ])
+    }),
+    force: Object.freeze({
+        bar: Object.freeze(["troops"]),
+        value: Object.freeze([
+            "primaryTroop.difficulty",
+            "battle.successThreshold",
+            "battle.stages.opening.progress",
+            "battle.stages.engagement.progress",
+            "battle.stages.finishing.progress"
+        ])
     })
 });
 

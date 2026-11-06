@@ -73,6 +73,19 @@ function responseError(data) {
   return error;
 }
 
+// Local resource results retain rollback callbacks and transaction objects.
+// Only the bounded, plain receipt crosses the broadcast socket.
+function resourceReceipt(result) {
+  if (!result || typeof result !== "object") return null;
+  const receipt = {};
+  for (const key of ["actorUuid", "paymentId", "transactionId", "cost", "spent", "refunded"]) {
+    const value = result[key];
+    if (value === null || ["string", "boolean"].includes(typeof value)
+      || (typeof value === "number" && Number.isFinite(value))) receipt[key] = value;
+  }
+  return receipt;
+}
+
 export class AgeActionDelegationService {
   static get protocolVersion() {
     return PROTOCOL_VERSION;
@@ -100,17 +113,21 @@ export class AgeActionDelegationService {
 
   static async request(request, {timeout = DEFAULT_TIMEOUT} = {}) {
     const action = AgeActionService.validate(request);
-    if (game.user?.isGM) {
-      return AgeActionService.execute(action, {context: {requestUser: game.user, delegated: false}});
-    }
-    if (!initializedSocket) this.initialize();
-    if (!initializedSocket) throw new Error("AGE action delegation socket is unavailable.");
     const gm = activeGms()[0];
+    // Resource changes from players and other GMs must share one queue.
+    const authoritative = action.type === "resource.power-points";
+    if (game.user?.isGM && (!authoritative || gm?.id === game.user.id)) {
+      return AgeActionService.execute(action, {
+        context: {requestUser: game.user, delegated: false, resourceAuthority: authoritative}
+      });
+    }
     if (!gm) {
       const error = new Error("No active GM is available for this AGE action.");
       error.code = "AGE_ACTION_NO_GM";
       throw error;
     }
+    if (!initializedSocket) this.initialize();
+    if (!initializedSocket) throw new Error("AGE action delegation socket is unavailable.");
     const milliseconds = Number(timeout);
     if (!Number.isFinite(milliseconds) || milliseconds < 1000 || milliseconds > 60000) {
       throw new RangeError("AGE action delegation timeout must be from 1000 to 60000 milliseconds.");
@@ -165,10 +182,12 @@ export class AgeActionDelegationService {
         id: `delegated:${senderUserId}:${requestId}`
       });
       const execution = await AgeActionService.execute(action, {
-        context: {requestUser: requester, delegated: true, requestId, senderUserId}
+        context: {requestUser: requester, delegated: true, requestId, senderUserId,
+          resourceAuthority: action.type === "resource.power-points"}
       });
       return this._emitResponse(packet, senderUserId, {
         ok: true,
+        ...(action.type === "resource.power-points" ? {result: resourceReceipt(execution.result)} : {}),
         diagnostic: clone(execution.diagnostic)
       });
     } catch (error) {
@@ -198,7 +217,7 @@ export class AgeActionDelegationService {
     if (!packet.ok) return pending.reject(responseError(packet.error));
     return pending.resolve({
       action: clone(pending.action),
-      result: null,
+      result: pending.action.type === "resource.power-points" ? clone(packet.result ?? null) : null,
       diagnostic: clone(packet.diagnostic ?? null),
       delegated: true,
       gmId: senderUserId

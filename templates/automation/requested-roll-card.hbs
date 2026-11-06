@@ -1,6 +1,26 @@
-<section class="age-system age-requested-roll-card">
-  <ul class="card-header colorset-first-tier"><li class="header">{{#if request.title}}{{request.title}}{{else}}{{localize "age-system.AUTOMATION.requestedRoll"}}{{/if}}</li><li class="sub header">{{localize (concat "age-system." request.ability)}}{{#if request.focus}} ({{request.focus}}){{/if}}{{#if request.targetNumber}} · TN {{request.targetNumber}}{{/if}}</li></ul>
-  <div class="chat-buttons flexcol" style="padding:.35rem;gap:.3rem">
-    {{#each actors as |actor|}}<button type="button" class="age-button age-requested-roll" data-actor-uuid="{{actor.uuid}}"><i class="fa-solid fa-dice"></i> {{localize "age-system.AUTOMATION.rollFor" actor=actor.name}}</button>{{/each}}
-  </div>
-</section>
+<article class="age-system age-v5-chat-card age-v5-chat-card--requested-roll age-roll-request-card age-requested-roll-card {{colorScheme}}" data-request-id="{{request.id}}" data-request-state="pending">
+  <header class="age-roll-request-card__header colorset-first-tier">
+    <span class="age-roll-request-card__icon" aria-hidden="true"><i class="fa-solid fa-dice"></i></span>
+    <div class="age-roll-request-card__title">
+      <small>{{localize "age-system.AUTOMATION.requestedRoll"}}</small>
+      <h3>{{#if request.title}}{{request.title}}{{else}}{{localize "age-system.AUTOMATION.requestedRoll"}}{{/if}}</h3>
+      <p class="age-roll-request-card__summary">{{localize (concat "age-system." request.ability)}}{{#if request.focus}} ({{request.focus}}){{/if}}{{#if request.targetNumber}} · TN {{request.targetNumber}}{{/if}}</p>
+    </div>
+    <span class="age-roll-request-card__count" data-requested-roll-summary title="{{localize 'age-system.AUTOMATION.status'}}">0 / {{recipientCount}}</span>
+  </header>
+  <section class="age-roll-request-card__recipients" aria-label="{{localize 'age-system.AUTOMATION.requestRecipients'}}">
+    {{#each actors as |actor|}}
+    <div class="age-roll-request-card__recipient{{#if actor.completed}} is-complete{{/if}}" data-requested-roll-recipient data-actor-uuid="{{actor.uuid}}" data-request-state="{{#if actor.completed}}completed{{else}}pending{{/if}}">
+      <img src="{{actor.img}}" alt="">
+      <div class="age-roll-request-card__recipient-details">
+        <strong>{{actor.name}}</strong>
+        <span class="age-roll-request-card__status" data-requested-roll-status data-request-state="{{#if actor.completed}}completed{{else}}pending{{/if}}">
+          <i class="{{#if actor.completed}}fa-solid fa-circle-check{{else}}fa-regular fa-circle{{/if}}" aria-hidden="true"></i>
+          <span data-requested-roll-status-label>{{localize actor.statusKey}}</span>
+        </span>
+      </div>
+      <button type="button" class="age-button age-requested-roll{{#if actor.completed}} is-complete{{/if}}" data-actor-uuid="{{actor.uuid}}" data-request-state="{{#if actor.completed}}completed{{else}}pending{{/if}}"><i class="fa-solid fa-dice" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.rollFor" actor=actor.name}}</button>
+    </div>
+    {{/each}}
+  </section>
+</article>

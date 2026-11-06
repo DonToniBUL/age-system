@@ -7,9 +7,54 @@ const clone = value => foundry.utils.deepClone(value);
 const cloneMaybe = value => value === undefined ? undefined : clone(value);
 const getProperty = (object, path) => foundry.utils.getProperty(object, path);
 const randomId = () => foundry.utils.randomID(20);
-const equals = (left, right) => foundry.utils.objectsEqual
-  ? foundry.utils.objectsEqual(left, right)
+const equals = (left, right) => typeof foundry.utils.equals === "function"
+  ? foundry.utils.equals(left, right)
   : JSON.stringify(left) === JSON.stringify(right);
+
+/**
+ * Produce the exact JSON value which Foundry can persist in a serializable
+ * AnyField. Class transactions intentionally use omitted properties to record
+ * source absence (for example a previously missing advancement summary).
+ * `deepClone` retains those `undefined` members, but Foundry 14 correctly
+ * rejects them because JSON serialization would silently remove them.
+ */
+export function classAdvancementJournalSnapshot(value, path = "classProgression") {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError(`${path} contains a non-finite number.`);
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry, index) => {
+      if (entry === undefined) throw new TypeError(`${path}[${index}] cannot be undefined.`);
+      return classAdvancementJournalSnapshot(entry, `${path}[${index}]`);
+    });
+  }
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object") throw new TypeError(`${path} is not JSON serializable.`);
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError(`${path} must be a plain JSON object.`);
+  }
+  const snapshot = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry === undefined) continue;
+    snapshot[key] = classAdvancementJournalSnapshot(entry, `${path}.${key}`);
+  }
+  return snapshot;
+}
+
+/**
+ * Normalize a persisted Class progression base level without converting an
+ * explicit absence marker to zero. JavaScript's Number(null) and Number("")
+ * both produce 0, but those source values mean "not established yet" and
+ * must survive an apply/rollback cycle exactly.
+ */
+export function classAdvancementBaseLevel(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
 
 function atomicSnapshot(value) {
   if (value === null || value === undefined || typeof value !== "object") return cloneMaybe(value);
@@ -294,9 +339,38 @@ function classProgression(actor) {
   const source = sourceSystem(actor).classProgression ?? actor.system?.classProgression ?? {};
   return {
     version: CLASS_ADVANCEMENT_VERSION,
-    baseLevel: Number.isFinite(Number(source.baseLevel)) ? Number(source.baseLevel) : null,
+    baseLevel: classAdvancementBaseLevel(source.baseLevel),
     transactions: Array.isArray(source.transactions) ? clone(source.transactions) : [],
   };
+}
+
+export function classAdvancementRollbackArray(transaction, currentAdvancement) {
+  if (Array.isArray(transaction?.before?.advancement)) return clone(transaction.before.advancement);
+  const advancement = Array.isArray(currentAdvancement) ? clone(currentAdvancement) : [];
+  if (transaction?.before?.hadAdvancementEntry) {
+    advancement[transaction.level] = cloneMaybe(transaction.before.advancementEntry);
+  } else {
+    delete advancement[transaction?.level];
+    while (advancement.length && advancement.at(-1) === undefined) advancement.pop();
+  }
+  return advancement;
+}
+
+/**
+ * Build the Class progression branch for a successful latest-level rollback.
+ * New transactions record the exact pre-advancement base-level marker. Older
+ * schema-v3 transactions may not contain that member, so they retain the
+ * established current base level rather than introducing an undefined value.
+ */
+export function classAdvancementRollbackProgression(transaction, currentProgression) {
+  const rollback = clone(currentProgression ?? {});
+  rollback.transactions = Array.isArray(rollback.transactions)
+    ? rollback.transactions.slice(0, -1)
+    : [];
+  if (Object.prototype.hasOwnProperty.call(transaction?.before ?? {}, "classProgressionBaseLevel")) {
+    rollback.baseLevel = cloneMaybe(transaction.before.classProgressionBaseLevel);
+  }
+  return rollback;
 }
 
 function classBonuses(actor) {
@@ -575,6 +649,7 @@ export class ClassAdvancementService {
     const actorSource = sourceSystem(actor);
     const classSource = sourceSystem(classItem);
     const progression = classProgression(actor);
+    const classProgressionBaseLevelBefore = progression.baseLevel;
     const previousTransactionId = [...progression.transactions].reverse().find(tx => tx.classItemId === classItem.id)?.id ?? null;
     if (progression.transactions.some(tx => tx.classItemId === classItem.id && tx.level === draft.targetLevel)) {
       throw new Error(`Class level ${draft.targetLevel} has already been applied.`);
@@ -586,6 +661,7 @@ export class ClassAdvancementService {
     const hadAdvancementEntry = Object.prototype.hasOwnProperty.call(advancementBefore, draft.targetLevel);
     const before = {
       actorLevel: Number(actorSource.level) || 0,
+      advancement: clone(advancementBefore),
       advancementEntry: cloneMaybe(advancementBefore[draft.targetLevel]),
       hadAdvancementEntry,
       classBonuses: classBonuses(actor),
@@ -600,7 +676,7 @@ export class ClassAdvancementService {
         conviction: Number(actor.system?.conviction?.max) || resourceMaximum(actorSource, "conviction", classBonuses(actor)),
       },
       classLevel: Number(classSource.level) || 0,
-      classProgressionBaseLevel: progression.baseLevel,
+      classProgressionBaseLevel: classProgressionBaseLevelBefore,
     };
 
     const bonuses = clone(before.classBonuses);
@@ -780,14 +856,26 @@ export class ClassAdvancementService {
       if (existingUpdates.size) {
         await actor.updateEmbeddedDocuments("Item", [...existingUpdates.entries()].map(([id, system]) => completeItemSystemSnapshot(id, system)), {classAdvancement: true});
       }
-      progression.transactions.push(transaction);
-      actorUpdate["system.classProgression"] = atomicSnapshot(progression);
+      const persistedTransaction = classAdvancementJournalSnapshot(transaction, "classProgression.transaction");
+      progression.transactions.push(persistedTransaction);
+      actorUpdate["system.classProgression"] = atomicSnapshot(
+        classAdvancementJournalSnapshot(progression)
+      );
       await actor.update(actorUpdate, {classAdvancement: true});
+      const persistedProgression = classProgression(actor);
+      if (!persistedProgression.transactions.some(entry => entry?.id === transactionId)) {
+        throw new Error("AGE class advancement transaction did not persist on the Actor.");
+      }
       await classItem.update({
         "system.level": draft.targetLevel,
         "system.progression.version": CLASS_ADVANCEMENT_VERSION,
         "system.progression.lastTransactionId": transactionId,
       }, {classAdvancement: true});
+      const persistedClass = sourceSystem(classItem);
+      if (Number(persistedClass.level) !== draft.targetLevel
+          || persistedClass.progression?.lastTransactionId !== transactionId) {
+        throw new Error("AGE class advancement state did not persist on the Class Item.");
+      }
     } catch (error) {
       try {
         if (created.length) await actor.deleteEmbeddedDocuments("Item", created.map(item => item.id), {classAdvancementRollback: true});
@@ -816,7 +904,7 @@ export class ClassAdvancementService {
       throw error;
     }
 
-    return transaction;
+    return classAdvancementJournalSnapshot(transaction, "classProgression.transaction");
   }
 
   static progressItemSystem(itemType, sourceSystem, trait = itemType) {
@@ -913,12 +1001,7 @@ export class ClassAdvancementService {
       ));
     }
 
-    const advancement = clone(currentAdvancement);
-    if (transaction.before.hadAdvancementEntry) advancement[transaction.level] = cloneMaybe(transaction.before.advancementEntry);
-    else {
-      delete advancement[transaction.level];
-      while (advancement.length && advancement.at(-1) === undefined) advancement.pop();
-    }
+    const advancement = classAdvancementRollbackArray(transaction, currentAdvancement);
 
     const currentResources = {
       health: Number(actorSource.health?.value) || 0,
@@ -936,8 +1019,8 @@ export class ClassAdvancementService {
     };
 
     const originalProgression = clone(progression);
-    progression.transactions.pop();
-    const previousTransaction = [...progression.transactions].reverse().find(tx => tx.classItemId === classItem.id);
+    const rollbackProgression = classAdvancementRollbackProgression(transaction, progression);
+    const previousTransaction = [...rollbackProgression.transactions].reverse().find(tx => tx.classItemId === classItem.id);
     const rollbackActorUpdate = {
       "system.level": transaction.before.actorLevel,
       "system.advancement": advancement,
@@ -947,7 +1030,7 @@ export class ClassAdvancementService {
       "system.health.value": rolledBackResources.health,
       "system.powerPoints.value": rolledBackResources.powerPoints,
       "system.conviction.value": rolledBackResources.conviction,
-      "system.classProgression": atomicSnapshot(progression),
+      "system.classProgression": atomicSnapshot(rollbackProgression),
     };
     const forwardActorUpdate = {
       "system.level": transaction.after.actorLevel,

@@ -9,6 +9,11 @@ import {MultiTargetService} from "./automation/multi-target.js";
 import {PowerResistanceService} from "./automation/power-resistance.js";
 import {AgeActionService} from "./automation/actions.js";
 import {mutateAtomicSystemUpdate, normalizeAtomicSystemUpdate} from "./data/atomic-system-updates.js";
+import {openLegacyClassAdvancementCenter} from "./progression/advancement-center.js";
+import {
+    AGE_PROGRESSION_DEFINITION_ITEM_TYPE,
+    assertProgressionDefinitionMutation
+} from "./progression/definition-documents.js";
 
 function actionEvent(event = null) {
     return {
@@ -21,6 +26,24 @@ function actionEvent(event = null) {
 
 function resultTargetUuids(results = []) {
     return Array.from(new Set((results ?? []).map(result => result?.tokenUuid ?? result?.actorUuid).filter(Boolean)));
+}
+
+function progressionMutationUser(userOrId) {
+    // Foundry v14 Document lifecycle methods receive the initiating User
+    // object. Retain id resolution for older/internal callers, but never pass a
+    // User object to Collection#get as though it were an id.
+    if (userOrId && typeof userOrId === "object") return userOrId;
+    return game.users?.get?.(userOrId) ?? (game.user?.id === userOrId ? game.user : null);
+}
+
+function allowProgressionDefinitionMutation(document, user, action) {
+    try {
+        assertProgressionDefinitionMutation({user: progressionMutationUser(user), document, action});
+        return true;
+    } catch (error) {
+        ui.notifications.warn(error.message);
+        return false;
+    }
 }
 
 export class ageSystemItem extends foundry.documents.Item {
@@ -47,11 +70,13 @@ export class ageSystemItem extends foundry.documents.Item {
     };
 
     /** @override */
-    async _preCreate(data, options, userId) {
-        const allowed = await super._preCreate(data, options, userId);
+    async _preCreate(data, options, user) {
+        const allowed = await super._preCreate(data, options, user);
         if (allowed === false) return false;
         const updates = {};
         const type = data.type ?? this.type;
+        if (type === AGE_PROGRESSION_DEFINITION_ITEM_TYPE
+            && !allowProgressionDefinitionMutation(this, user, "create")) return false;
         if (!data.img || data.img === `icons/svg/item-bag.svg`) updates.img = ageSystem.itemIcons[type];
         let requestedSystem = data.system && typeof data.system === "object"
             ? foundry.utils.deepClone(data.system)
@@ -83,9 +108,11 @@ export class ageSystemItem extends foundry.documents.Item {
     }
 
     /** @override */
-    async _preUpdate(changed, options, userId) {
+    async _preUpdate(changed, options, user) {
+        if (this.type === AGE_PROGRESSION_DEFINITION_ITEM_TYPE
+            && !allowProgressionDefinitionMutation(this, user, "update")) return false;
         mutateAtomicSystemUpdate(changed, this._source, {recursive: options?.recursive});
-        const allowed = await super._preUpdate(changed, options, userId);
+        const allowed = await super._preUpdate(changed, options, user);
         if (allowed === false || this.type !== "class") return allowed;
         if (options?.classAdvancement || options?.classAdvancementRollback || options?.classAdvancementRecovery || options?.ageSystemMigration) return allowed;
 
@@ -112,6 +139,11 @@ export class ageSystemItem extends foundry.documents.Item {
         const itemData = this;
         const data = itemData.system;
         const itemType = itemData.type;
+
+        // Progression Items are immutable rule-definition containers. Their
+        // exact DefinitionV1 and checksum must never receive gameplay Item
+        // preparation, modifiers, Actor-derived fields, or roll state.
+        if (itemType === AGE_PROGRESSION_DEFINITION_ITEM_TYPE) return;
 
         data.colorScheme = `colorset-${game.settings.get("age-system", "colorScheme")}`;
         data.nameLowerCase = String(itemData.name ?? "").toLowerCase();
@@ -471,9 +503,16 @@ export class ageSystemItem extends foundry.documents.Item {
     async _levelUp() {
         if (this.type !== "class" || !this.isOwned || !this.actor) return null;
         if (Number(this.system.level) >= ageSystem.maxLevel) return ui.notifications.warn(game.i18n.localize("age-system.WARNING.classMaxLevel"));
+        const legacyFallback = () => AgeProgUI.open(this.actor, this);
         try {
-            return await AgeProgUI.open(this.actor, this);
+            return await openLegacyClassAdvancementCenter({
+                service: game.ageSystem?.progression ?? null,
+                actor: this.actor,
+                classItem: this,
+                legacyFallback
+            });
         } catch (error) {
+            if (["profile-unsupported", "service-unavailable"].includes(error?.code)) return legacyFallback();
             console.error("AGE System | Unable to start class advancement", error);
             return ui.notifications.error(error.message);
         }
@@ -498,9 +537,11 @@ export class ageSystemItem extends foundry.documents.Item {
         }
     }
 
-    async _preDelete(options, userId) {
-        const allowed = await super._preDelete(options, userId);
+    async _preDelete(options, user) {
+        const allowed = await super._preDelete(options, user);
         if (allowed === false) return false;
+        if (this.type === AGE_PROGRESSION_DEFINITION_ITEM_TYPE
+            && !allowProgressionDefinitionMutation(this, user, "delete")) return false;
         if (this.type === "class" && this.isOwned && !options?.classAdvancementRollback) {
             const transactions = this.actor?.system?.classProgression?.transactions ?? [];
             const hasAppliedLevels = Number(this.system?.level) > 0

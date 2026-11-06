@@ -280,7 +280,15 @@
             </div>
 
             <div class="resource colorset-first-tier at-header">
-                <div class="title">{{localize "age-system.level"}}</div>
+                <div class="title character-level-title">
+                    <span>{{localize "age-system.level"}}</span>
+                    {{#if actor.isOwner}}
+                    <button type="button" class="open-advancement-center advancement-sheet-control advancement-sheet-control--{{progressionSummary.state}}" title="{{progressionSummary.message}}" aria-label="{{localize 'age-system.advancement'}}" data-progression-state="{{progressionSummary.state}}">
+                        <i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>
+                        {{#if progressionSummary.available}}<span class="advancement-sheet-control__rank">{{progressionSummary.targetRank}}</span>{{/if}}
+                    </button>
+                    {{/if}}
+                </div>
                 <div class="values">
                     <input class="value-data circle" type="number" name="system.level" value="{{system.level}}" data-dtype="Number" {{#if classManagedLevel}}readonly title="{{localize 'age-system.WARNING.classManagedLevel'}}"{{/if}} />
                 </div>    

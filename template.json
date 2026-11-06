@@ -4,9 +4,54 @@
             "char",
             "vehicle",
             "spaceship",
-            "organization"
+            "organization",
+            "force"
         ],
         "templates": {},
+        "force": {
+            "description": "",
+            "profile": "fage",
+            "commander": {
+                "uuid": "",
+                "name": "",
+                "useLinked": true,
+                "manual": {
+                    "communication": 0,
+                    "leadership": 0,
+                    "military": 0,
+                    "militaryLore": 0
+                }
+            },
+            "troops": {
+                "value": 100,
+                "max": 100
+            },
+            "primaryTroop": {
+                "name": "Men-at-Arms",
+                "difficulty": 11
+            },
+            "specialists": {
+                "opening": {"description": "", "bonus": 0},
+                "engagement": {"description": "", "bonus": 0},
+                "finishing": {"description": "", "bonus": 0}
+            },
+            "battle": {
+                "opponentUuid": "",
+                "testDifficulty": 11,
+                "successThreshold": 5,
+                "finishingAbility": "military",
+                "stages": {
+                    "opening": {"progress": 0, "modifier": 0, "result": "unresolved", "history": []},
+                    "engagement": {"progress": 0, "modifier": 0, "result": "unresolved", "history": []},
+                    "finishing": {"progress": 0, "modifier": 0, "result": "unresolved", "history": []}
+                },
+                "casualties": {"customModifier": 0},
+                "casualtyPreview": null,
+                "casualtyHistory": []
+            },
+            "notes": "",
+            "gmNotes": ""
+        },
         "organization": {
             "description": "",
             "abilities": {
@@ -415,7 +460,8 @@
             "honorifics",
             "membership",
             "shipfeatures",
-            "class"
+            "class",
+            "progression"
         ],
         "templates": {
             "itemReq": {
@@ -475,6 +521,15 @@
                 "version": 3,
                 "lastTransactionId": null,
                 "legacyLevel": 0
+            }
+        },
+        "progression": {
+            "definition": null,
+            "digest": "",
+            "enabled": true,
+            "provenance": {
+                "schemaVersion": 1,
+                "originKind": "world"
             }
         },
         "shipfeatures": {

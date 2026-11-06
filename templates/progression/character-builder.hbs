@@ -1,0 +1,279 @@
+<section class="age-character-builder__surface">
+  <header class="age-character-builder__header">
+    <div>
+      <span class="age-character-builder__kicker">Guided character creation</span>
+      <h1>Character Builder</h1>
+      <p>Fill in the visible steps, review the result, then create the Character. Nothing changes while you are choosing.</p>
+    </div>
+    {{#if preview}}
+    <div class="age-character-builder__preview-state {{#if previewExpiring}}is-warning{{/if}} {{#if previewExpired}}is-error{{/if}}">
+      <strong>{{#if previewExpired}}Expired{{else}}Signed preview{{/if}}</strong>
+      <span>{{previewRemaining}}s remaining</span>
+    </div>
+    {{/if}}
+  </header>
+
+  <nav class="age-character-builder__steps" aria-label="Character creation steps">
+    {{#each workflowStages as |step|}}
+    <button type="button" class="{{#if step.complete}}is-complete{{/if}} {{#if step.current}}is-current{{/if}}"
+            data-age-character-scroll="{{step.id}}" {{#if step.current}}aria-current="step"{{/if}}>
+      <b>{{#if step.complete}}<i class="fa-solid fa-check" aria-label="Complete"></i>{{else}}{{step.number}}{{/if}}</b>
+      <small>{{step.label}}</small>
+    </button>
+    {{#unless @last}}<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>{{/unless}}
+    {{/each}}
+  </nav>
+
+  <div class="age-character-builder__scroll">
+    <section class="age-character-builder__panel age-character-builder__selectors" data-age-character-stage="path">
+      <label>
+        <span>Creation definition</span>
+        <select data-age-character-change="definition" {{#if busy}}disabled{{/if}}>
+          {{#each definitions as |entry|}}
+          <option value="{{entry.id}}" {{#if entry.selected}}selected{{/if}}>{{entry.label}} · {{entry.profileId}} · {{entry.version}}</option>
+          {{/each}}
+        </select>
+      </label>
+      <label>
+        <span>Creation milestone</span>
+        <select data-age-character-change="rank" {{#if busy}}disabled{{/if}}>
+          {{#each ranks as |entry|}}
+          <option value="{{entry.rank}}" {{#if entry.selected}}selected{{/if}}>{{entry.label}} · rank {{entry.rank}}</option>
+          {{/each}}
+        </select>
+      </label>
+    </section>
+
+    {{#if definition}}
+    <details class="age-character-builder__technical">
+      <summary><i class="fa-solid fa-circle-info"></i> Rules source and technical details</summary>
+    <section class="age-character-builder__profile-strip">
+      <div><span>Profile</span><strong>{{profile.label}}</strong><small>{{profileId}}</small></div>
+      <div><span>Definition</span><strong>{{definition.id}}</strong><small>DefinitionV{{definition.schemaVersion}}</small></div>
+      <div><span>Provider</span><strong>{{#if provider}}{{provider.label}}{{else}}Registered source{{/if}}</strong><small>{{#if provider}}{{provider.kind}} · {{provider.id}}{{else}}Provider-neutral{{/if}}</small></div>
+      <div><span>Milestone</span><strong>Rank {{rank}}</strong><small>{{milestone.id}}</small></div>
+    </section>
+    </details>
+
+    <div class="age-character-builder__grid">
+      <section class="age-character-builder__panel">
+        <header class="age-character-builder__panel-heading">
+          <div><span>Profile-driven vocabulary</span><h2>Character identity</h2></div>
+          <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+        </header>
+        {{#if semanticInputs.length}}
+        <div class="age-character-builder__semantic-inputs">
+          {{#each semanticInputs as |input|}}
+          <label data-age-character-stage="{{input.workflowStageId}}">
+            <span>{{input.label}}{{#if input.required}} <strong aria-label="required">*</strong>{{/if}}</span>
+            {{#if input.isSelect}}
+            <select data-age-character-change="semantic-input" data-input-id="{{input.id}}" {{#if input.required}}required{{/if}}>
+              {{#unless input.required}}<option value="">—</option>{{/unless}}
+              {{#each input.options as |option|}}<option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>{{/each}}
+            </select>
+            {{else if input.isLongText}}
+            <textarea maxlength="{{input.maximum}}" data-age-character-change="semantic-input" data-input-id="{{input.id}}" {{#if input.required}}required{{/if}}>{{input.value}}</textarea>
+            {{else if input.isInteger}}
+            <input type="number" value="{{input.value}}" min="{{input.minimum}}" max="{{input.maximum}}" step="1"
+                   data-age-character-change="semantic-input" data-input-id="{{input.id}}" {{#if input.required}}required{{/if}}>
+            {{else}}
+            <input type="text" value="{{input.value}}" maxlength="{{input.maximum}}"
+                   data-age-character-change="semantic-input" data-input-id="{{input.id}}"
+                   {{#if input.required}}required{{/if}} autocomplete="off">
+            {{/if}}
+          </label>
+          {{/each}}
+        </div>
+        {{/if}}
+        <div class="age-character-builder__identity-list">
+          {{#each identity as |entry|}}
+          <article><span>{{entry.label}}</span><strong>{{entry.value}}</strong></article>
+          {{else}}
+          <p class="age-character-builder__empty">Identity is supplied by the selected definition and its choices.</p>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="age-character-builder__panel">
+        <header class="age-character-builder__panel-heading">
+          <div><span>Readiness</span><h2>Before you continue</h2></div>
+          {{#if definitionErrors.length}}<i class="fa-solid fa-triangle-exclamation"></i>{{else}}<i class="fa-solid fa-circle-check"></i>{{/if}}
+        </header>
+        {{#if definitionErrors.length}}
+        <ul class="age-character-builder__issues is-error">{{#each definitionErrors as |error|}}<li>{{error}}</li>{{/each}}</ul>
+        {{else}}
+        <p class="age-character-builder__valid"><i class="fa-solid fa-shield-check"></i> This creation path is ready.</p>
+        {{/if}}
+        {{#if inputErrors.length}}
+        <ul class="age-character-builder__issues is-warning">{{#each inputErrors as |error|}}<li>{{error}}</li>{{/each}}</ul>
+        {{/if}}
+        {{#if previewError}}
+        <div class="age-character-builder__error"><strong>{{#if previewError.dependency}}Required content unavailable{{else}}Preview unavailable{{/if}}</strong><span>{{previewError.message}}</span></div>
+        {{/if}}
+        {{#if undoError}}
+        <div class="age-character-builder__error"><strong>Deletion unavailable</strong><span>{{undoError.message}}</span></div>
+        {{/if}}
+      </section>
+    </div>
+
+    <div class="age-character-builder__stage-anchor" data-age-character-stage="choices" aria-hidden="true"></div>
+    {{#each choiceGroups as |group|}}
+    {{#if group.available}}
+    <section class="age-character-builder__panel {{#if group.identityStage}}age-character-builder__panel--identity-stage{{/if}}" data-age-character-choice-group="{{group.id}}" data-age-character-stage="{{group.workflowStageId}}">
+      <header class="age-character-builder__panel-heading">
+        <div><span>{{#if group.identityStage}}Character identity · {{group.identityStage.label}}{{else}}{{group.instruction}}{{/if}}</span><h2>{{group.label}}</h2></div>
+        <small>{{#if group.indeterminate}}Availability verified in preview{{else}}{{group.minimum}}–{{group.maximum}} selections{{/if}}</small>
+      </header>
+      {{#if group.searchable}}
+      <div class="age-character-builder__choice-tools">
+        <label class="age-character-builder__choice-search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input type="search" placeholder="Search {{group.label}}…" aria-label="Search {{group.label}}"
+                 data-age-character-choice-filter data-group-id="{{group.id}}" autocomplete="off">
+        </label>
+        <label class="age-character-builder__choice-selected-only">
+          <input type="checkbox" data-age-character-choice-selected data-group-id="{{group.id}}"> Selected only
+        </label>
+        <button type="button" data-age-character-action="clear-choice-filter"><i class="fa-solid fa-filter-circle-xmark"></i> Clear</button>
+        <output><strong>{{group.selectedCount}}</strong> selected · <strong data-age-character-choice-visible>{{group.optionCount}}</strong> shown</output>
+      </div>
+      {{/if}}
+      <div class="age-character-builder__choice-grid">
+        {{#each group.options as |option|}}
+        <label class="age-character-builder__choice {{#if option.selected}}is-selected{{/if}} {{#unless option.available}}is-disabled{{/unless}}"
+               data-age-character-choice-option data-search-text="{{option.searchText}}" {{#unless option.available}}title="{{option.unavailableReason}}"{{/unless}}>
+          <input type="checkbox" data-age-character-change="choice" data-group-id="{{group.id}}" data-option-id="{{option.id}}" {{checked option.selected}} {{#unless option.available}}disabled{{/unless}} {{#if ../../busy}}disabled{{/if}}/>
+          <span><strong>{{option.label}}</strong>{{#if option.detail}}<small>{{option.detail}}</small>{{/if}}{{#if option.indeterminate}}<small>{{option.unavailableReason}}</small>{{else}}{{#unless option.available}}<small>{{option.unavailableReason}}</small>{{/unless}}{{/if}}</span>
+        </label>
+        {{/each}}
+      </div>
+      <p class="age-character-builder__choice-empty" data-age-character-choice-empty hidden>No matching options.</p>
+    </section>
+    {{/if}}
+    {{/each}}
+
+    {{#each abilityGroups as |group|}}
+    <section class="age-character-builder__panel">
+      <header class="age-character-builder__panel-heading">
+        <div><span>Distribute your points</span><h2>{{group.label}}</h2></div>
+        <strong class="age-character-builder__counter">{{group.spent}} / {{group.points}} · {{group.remaining}} remaining</strong>
+      </header>
+      <div class="age-character-builder__ability-grid">
+        {{#each group.options as |ability|}}
+        <label>
+          <span><strong>{{ability.name}}</strong></span>
+          <input type="number" min="0" step="1" value="{{ability.allocation}}" data-age-character-change="ability" data-operation-id="{{group.operationId}}" data-ability-id="{{ability.id}}" {{#if ../../busy}}disabled{{/if}}/>
+        </label>
+        {{/each}}
+      </div>
+    </section>
+    {{/each}}
+
+    <details class="age-character-builder__technical">
+      <summary><i class="fa-solid fa-gears"></i> Advanced preview details: sources and formula rolls</summary>
+    <div class="age-character-builder__grid">
+      <section class="age-character-builder__panel">
+        <header class="age-character-builder__panel-heading">
+          <div><span>Explicit DefinitionV{{definition.schemaVersion}} references</span><h2>Sources</h2></div>
+          {{#if preview}}<i class="fa-solid fa-lock"></i>{{/if}}
+        </header>
+        <div class="age-character-builder__source-list">
+          {{#each sources as |source|}}
+          <article class="{{#if source.selected}}is-selected{{/if}}">
+            <span><strong>{{source.label}}</strong><small>{{source.kind}} · {{source.detail}}</small></span>
+            {{#if source.selected}}<b><i class="fa-solid fa-link"></i> Pinned</b>{{/if}}
+          </article>
+          {{else}}
+          <p class="age-character-builder__empty">No external sources are declared.</p>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="age-character-builder__panel">
+        <header class="age-character-builder__panel-heading">
+          <div><span>Resolved once at preview time</span><h2>Pinned formulas</h2></div>
+          {{#if preview}}<i class="fa-solid fa-dice"></i>{{/if}}
+        </header>
+        <div class="age-character-builder__formula-list">
+          {{#each formulas as |formula|}}
+          <article>
+            <span><strong>{{formula.formula}}</strong><small>{{formula.operationId}}</small></span>
+            <b>{{formula.result}}</b>
+            <button type="button" data-age-character-action="reroll" data-operation-id="{{formula.operationId}}" title="Rebuild a signed preview with a new result"><i class="fa-solid fa-dice"></i></button>
+          </article>
+          {{else}}
+          <p class="age-character-builder__empty">This creation milestone has no formulas.</p>
+          {{/each}}
+        </div>
+      </section>
+    </div>
+    </details>
+
+    <section class="age-character-builder__panel" data-age-character-stage="review">
+      <header class="age-character-builder__panel-heading">
+        <div><span>Review</span><h2>What the new Character will receive</h2></div>
+        <small>{{effects.length}} operation(s)</small>
+      </header>
+      <ol class="age-character-builder__effect-list">
+        {{#each effects as |effect|}}
+        <li><span>{{effect.display}}</span></li>
+        {{else}}
+        <li class="age-character-builder__empty">No effects at this milestone.</li>
+        {{/each}}
+      </ol>
+    </section>
+
+    {{#if summary.length}}
+    <section class="age-character-builder__summary">
+      <strong>Creation summary</strong>
+      <ul>{{#each summary as |entry|}}<li>{{entry}}</li>{{/each}}</ul>
+    </section>
+    {{/if}}
+
+    {{#if receiptResult}}
+    <section class="age-character-builder__receipt">
+      <div>
+        <span>{{receiptResult.title}}</span>
+        <strong>{{receiptResult.actorLabel}}</strong>
+        <small>{{receiptResult.message}}</small>
+      </div>
+      {{#if receiptCanUndo}}
+      <button type="button" data-age-character-action="undo" data-receipt-id="{{receipt.id}}"><i class="fa-solid fa-trash-can-arrow-up"></i> Preview exact deletion</button>
+      {{/if}}
+    </section>
+    {{else if receipts.length}}
+    <section class="age-character-builder__panel">
+      <header class="age-character-builder__panel-heading">
+        <div><span>Exact receipt reversal</span><h2>Created Characters</h2></div>
+        <small>Deletion is blocked after any source change</small>
+      </header>
+      <div class="age-character-builder__receipt-list">
+        {{#each receipts as |entry|}}
+        <article>
+          <span><strong>{{entry.actorLabel}} · {{entry.definitionLabel}}</strong><small>{{entry.stateLabel}} · {{entry.createdLabel}}</small></span>
+          <button type="button" data-age-character-action="undo" data-receipt-id="{{entry.id}}"><i class="fa-solid fa-trash-can-arrow-up"></i> Preview exact deletion</button>
+        </article>
+        {{/each}}
+      </div>
+    </section>
+    {{/if}}
+    {{else}}
+    <section class="age-character-builder__empty-state">
+      <i class="fa-solid fa-user-plus"></i>
+      <h2>No character-creation definition is available</h2>
+      <p>Register a valid AGE progression definition for the active rules profile with a character.create milestone.</p>
+    </section>
+    {{/if}}
+  </div>
+
+  <footer class="age-character-builder__footer">
+    <div class="age-character-builder__commit-status" id="age-character-builder-commit-help" aria-live="polite">
+      <i class="fa-solid {{#if canCommit}}fa-circle-check{{else}}fa-circle-info{{/if}}" aria-hidden="true"></i>
+      <span>{{commitStatus}}</span>
+    </div>
+    <button type="button" data-age-character-action="cancel"><i class="fa-solid fa-xmark"></i> Close without changes</button>
+    <button type="button" data-age-character-action="refresh" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-rotate"></i> Refresh review</button>
+    <button type="button" class="age-character-builder__commit" data-age-character-action="commit"
+            title="{{commitStatus}}" aria-describedby="age-character-builder-commit-help" {{#unless canCommit}}disabled{{/unless}}><i class="fa-solid fa-user-plus"></i> Create Character</button>
+  </footer>
+</section>

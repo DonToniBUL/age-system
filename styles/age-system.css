@@ -4916,48 +4916,24 @@ body.system-age-system *:not(i, .fa, .far, .fas, .ui-control, .icon) {
   justify-content: space-evenly;
 }
 /*---------------------------------*/
-.age-system .import-preview-entry {
-  margin: 0.4rem 0;
-}
-.age-system .import-match-list {
-  display: grid;
-  gap: 0.45rem;
-  margin: 0.4rem 0 0.7rem;
-}
-.age-system .import-match-row {
-  padding: 0.45rem;
-  border: 1px solid var(--color-border-light-primary, #777);
-  border-left: 0.3rem solid var(--color-border-highlight, #c88b2b);
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--color-bg-option, #fff) 90%, transparent);
-}
-.age-system .import-match-row[data-status="world"],
-.age-system .import-match-row[data-status="compendium"] {
-  border-left-color: var(--color-level-success, #2d8f55);
-}
-.age-system .import-match-heading,
-.age-system .import-match-controls {
+.class-advancement-entry {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-bg-option, #222) 72%, transparent);
 }
-.age-system .import-match-controls {
-  margin-top: 0.35rem;
-}
-.age-system .import-match-controls select {
-  flex: 2 1 22rem;
-}
-.age-system .import-match-controls input[type="search"] {
-  flex: 1 1 12rem;
-}
-.age-system .import-match-controls button.icon {
-  flex: 0 0 2.2rem;
-  width: 2.2rem;
-  margin: 0;
-}
-.age-system .import-match-heading .notes {
-  margin-left: auto;
-}
-.age-system .import-normalization-note {
-  margin: 0.4rem 0;
+
+.class-advancement-entry div,
+.class-advancement-entry span { display: block; }
+.class-advancement-entry span { margin-top: 0.15rem; font-size: 0.82rem; opacity: 0.78; }
+.class-advancement-entry button { flex: 0 0 auto; width: auto; min-width: 13rem; }
+
+@media (max-width: 640px) {
+  .class-advancement-entry { align-items: stretch; flex-direction: column; }
+  .class-advancement-entry button { width: 100%; }
 }

@@ -16,6 +16,7 @@ const NON_INVENTORY_ITEM_TYPES = Object.freeze([
     "membership",
     "shipfeatures",
     "class",
+    "progression",
 ]);
 
 function localizedCurrency(key, fallback) {

@@ -10,7 +10,8 @@ import ageSystemSheetCharacterV2, {
     ageSystemSheetCharStatBlockV2,
     ageSystemSheetVehicleV2,
     ageSystemSheetSpaceshipV2,
-    ageSystemSheetOrgV2
+    ageSystemSheetOrgV2,
+    ageSystemSheetForceV2
 } from "./modules/sheets/ageSystemSheetCharacterV2.js";
 import {
     ageSystemSheetClassV2,
@@ -30,28 +31,35 @@ import {ageSystemItem} from "./modules/ageSystemItem.js";
 import { createAgeMacro} from "./modules/macros.js";
 import { rollOwnedItem } from "./modules/macros.js";
 import { AgeTracker } from "./modules/age-tracker.js";
-import { applyBreather } from "./modules/breather.js";
+import BreatherSettings, { applyBreather } from "./modules/breather.js";
+import {AdvancedSettings, QuickSettings} from "./modules/settings-helper.js";
 import AgeImporter from "./modules/age-importer.js";
+import AgeNpcStudio from "./modules/npc-studio.js";
 import ConditionsWorkshop from "./modules/conditions-workshop.js";
 import { getCoreMessageMode, MESSAGE_MODES, statusEffectArray, statusEffectRecord } from "./modules/compat.js";
-import {applyColorScheme} from "./modules/color-scheme.js";
+import {applyColorScheme, initializeWorldColorSchemePreference} from "./modules/color-scheme.js";
 import * as Currency from "./modules/currency.js";
 import {registerAgeItemPilesIntegration} from "./modules/item-piles.js";
 import {AgeTransactionService} from "./modules/automation/action-transactions.js";
 import {PowerResourceService} from "./modules/automation/power-resources.js";
-import {RuleProfileService} from "./modules/automation/rule-profiles.js";
+import {RuleProfileManager, RuleProfileService} from "./modules/automation/rule-profiles.js";
 import {ageCompendiumIndex, UnifiedAgeSearch} from "./modules/automation/compendium-index.js";
 import {AgeImporterService} from "./modules/automation/importer-service.js";
+import {AgeNpcStudioService} from "./modules/npc-studio/service.js";
 import {automationFeatureEnabled} from "./modules/automation/mode.js";
-import {StuntAssistantService} from "./modules/automation/stunt-assistant.js";
+import {StuntAssistant, StuntAssistantService} from "./modules/automation/stunt-assistant.js";
 import {MultiTargetService} from "./modules/automation/multi-target.js";
 import {PowerResistanceService} from "./modules/automation/power-resistance.js";
 import {CombatLifecycleService} from "./modules/automation/combat-lifecycle.js";
-import {AdvancedTestService} from "./modules/automation/advanced-tests.js";
+import {AdvancedTestService, AdvancedTestTracker} from "./modules/automation/advanced-tests.js";
 import {ConditionLifecycleService} from "./modules/automation/condition-lifecycle.js";
-import {RequestedRollService} from "./modules/automation/requested-rolls.js";
-import {RecoveryService} from "./modules/automation/recovery.js";
-import {CombatEconomyService} from "./modules/automation/combat-economy.js";
+import {
+    captureRequestedRollResultRefresh,
+    RequestedRollBuilder,
+    RequestedRollService
+} from "./modules/automation/requested-rolls.js";
+import {RecoveryAssistant, RecoveryService} from "./modules/automation/recovery.js";
+import {CombatEconomyService, CombatEconomyTracker} from "./modules/automation/combat-economy.js";
 import {AgeContentValidator} from "./modules/automation/content-validator.js";
 import {AgeActionService} from "./modules/automation/actions.js";
 import {registerCoreAgeActions} from "./modules/automation/core-actions.js";
@@ -60,16 +68,24 @@ import {AgeActionDelegationService} from "./modules/automation/action-delegation
 import {createAgeSystemApi} from "./modules/api.js";
 import {AgeDataContracts} from "./modules/data/contracts.js";
 import {AGE_DATA_MODEL_STATUS, registerAgeDataModels} from "./modules/data/models.js";
-import {registerAgeTokenTrackableAttributes} from "./modules/token-attributes.js";
 import {AgeMigrationPreview} from "./modules/data/migration-preview.js";
 import {StructuredChatCardService} from "./modules/chat/structured-chat.js";
 import {
     migrateBeta1ItemSheetSelections,
     migrateStableAppV2SheetDefaults
 } from "./modules/sheets/v2-sheet-migration.js";
-import {registerLegacySelectHelper} from "./modules/handlebars-helpers.js";
 import {registerNativeEditorHelper} from "./modules/sheets/native-editor.js";
 import {registerAgeSystemTour} from "./modules/tour.js";
+import {
+    ageProgressionRuntime,
+    initializeAgeProgressionRuntime
+} from "./modules/progression/runtime.js";
+import {AgeAdvancementCenter} from "./modules/progression/advancement-center.js";
+import {AgeCharacterBuilder} from "./modules/progression/character-builder.js";
+import {AgeProgressionDefinitionDocumentProvider} from "./modules/progression/definition-documents.js";
+import {AgeProgressionDefinitionSheet} from "./modules/progression/definition-sheet.js";
+import {registerAgeTokenTrackableAttributes} from "./modules/token-attributes.js";
+import {MassBattleService} from "./modules/mass-battle.js";
 
 import * as Dice from "./modules/dice.js";
 import * as Settings from "./modules/settings.js";
@@ -121,7 +137,7 @@ async function preloadHandlebarsTemplates() {
     return foundry.applications.handlebars.loadTemplates(templatePaths);
 };
 
-Hooks.once("init", async function() {
+Hooks.once("init", function() {
     const ageSystemText = `
      ___   ____________   _____            __               
     /   | / ____/ ____/  / ___/__  _______/ /____  ____ ___ 
@@ -135,23 +151,21 @@ Hooks.once("init", async function() {
 
     // Native AppV2 form controls must be emitted while Handlebars renders;
     // registering here avoids post-render DOM replacement.
-    registerLegacySelectHelper();
     registerNativeEditorHelper();
     registerAgeDataModels();
     registerAgeTokenTrackableAttributes();
 
     // Create a namespace within the game global
     registerCoreAgeActions();
-    const publicApi = createAgeSystemApi({
-        transactions: AgeTransactionService,
-        contentValidator: AgeContentValidator,
-        migrationPreview: AgeMigrationPreview,
-        actions: AgeActionService,
-        delegation: AgeActionDelegationService,
-        systemVersion: game.system.version
-    });
     game.ageSystem = {
-        api: publicApi,
+        // The public API is completed during setup, after Foundry has created
+        // the world collections and current User required by progression.
+        api: null,
+        npcStudio: AgeNpcStudioService,
+        progression: null,
+        progressionDefinitions: null,
+        progressionRuntime: ageProgressionRuntime,
+        templatesReady: null,
         applications: {
             ageSystemSheetCharacter,
             ageSystemSheetCharStatBlock,
@@ -164,6 +178,7 @@ Hooks.once("init", async function() {
             ageSystemSheetVehicleV2,
             ageSystemSheetSpaceshipV2,
             ageSystemSheetOrgV2,
+            ageSystemSheetForceV2,
             ageSystemSheetClassV2,
             ageSystemSheetEquipmentV2,
             ageSystemSheetFocusV2,
@@ -175,6 +190,22 @@ Hooks.once("init", async function() {
             ageSystemSheetStuntsV2,
             ageSystemSheetTalentV2,
             ageSystemSheetWeaponV2,
+            AgeAdvancementCenter,
+            AgeCharacterBuilder,
+            AgeImporter,
+            AgeNpcStudio,
+            AgeProgressionDefinitionSheet,
+            AdvancedTestTracker,
+            RequestedRollBuilder,
+            StuntAssistant,
+            RecoveryAssistant,
+            UnifiedAgeSearch,
+            CombatEconomyTracker,
+            RuleProfileManager,
+            QuickSettings,
+            AdvancedSettings,
+            BreatherSettings,
+            ConditionsWorkshop,
             AgeTracker
         },
         dice: Dice,
@@ -200,6 +231,7 @@ Hooks.once("init", async function() {
             ruleProfiles: RuleProfileService,
             compendiumIndex: ageCompendiumIndex,
             importer: AgeImporterService,
+            npcStudio: AgeNpcStudioService,
             stuntAssistant: StuntAssistantService,
             multiTargeting: MultiTargetService,
             powerResistance: PowerResistanceService,
@@ -209,7 +241,10 @@ Hooks.once("init", async function() {
             recovery: RecoveryService,
             combatEconomy: CombatEconomyService,
             advancedTests: AdvancedTestService,
+            massBattle: MassBattleService,
             contentValidator: AgeContentValidator,
+            progression: null,
+            progressionDefinitions: null,
             indexReady: null
         }
     };
@@ -267,6 +302,11 @@ Hooks.once("init", async function() {
         makeDefault: true,
         label: "age-system.SHEETS.orgAppV2Stable"
     });
+    Actors.registerSheet("age-system", ageSystemSheetForceV2, {
+        types: ["force"],
+        makeDefault: true,
+        label: "age-system.SHEETS.forceAppV2"
+    });
     
     const Items = foundry.documents.collections.Items;
     const ItemSheet = foundry.appv1.sheets.ItemSheet;
@@ -308,6 +348,11 @@ Hooks.once("init", async function() {
             label: "age-system.SHEETS.itemAppV2Stable"
         });
     }
+    Items.registerSheet("age-system", AgeProgressionDefinitionSheet, {
+        types: ["progression"],
+        makeDefault: true,
+        label: "age-system.SHEETS.progressionDefinitionAppV2"
+    });
 
     game.ageSystem.ageTracker = new AgeTracker({
         popOut: false,
@@ -321,11 +366,18 @@ Hooks.once("init", async function() {
     CONFIG.ageSystem = ageSystem;
     CONFIG.ageSystem.classAdvancementSupported = true;
 
-    // Load partials for Handlebars
-    await preloadHandlebarsTemplates();
+    // Foundry's init hook is synchronous. Start template preloading without
+    // suspending the hook so settings, helpers, configuration, and the public
+    // API are always registered before Foundry initializes world Documents.
+    // The ready hook awaits this captured promise before AGE finishes its own
+    // asynchronous startup work.
+    game.ageSystem.templatesReady = preloadHandlebarsTemplates().catch(error => {
+        console.error("AGE System | Handlebars template preload failed.", error);
+        return [];
+    });
 
     // Register System Settings
-    await Settings.registerSystemSettings();
+    Settings.registerSystemSettings();
     // Client settings are already user-specific. Apply the selected colour as
     // soon as settings exist so sheets opened during startup never receive an
     // undefined colour class.
@@ -500,6 +552,28 @@ Hooks.once("item-piles-ready", () => registerAgeItemPilesIntegration().catch(err
     }));
 
 Hooks.once("setup", function() {
+    // Foundry v14 creates game.user and the world Document collections after
+    // init and before setup. Build the provider-neutral progression graph at
+    // this boundary so its resolvers bind real runtime state while the public
+    // API is still available to the ageSystemApiReady setup hook.
+    const progression = initializeAgeProgressionRuntime();
+    const publicApi = createAgeSystemApi({
+        transactions: AgeTransactionService,
+        contentValidator: AgeContentValidator,
+        migrationPreview: AgeMigrationPreview,
+        actions: AgeActionService,
+        delegation: AgeActionDelegationService,
+        progression,
+        npcStudio: AgeNpcStudioService,
+        systemVersion: game.system.version
+    });
+    game.ageSystem.api = publicApi;
+    game.ageSystem.progression = progression;
+    game.ageSystem.automation.progression = progression;
+    const progressionDefinitions = new AgeProgressionDefinitionDocumentProvider({service: progression});
+    game.ageSystem.progressionDefinitions = progressionDefinitions;
+    game.ageSystem.automation.progressionDefinitions = progressionDefinitions;
+
     // Specific Localization
     Setup.localizePower();
     Setup.abilitiesName();
@@ -532,16 +606,24 @@ Hooks.once("setup", function() {
 });
 
 Hooks.once("ready", async function() {
+    await game.ageSystem.templatesReady;
     AgeActionDelegationService.initialize();
     await migrateBeta1ItemSheetSelections();
     await migrateStableAppV2SheetDefaults();
-    await registerAgeSystemTour();
-    // The client-scoped setting is the source of truth. Older builds also
-    // stored a user flag which could become stale and overwrite the selection.
-    const color = applyColorScheme(game.settings.get("age-system", "colorScheme"));
-    if (game.user.getFlag("age-system", "colorScheme") !== color) {
-        await game.user.setFlag("age-system", "colorScheme", color);
+    try {
+        await game.ageSystem.progressionDefinitions?.initialize();
+    } catch (error) {
+        // Persisted definitions fail closed inside their provider. An
+        // unexpected startup failure must remain visible without preventing
+        // the rest of AGE from reaching ready state.
+        console.error("AGE System | Progression definition provider failed to initialize.", error);
     }
+    await registerAgeSystemTour();
+    // Palette choice is personal but world-specific. The visible client
+    // setting is hydrated from this world's User flag so legacy sheet and roll
+    // callers keep receiving a concrete palette without leaking choices into
+    // other worlds.
+    await initializeWorldColorSchemePreference();
 
     // Tracker Handling
     // Identify if User already has ageTrackerPos flag set
@@ -645,9 +727,14 @@ Hooks.on("preCreateChatMessage", (message, source) => StructuredChatCardService.
 Hooks.on("renderageSystemSheetCharacter", (app, html, data) => {Setup.hidePrimaryAblCheckbox(html)});
 Hooks.on("renderChatMessageHTML", (app, html, data) => {
     StructuredChatCardService.decorate(app, html);
+    MassBattleService.decorate(app, html);
     AgeChat.addChatListeners(app, html);
     AgeChat.sortCustomAgeChatCards(app, html, data);
 });
+Hooks.on("preUpdateChatMessage", captureRequestedRollResultRefresh);
+Hooks.on("updateChatMessage", message => RequestedRollService.refreshResultReferences(message));
+Hooks.on("preDeleteChatMessage", captureRequestedRollResultRefresh);
+Hooks.on("deleteChatMessage", message => RequestedRollService.refreshResultReferences(message));
 Hooks.on("updateCombat", combat => {
     CombatLifecycleService.onUpdateCombat(combat).catch(error => console.error("AGE System | Combat lifecycle failed.", error));
     CombatEconomyService.onUpdateCombat(combat).catch(error => console.error("AGE System | Combat economy failed.", error));
@@ -698,6 +785,27 @@ Hooks.on('renderSettingsConfig', (SettingsConfig, html, data) => {
     Settings.updateFocusCompendia();
     // Settings.updateCompTable(); // TODO - this function will be useful only when dynamic choices for System Settings is implemented
 });
+
+function actorFromDirectoryContext(element) {
+    const root = element?.[0] ?? element;
+    const actorId = root?.dataset?.entryId ?? element?.data?.("entryId");
+    return actorId ? game.actors?.get?.(actorId) ?? null : null;
+}
+
+Hooks.on("getActorDirectoryEntryContext", (_html, options) => {
+    if (!game.user?.isGM) return;
+    options.push({
+        name: "age-system.NPC_STUDIO.cloneContext",
+        icon: '<i class="fa-solid fa-clone" aria-hidden="true"></i>',
+        condition: element => actorFromDirectoryContext(element)?.type === "char",
+        callback: element => {
+            const actor = actorFromDirectoryContext(element);
+            if (!actor) return null;
+            return AgeNpcStudio.open({service: AgeNpcStudioService, origin: "clone", actorUuid: actor.uuid});
+        }
+    });
+});
+
 // Adding AGE Roller as Canvas Control menu.
 Hooks.on(`getSceneControlButtons`, controls => {
     controls["ageroller"] = {
@@ -713,55 +821,6 @@ Hooks.on(`getSceneControlButtons`, controls => {
                 "icon": "fa-solid fa-toolbox",
                 "order": 0,
                 "button": false
-            },
-            "ageroll": {
-                "name": "ageroll",
-                "order": 1,
-                "title": "Roll 3D6",
-                "icon": "fa-duotone fa-light fa-dice",
-                "button": true,
-                onChange: (event, active) => {
-                    const rollData = {
-                        event,
-                        flavor: game.user.name,
-                        flavor2: game.i18n.localize("age-system.chatCard.looseRoll")
-                    }
-                    return Dice.ageRollCheck(rollData);
-                },
-            },
-            "singleroll": {
-                "name": "singleroll",
-                "order": 2,
-                "title": "Roll 1D6",
-                "icon": "fa-duotone fa-light fa-dice-six",
-                "button": true,
-                "activate": true,
-                onChange: async (event, active) => {
-                    let roll = await new Roll("1d6").evaluate();
-                    return roll.toMessage({}, {messageMode: event?.shiftKey ? MESSAGE_MODES.BLIND : getCoreMessageMode()});
-                }
-            },
-            "d66": {
-                "name": "d66",
-                "order": 3,
-                "title": "D66",
-                "icon": "fa-regular fa-2",
-                "button": true,
-                onChange: async (event, active) => {
-                    let roll = await new Roll("1d6*10 + 1d6").evaluate();
-                    return roll.toMessage({}, {messageMode: event?.shiftKey ? MESSAGE_MODES.BLIND : getCoreMessageMode()})
-                }
-            },
-            "d666": {
-                "name": "d666",
-                "order": 4,
-                "title": "D666",
-                "icon": "fa-regular fa-3",
-                "button": true,
-                onChange: async (event, active) => {
-                    let roll = await new Roll("1d6*100 + 1d6*10 + 1d6").evaluate();
-                    return roll.toMessage({}, {messageMode: event?.shiftKey ? MESSAGE_MODES.BLIND : getCoreMessageMode()})
-                }
             },
             // Figure out a way to select token when using this tool!!!
             "breather": {
@@ -788,11 +847,20 @@ Hooks.on(`getSceneControlButtons`, controls => {
                 "icon": "fa-regular fa-file-import",
                 "button": true,
                 "visible": game.user.isGM,
-                onChange: (event, active) => new AgeImporter().render(true)
+                onChange: () => AgeImporter.open()
+            },
+            "npcStudio": {
+                "name": "npcStudio",
+                "order": 8,
+                "title": "age-system.NPC_STUDIO.open",
+                "icon": "fa-solid fa-dragon",
+                "button": true,
+                "visible": Boolean(game.user.isGM),
+                onChange: () => AgeNpcStudio.open({service: AgeNpcStudioService})
             },
             "library": {
                 "name": "library",
-                "order": 8,
+                "order": 9,
                 "title": "age-system.AUTOMATION.librarySearch",
                 "icon": "fa-solid fa-magnifying-glass",
                 "button": true,
@@ -801,7 +869,7 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "undo": {
                 "name": "undo",
-                "order": 9,
+                "order": 10,
                 "title": "age-system.AUTOMATION.undoLastAction",
                 "icon": "fa-solid fa-rotate-left",
                 "button": true,
@@ -819,7 +887,7 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "advancedTests": {
                 "name": "advancedTests",
-                "order": 10,
+                "order": 11,
                 "title": "age-system.AUTOMATION.advancedTests",
                 "icon": "fa-solid fa-bars-progress",
                 "button": true,
@@ -828,7 +896,7 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "actionDiagnostics": {
                 "name": "actionDiagnostics",
-                "order": 14,
+                "order": 16,
                 "title": "age-system.AUTOMATION.actionDiagnostics",
                 "icon": "fa-solid fa-stethoscope",
                 "button": true,
@@ -837,7 +905,7 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "requestedRolls": {
                 "name": "requestedRolls",
-                "order": 11,
+                "order": 12,
                 "title": "age-system.AUTOMATION.requestedRolls",
                 "icon": "fa-solid fa-bullhorn",
                 "button": true,
@@ -846,7 +914,7 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "recoveryAssistant": {
                 "name": "recoveryAssistant",
-                "order": 12,
+                "order": 13,
                 "title": "age-system.AUTOMATION.recoveryAssistant",
                 "icon": "fa-solid fa-bed",
                 "button": true,
@@ -855,16 +923,25 @@ Hooks.on(`getSceneControlButtons`, controls => {
             },
             "combatEconomy": {
                 "name": "combatEconomy",
-                "order": 13,
+                "order": 14,
                 "title": "age-system.AUTOMATION.combatEconomy",
                 "icon": "fa-solid fa-hourglass-half",
                 "button": true,
                 "visible": automationFeatureEnabled("enableCombatEconomy"),
                 onChange: () => CombatEconomyService.open()
             },
+            "characterBuilder": {
+                "name": "characterBuilder",
+                "order": 15,
+                "title": "AGE Character Builder",
+                "icon": "fa-solid fa-user-plus",
+                "button": true,
+                "visible": Boolean(game.user.isGM || game.user.can?.("ACTOR_CREATE")),
+                onChange: () => AgeCharacterBuilder.open({service: game.ageSystem.progression})
+            },
             "help": {
                 "name": "help",
-                "order": 15,
+                "order": 17,
                 "title": "AGE System (unofficial) Wiki",
                 "icon": "fa-regular fa-circle-info",
                 "button": true,

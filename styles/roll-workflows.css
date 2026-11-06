@@ -1,0 +1,708 @@
+/* AGE 5.3.3 roll workflows
+   Advanced Tests and Requested Rolls share the Force-sheet visual language,
+   but use only semantic palette tokens so every shipped colour scheme remains
+   readable. Roll rules and stored automation data are intentionally untouched. */
+
+.application.age-system.age-roll-workflow .window-content {
+    container-name: age-roll-workflow;
+    container-type: inline-size;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+}
+
+.application.age-system.age-roll-workflow .window-content > .age-roll-workflow__surface,
+.application.age-system.age-roll-workflow .window-content > section > .age-roll-workflow__surface {
+    height: 100%;
+}
+
+.age-roll-workflow__surface {
+    min-width: 0;
+    min-height: 0;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+}
+
+.age-roll-workflow__header {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 0.85rem 1rem;
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-bottom: 3px solid var(--age-v5-gold, #d1a52b);
+}
+
+.age-roll-workflow__header :where(h1, h2, h3, p, span, small) {
+    margin: 0;
+    color: inherit;
+}
+
+.age-roll-workflow__header :where(h1, h2) {
+    font: 700 1.65rem/1.1 Georgia, serif;
+}
+
+.age-roll-workflow__header > i {
+    flex: 0 0 auto;
+    font-size: 2rem;
+    opacity: 0.9;
+}
+
+.age-roll-workflow__kicker {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: inherit;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.age-roll-workflow__panel {
+    min-width: 0;
+    padding: 0.75rem;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+    border-radius: var(--age-v5-radius, 8px);
+    box-shadow: 0 2px 8px rgb(18 29 32 / 9%);
+}
+
+.age-roll-workflow__heading,
+.age-roll-workflow__card-header,
+.age-roll-workflow__actions {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.age-roll-workflow__heading {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 25%, transparent);
+}
+
+.age-roll-workflow__heading :where(h2, h3),
+.age-roll-workflow__card-header :where(h2, h3) {
+    min-width: 0;
+    margin: 0;
+    color: inherit;
+    font-family: Georgia, serif;
+}
+
+.age-roll-workflow__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    align-items: end;
+    min-width: 0;
+}
+
+.age-roll-workflow__grid label,
+.age-roll-workflow__field {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    color: inherit;
+}
+
+.age-roll-workflow__grid label > span,
+.age-roll-workflow__field > span {
+    font-size: 0.72rem;
+    font-weight: 750;
+}
+
+.age-roll-workflow__field--wide {
+    grid-column: 1 / -1;
+}
+
+.age-roll-workflow :where(input:not([type="checkbox"]):not([type="radio"]), select) {
+    width: 100%;
+    min-width: 0;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border-color: color-mix(in srgb, var(--age-v5-theme-primary) 42%, transparent);
+}
+
+.age-roll-workflow button,
+.age-roll-request-card button {
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-color: color-mix(in srgb, var(--age-v5-theme-on-primary) 36%, transparent);
+    font-weight: 700;
+}
+
+.age-roll-workflow button:hover:not(:disabled),
+.age-roll-workflow button:focus-visible,
+.age-roll-request-card button:hover:not(:disabled),
+.age-roll-request-card button:focus-visible {
+    box-shadow: 0 0 0 2px var(--age-v5-gold, #d1a52b);
+}
+
+.age-roll-workflow button:disabled,
+.age-roll-request-card button:disabled {
+    color: var(--age-v5-theme-disabled-fg, #354246);
+    background: var(--age-v5-theme-disabled-bg, #d6d8d5);
+    cursor: not-allowed;
+}
+
+.age-roll-workflow button.danger {
+    color: #fff;
+    background: #8c252a;
+}
+
+.age-roll-workflow__badge {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.8rem;
+    padding: 0.25rem 0.5rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.age-roll-workflow__notice {
+    flex: 0 0 auto;
+    margin: 0.75rem 0.75rem 0;
+}
+
+.age-roll-workflow__empty {
+    display: grid;
+    place-items: center;
+    min-height: 6rem;
+    margin: 0;
+    padding: 1rem;
+    color: var(--age-v5-theme-editor-fg);
+    border: 1px dashed color-mix(in srgb, var(--age-v5-theme-primary) 50%, transparent);
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* Advanced Tests ------------------------------------------------------- */
+
+.age-advanced-tests {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: hidden;
+}
+
+.age-advanced-create-panel,
+.age-advanced-tracker-panel {
+    margin-inline: 0.75rem;
+}
+
+.age-advanced-create-panel {
+    flex: 0 0 auto;
+}
+
+.age-advanced-tracker-panel {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+    margin-bottom: 0.75rem;
+}
+
+.age-advanced-create {
+    grid-template-columns: minmax(10rem, 2fr) minmax(8rem, 1fr) minmax(6rem, 0.7fr) minmax(7rem, 0.8fr) auto;
+}
+
+.age-advanced-create > button {
+    min-height: var(--form-field-height, 32px);
+    white-space: nowrap;
+}
+
+.age-advanced-list,
+.age-roll-workflow__scroll {
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.age-advanced-list {
+    display: grid;
+    gap: 0.7rem;
+    align-content: start;
+    padding-right: 0.2rem;
+}
+
+.age-roll-workflow__card {
+    min-width: 0;
+    padding: 0.7rem;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+    border-top: 4px solid var(--age-v5-theme-primary);
+    border-radius: 6px;
+}
+
+.age-roll-workflow__card.is-closed {
+    border-style: dashed;
+}
+
+.age-advanced-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.7rem;
+}
+
+.age-roll-workflow__progress {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+    padding: 0.55rem;
+    background: color-mix(in srgb, var(--age-v5-theme-editor-bg) 75%, var(--age-v5-theme-surface));
+    border-radius: 5px;
+}
+
+.age-roll-workflow__progress > div {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+    font-size: 0.74rem;
+}
+
+.age-roll-workflow__progress progress {
+    width: 100%;
+    accent-color: var(--age-v5-theme-primary);
+}
+
+.age-advanced-progress--opposition progress {
+    accent-color: var(--age-v5-theme-secondary);
+}
+
+.age-advanced-adjustments {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7rem minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: end;
+    margin-top: 0.65rem;
+}
+
+.age-advanced-side-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.2rem 2.2rem;
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.age-advanced-side-actions > span,
+.age-advanced-amount > span {
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.age-advanced-side-actions button {
+    width: 2.2rem;
+    min-width: 2.2rem;
+    margin: 0;
+}
+
+.age-advanced-amount {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    text-align: center;
+}
+
+.age-advanced-amount input {
+    text-align: center;
+}
+
+.age-advanced-actions {
+    justify-content: flex-end;
+    margin-top: 0.65rem;
+}
+
+.age-advanced-actions button {
+    width: auto;
+    min-width: 7rem;
+}
+
+.age-advanced-history {
+    margin-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 25%, transparent);
+}
+
+.age-advanced-history summary {
+    padding-block: 0.55rem 0.25rem;
+    color: inherit;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.age-advanced-history ol {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0.35rem 0 0;
+    padding-left: 1.5rem;
+}
+
+.age-advanced-history li {
+    display: grid;
+    grid-template-columns: minmax(5rem, auto) minmax(0, 1fr);
+    gap: 0.15rem 0.5rem;
+}
+
+.age-advanced-history li small {
+    grid-column: 1 / -1;
+}
+
+.age-advanced-test-controls {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgb(0 0 0 / 25%);
+}
+
+/* Requested Roll builder --------------------------------------------- */
+
+.age-requested-roll-builder,
+.age-requested-roll-form {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.age-requested-roll-builder {
+    display: grid;
+}
+
+.age-requested-roll-form {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.age-requested-roll-form > .age-roll-workflow__scroll {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+    padding: 0.75rem;
+}
+
+.age-requested-roll-recipient-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.age-requested-roll-recipient-actions button {
+    width: auto;
+    margin: 0;
+}
+
+.age-requested-roll-recipient-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.age-requested-roll-recipient {
+    padding: 0;
+    border-top-width: 1px;
+}
+
+.age-requested-roll-recipient label {
+    display: grid;
+    grid-template-columns: auto 42px minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+    min-width: 0;
+    padding: 0.55rem;
+    cursor: pointer;
+}
+
+.age-requested-roll-recipient label:has(input:checked) {
+    background: color-mix(in srgb, var(--age-v5-theme-primary) 14%, transparent);
+    outline: 2px solid var(--age-v5-theme-primary);
+    outline-offset: -2px;
+}
+
+.age-requested-roll-recipient img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 40%, transparent);
+    border-radius: 50%;
+}
+
+.age-requested-roll-recipient__identity {
+    display: grid;
+    min-width: 0;
+}
+
+.age-requested-roll-recipient__identity :where(strong, small) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.age-requested-roll-recipient__identity small {
+    color: inherit;
+}
+
+.age-requested-roll-builder__footer {
+    justify-content: flex-end;
+    padding: 0.65rem 0.75rem;
+    color: var(--age-v5-theme-on-surface);
+    background: color-mix(in srgb, var(--age-v5-theme-surface) 88%, var(--age-v5-theme-secondary));
+    border-top: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 28%, transparent);
+}
+
+.age-requested-roll-builder__footer button {
+    width: auto;
+    min-width: 13rem;
+}
+
+/* Requested Roll chat card ------------------------------------------- */
+
+.age-roll-request-card {
+    container-name: age-roll-request-card;
+    container-type: inline-size;
+    --age-v5-theme-primary: #0f5f68;
+    --age-v5-theme-secondary: #c9c4b6;
+    --age-v5-theme-surface: #f5f2e9;
+    --age-v5-theme-on-primary: #ffffff;
+    --age-v5-theme-on-secondary: #182225;
+    --age-v5-theme-on-surface: #182225;
+    --age-v5-theme-editor-bg: #fffdf7;
+    --age-v5-theme-editor-fg: #182225;
+    --age-v5-theme-disabled-bg: #d6d8d5;
+    --age-v5-theme-disabled-fg: #354246;
+    --age-v5-gold: #d1a52b;
+}
+
+.age-roll-request-card.colorset-modern-blue { --age-v5-theme-primary: #007dad; --age-v5-theme-secondary: #35a5ca; --age-v5-theme-surface: #b9dbeb; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-fantasy-blue { --age-v5-theme-primary: #0f4f5b; --age-v5-theme-secondary: #0f0f0f; --age-v5-theme-surface: #91b6d4; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-dragon-red { --age-v5-theme-primary: #83272a; --age-v5-theme-secondary: #979899; --age-v5-theme-surface: #e0beb1; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-ronin-green { --age-v5-theme-primary: #155f0e; --age-v5-theme-secondary: #92b65f; --age-v5-theme-surface: #c2f5aa; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #101416; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-expanded-blue { --age-v5-theme-primary: #005971; --age-v5-theme-secondary: #112339; --age-v5-theme-surface: #e6e7e8; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-folded-purple { --age-v5-theme-primary: #565183; --age-v5-theme-secondary: #625b68; --age-v5-theme-surface: #cfccde; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-select-one { --age-v5-theme-primary: #273249; --age-v5-theme-secondary: #4d627a; --age-v5-theme-surface: #768d9f; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-the-grey { --age-v5-theme-primary: #3d3e3f; --age-v5-theme-secondary: #6b6a6a; --age-v5-theme-surface: #b4b6b3; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-red-warrior { --age-v5-theme-primary: #751119; --age-v5-theme-secondary: #b22126; --age-v5-theme-surface: #d1635b; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+.age-roll-request-card.colorset-never-dead { --age-v5-theme-primary: #663322; --age-v5-theme-secondary: #58705a; --age-v5-theme-surface: #eeddcd; --age-v5-theme-on-primary: #fff; --age-v5-theme-on-secondary: #fff; --age-v5-theme-on-surface: #101416; }
+
+.age-roll-request-card {
+    overflow: hidden;
+    color: var(--age-v5-theme-editor-fg);
+    background: var(--age-v5-theme-editor-bg);
+    border: 1px solid color-mix(in srgb, var(--age-v5-theme-primary) 34%, transparent);
+    border-radius: 7px;
+}
+
+.age-roll-request-card__header {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.55rem;
+    color: var(--age-v5-theme-on-primary);
+    background: var(--age-v5-theme-primary);
+    border-bottom: 3px solid var(--age-v5-gold);
+}
+
+.age-roll-request-card__icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 50%;
+    font-size: 1.15rem;
+}
+
+.age-roll-request-card__title {
+    min-width: 0;
+}
+
+.age-roll-request-card__title :where(h3, p, small) {
+    margin: 0;
+    color: inherit;
+}
+
+.age-roll-request-card__title h3 {
+    overflow: hidden;
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.age-roll-request-card__title small {
+    color: inherit;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.age-roll-request-card__summary {
+    overflow: hidden;
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.age-roll-request-card__count {
+    min-width: 3rem;
+    padding: 0.3rem 0.45rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.age-roll-request-card__recipients {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.55rem;
+}
+
+.age-roll-request-card__recipient {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 0;
+    padding: 0.45rem;
+    color: var(--age-v5-theme-on-surface);
+    background: var(--age-v5-theme-surface);
+    border-left: 4px solid var(--age-v5-theme-primary);
+    border-radius: 5px;
+}
+
+.age-roll-request-card__recipient.is-complete {
+    border-left-color: #327a49;
+}
+
+.age-roll-request-card__recipient > img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.age-roll-request-card__recipient-details,
+.age-roll-request-card__status {
+    display: grid;
+    min-width: 0;
+}
+
+.age-roll-request-card__recipient-details > strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.age-roll-request-card__status {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.3rem;
+    align-items: center;
+    font-size: 0.7rem;
+}
+
+.age-roll-request-card__status[data-request-state="completed"] {
+    padding: 0.12rem 0.3rem;
+    color: var(--age-v5-theme-on-secondary);
+    background: var(--age-v5-theme-secondary);
+    border-radius: 999px;
+}
+
+.age-roll-request-card__recipient button {
+    width: auto;
+    min-width: 6.2rem;
+    margin: 0;
+}
+
+.age-roll-request-card.is-complete .age-roll-request-card__count {
+    box-shadow: inset 0 0 0 2px #327a49;
+}
+
+@container age-roll-workflow (max-width: 680px) {
+    .age-advanced-create,
+    .age-roll-workflow__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .age-advanced-create > button,
+    .age-roll-workflow__field--wide {
+        grid-column: 1 / -1;
+    }
+
+    .age-advanced-adjustments {
+        grid-template-columns: minmax(0, 1fr) 6rem minmax(0, 1fr);
+    }
+
+    .age-requested-roll-recipient-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@container age-roll-workflow (max-width: 520px) {
+    .age-roll-workflow__header {
+        padding: 0.7rem;
+    }
+
+    .age-roll-workflow__header > i {
+        display: none;
+    }
+
+    .age-roll-workflow__heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .age-advanced-create,
+    .age-roll-workflow__grid,
+    .age-advanced-progress-grid,
+    .age-advanced-adjustments {
+        grid-template-columns: 1fr;
+    }
+
+    .age-advanced-create > button,
+    .age-roll-workflow__field--wide {
+        grid-column: auto;
+    }
+
+}
+
+@container age-roll-request-card (max-width: 520px) {
+    .age-roll-request-card__header {
+        grid-template-columns: 36px minmax(0, 1fr);
+    }
+
+    .age-roll-request-card__count {
+        grid-column: 1 / -1;
+    }
+
+    .age-roll-request-card__recipient {
+        grid-template-columns: 32px minmax(0, 1fr);
+    }
+
+    .age-roll-request-card__recipient button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}

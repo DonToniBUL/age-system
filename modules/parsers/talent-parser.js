@@ -1,5 +1,5 @@
 import {ageSystem} from "../config.js";
-import {normalizeImportedTitle} from "../automation/import-normalization.js";
+import {normalizeImportedTitle, normalizePdfClipboardText} from "../automation/import-normalization.js";
 
 /**
  * Parser for importing individual talents from AGE System books
@@ -9,7 +9,8 @@ export class TalentParser {
     this._mode = ageSetting;
     this.mode = ageSetting;
     this._modeSelected = ageSetting;
-    this._text = String(text ?? "").trim();
+    this.normalization = normalizePdfClipboardText(text);
+    this._text = this.normalization.text;
     this.text = this._text;
     this.textLC = foundry.utils.deepClone(this.text.toLowerCase());
     this.options = options;
@@ -297,6 +298,8 @@ export class TalentParser {
     // Create the talent items
     if (talentItems.length > 0) {
       const created = await game.items.documentClass.createDocuments(talentItems);
+      for (const document of created ?? []) this.options?.onCreatedDocument?.(document);
+      if (created?.length !== talentItems.length) throw new Error("Foundry did not create every imported Talent Item.");
       ui.notifications.info(`Created ${talentItems.length} talent(s): ${talentItems.map(t => t.name).join(', ')}`);
       return [...reused, ...created];
     } else if (reused.length > 0) {

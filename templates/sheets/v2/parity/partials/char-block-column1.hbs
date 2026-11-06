@@ -202,7 +202,9 @@
             {{/if}}
         </label>
         {{!-- <div>{{{item.system.longDesc}}}</div> --}}
-        {{{ageEditor item.system.longDesc item.system.longDesc target="system.longDesc" editable=false documentUUID=item.uuid}}}
+        <div class="stat-block-power-description">
+            {{{item.ageEnrichedLongDesc}}}
+        </div>
     </li>
     {{/each}}
 </ul>

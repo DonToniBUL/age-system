@@ -1,22 +1,81 @@
-<section class="age-combat-economy flexcol" style="gap:.55rem;padding:.35rem">
-  {{#if actor}}
-  <h2 style="margin:0">{{actor.name}}</h2>
-  <div class="flexrow" style="gap:.45rem">
-    <div class="notification info" style="margin:0;flex:1"><strong>{{state.major}}</strong><br>{{localize "age-system.AUTOMATION.majorActions"}}</div>
-    <div class="notification info" style="margin:0;flex:1"><strong>{{state.minor}}</strong><br>{{localize "age-system.AUTOMATION.minorActions"}}</div>
-    <div class="notification info" style="margin:0;flex:1"><strong>{{state.free}}</strong><br>{{localize "age-system.AUTOMATION.freeActions"}}</div>
+<section class="age-utility-workflow__surface age-combat-economy colorset-selection" aria-labelledby="age-combat-economy-title">
+  <header class="age-utility-workflow__header colorset-first-tier">
+    <div>
+      <span class="age-utility-workflow__kicker">{{localize "age-system.AUTOMATION.combatEconomy"}}</span>
+      <h1 id="age-combat-economy-title">{{#if actor}}{{actor.name}}{{else}}{{localize "age-system.AUTOMATION.combatEconomy"}}{{/if}}</h1>
+    </div>
+    <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+  </header>
+
+  <div class="age-utility-workflow__scroll">
+    {{#if actor}}
+    <section class="age-utility-workflow__panel colorset-second-tier" aria-labelledby="age-combat-economy-actions-title">
+      <div class="age-utility-workflow__heading">
+        <h2 id="age-combat-economy-actions-title">{{localize "age-system.AUTOMATION.combatEconomy"}}</h2>
+      </div>
+
+      <div class="age-utility-workflow__grid age-combat-economy__totals" role="list">
+        <article class="age-utility-workflow__card age-combat-economy__total" role="listitem">
+          <strong>{{state.major}}</strong>
+          <span>{{localize "age-system.AUTOMATION.majorActions"}}</span>
+        </article>
+        <article class="age-utility-workflow__card age-combat-economy__total" role="listitem">
+          <strong>{{state.minor}}</strong>
+          <span>{{localize "age-system.AUTOMATION.minorActions"}}</span>
+        </article>
+        <article class="age-utility-workflow__card age-combat-economy__total" role="listitem">
+          <strong>{{state.free}}</strong>
+          <span>{{localize "age-system.AUTOMATION.freeActions"}}</span>
+        </article>
+      </div>
+
+      {{#unless evaluation.legal}}
+      <p class="age-utility-workflow__notice notification warning" role="alert">
+        {{localize "age-system.AUTOMATION.actionEconomyExceeded"}}
+      </p>
+      {{/unless}}
+
+      <div class="age-utility-workflow__actions age-combat-economy__actions" role="group" aria-label="{{localize 'age-system.AUTOMATION.combatEconomy'}}">
+        <button type="button" data-action="record" data-economy-type="major" data-label="Manual major action">
+          <i class="fa-solid fa-circle" aria-hidden="true"></i>
+          {{localize "age-system.AUTOMATION.markMajor"}}
+        </button>
+        <button type="button" data-action="record" data-economy-type="minor" data-label="Manual minor action">
+          <i class="fa-regular fa-circle" aria-hidden="true"></i>
+          {{localize "age-system.AUTOMATION.markMinor"}}
+        </button>
+        <button type="button" data-action="record" data-economy-type="free" data-label="Manual free action">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+          {{localize "age-system.AUTOMATION.markFree"}}
+        </button>
+        <button type="button" class="age-economy-undo" data-action="undo" {{#unless history.length}}disabled{{/unless}}>
+          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+          {{localize "age-system.AUTOMATION.undoLastActionMark"}}
+        </button>
+      </div>
+    </section>
+
+    <section class="age-utility-workflow__panel colorset-second-tier" aria-labelledby="age-combat-economy-history-title">
+      <div class="age-utility-workflow__heading">
+        <h2 id="age-combat-economy-history-title">{{localize "age-system.AUTOMATION.recentActionDiagnostics"}}</h2>
+        <span class="age-utility-workflow__badge">{{history.length}}</span>
+      </div>
+      <ol class="age-utility-workflow__list age-combat-economy__history" role="list">
+        {{#each history as |entry|}}
+        <li class="age-utility-workflow__row age-combat-economy__history-entry">
+          <strong>{{entry.type}}</strong>
+          <span>{{entry.label}}</span>
+          {{#if entry.offTurn}}<small>({{localize "age-system.AUTOMATION.offTurn"}})</small>{{/if}}
+        </li>
+        {{else}}
+        <li class="age-utility-workflow__empty notes" role="status">{{localize "age-system.AUTOMATION.noActionsRecorded"}}</li>
+        {{/each}}
+      </ol>
+    </section>
+    {{else}}
+    <p class="age-utility-workflow__notice notification warning" role="alert">
+      {{localize "age-system.AUTOMATION.noActiveCombatant"}}
+    </p>
+    {{/if}}
   </div>
-  {{#unless evaluation.legal}}<p class="notification warning">{{localize "age-system.AUTOMATION.actionEconomyExceeded"}}</p>{{/unless}}
-  <div class="flexrow" style="gap:.35rem">
-    <button type="button" data-economy-type="major" data-label="Manual major action"><i class="fa-solid fa-circle"></i> {{localize "age-system.AUTOMATION.markMajor"}}</button>
-    <button type="button" data-economy-type="minor" data-label="Manual minor action"><i class="fa-regular fa-circle"></i> {{localize "age-system.AUTOMATION.markMinor"}}</button>
-    <button type="button" data-economy-type="free" data-label="Manual free action"><i class="fa-solid fa-bolt"></i> {{localize "age-system.AUTOMATION.markFree"}}</button>
-  </div>
-  <button type="button" class="age-economy-undo" {{#unless history.length}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.undoLastActionMark"}}</button>
-  <ol class="directory-list" style="max-height:14rem;overflow:auto">
-    {{#each history as |entry|}}<li class="directory-item" style="padding:.3rem .4rem"><strong>{{entry.type}}</strong> · {{entry.label}}{{#if entry.offTurn}} <span class="notes">({{localize "age-system.AUTOMATION.offTurn"}})</span>{{/if}}</li>{{else}}<li class="directory-item notes" style="padding:.5rem">{{localize "age-system.AUTOMATION.noActionsRecorded"}}</li>{{/each}}
-  </ol>
-  {{else}}
-  <p class="notification warning">{{localize "age-system.AUTOMATION.noActiveCombatant"}}</p>
-  {{/if}}
 </section>

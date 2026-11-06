@@ -1,6 +1,7 @@
 import {normalizeActiveEffectData} from "../compat.js";
 import * as AgeChat from "../age-chat.js";
 import {AgeActionService} from "./actions.js";
+import {AgeTransactionService} from "./action-transactions.js";
 import {PowerResourceService} from "./power-resources.js";
 import {PowerResistanceService} from "./power-resistance.js";
 import {StuntAssistantService} from "./stunt-assistant.js";
@@ -227,10 +228,25 @@ const coreHandlers = {
     reversible: true,
     authorize: authorizeActor,
     preview: action => ({kind: "power-points", cost: Number(action.payload.cost ?? 0), mutates: true}),
-    async execute(action) {
+    async execute(action, context) {
       const actor = await requireActor(action);
       const item = action.itemUuid ? await resolveUuid(action.itemUuid) : null;
-      return PowerResourceService.spend({actor, item, cost: action.payload.cost, ageAction: action});
+      // Keep API 1.4.0 execute() usable on owners' clients. A fresh inner
+      // envelope avoids waiting on the outer action's pending Promise.
+      if (context?.resourceAuthority !== true) {
+        if (action.payload.operation === "rollback") {
+          return PowerResourceService.rollback({actor, paymentId: action.payload.paymentId});
+        }
+        if (action.payload.operation && action.payload.operation !== "spend") {
+          throw new TypeError("Unknown Power Point operation.");
+        }
+        return PowerResourceService.spend({actor, item, cost: action.payload.cost});
+      }
+      return PowerResourceService.executeAuthoritative({
+        actor, item, action, user: requestUser(context), cost: action.payload.cost,
+        operation: action.payload.operation ?? "spend", paymentId: action.payload.paymentId,
+        allowInsufficient: action.payload.allowInsufficient === true
+      });
     },
     summarize: result => ({spent: Number(result?.spent ?? 0), requested: Number(result?.cost ?? 0)})
   },
@@ -316,6 +332,9 @@ const coreTemplates = {
 };
 
 export function registerCoreAgeActions() {
+  for (const type of ["resource.power-points", "power-points"]) {
+    AgeTransactionService.registerUndoCoordinator(type, request => PowerResourceService.coordinateUndo(request));
+  }
   for (const [type, handler] of Object.entries(coreHandlers)) {
     AgeActionService.register(type, handler, {replace: true});
   }

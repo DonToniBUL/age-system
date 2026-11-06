@@ -1,0 +1,325 @@
+<section class="age-npc-studio__surface" data-npc-studio-step="{{activeStep}}" aria-busy="{{#if busy}}true{{else}}false{{/if}}">
+  <header class="age-npc-studio__header">
+    <div>
+      <span class="age-npc-studio__kicker">{{labels.kicker}}</span>
+      <h1>{{labels.title}}</h1>
+      <p>{{labels.subtitle}}</p>
+    </div>
+    <aside class="age-npc-studio__profile" aria-label="{{labels.activeProfile}}">
+      <span>{{labels.activeProfile}}</span>
+      <strong>{{profile.label}}</strong>
+      <small>{{profile.id}}</small>
+    </aside>
+  </header>
+
+  <nav class="age-npc-studio__steps" aria-label="{{labels.stepsAria}}">
+    {{#each steps}}
+    <button type="button" data-action="go-step" data-step="{{id}}"
+            class="{{#if current}}is-current{{/if}} {{#if complete}}is-complete{{/if}}"
+            {{#unless available}}disabled{{/unless}}
+            {{#if current}}aria-current="step"{{/if}}>
+      <b aria-hidden="true">{{number}}</b><span>{{label}}</span>
+    </button>
+    {{/each}}
+  </nav>
+
+  <div class="age-npc-studio__scroll">
+    {{#if error}}
+    <aside class="age-npc-studio__notice is-error" role="alert" tabindex="-1" data-npc-studio-error>
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <div><strong>{{labels.errorHeading}}</strong><p>{{error}}</p></div>
+    </aside>
+    {{/if}}
+
+    {{#if stepSource}}
+    <section class="age-npc-studio__stage" aria-labelledby="npc-studio-source-heading">
+      <header class="age-npc-studio__section-heading">
+        <div><span>{{labels.step}} 1</span><h2 id="npc-studio-source-heading" data-npc-studio-heading="source" tabindex="-1">{{labels.sourceHeading}}</h2></div>
+        <p>{{labels.sourceIntro}}</p>
+      </header>
+
+      <fieldset class="age-npc-studio__source-choices">
+        <legend class="sr-only">{{labels.sourceHeading}}</legend>
+        {{#each sourceModes}}
+        <label class="age-npc-studio__source-card {{#if selected}}is-selected{{/if}}">
+          <input type="radio" name="npc-studio-source" value="{{id}}" data-source-mode="{{id}}" {{checked selected}} {{#if ../busy}}disabled{{/if}}>
+          <span class="age-npc-studio__source-icon" aria-hidden="true">
+            {{#if (eq id "paste")}}<i class="fa-solid fa-paste"></i>{{/if}}
+            {{#if (eq id "blank")}}<i class="fa-regular fa-file"></i>{{/if}}
+            {{#if (eq id "clone")}}<i class="fa-solid fa-copy"></i>{{/if}}
+          </span>
+          <span><strong>{{label}}</strong><small>{{hint}}</small></span>
+        </label>
+        {{/each}}
+      </fieldset>
+
+      {{#if sourcePaste}}
+      <div class="age-npc-studio__source-workspace">
+        <section class="age-npc-studio__panel">
+          <label for="npc-studio-paste"><strong>{{labels.pasteLabel}}</strong></label>
+          <textarea id="npc-studio-paste" data-source-field="pasteText" maxlength="{{pasteCharacterLimit}}"
+                    aria-describedby="npc-studio-paste-help" spellcheck="false" {{#if busy}}disabled{{/if}}>{{pasteText}}</textarea>
+          <div class="age-npc-studio__field-meta"><small id="npc-studio-paste-help">{{labels.pasteHint}}</small><small>{{pasteCharacters}} / {{pasteCharacterLimit}}</small></div>
+        </section>
+        <aside class="age-npc-studio__panel">
+          <label for="npc-studio-parser"><strong>{{labels.parserMode}}</strong></label>
+          <select id="npc-studio-parser" data-source-field="parserMode" {{#if busy}}disabled{{/if}}>
+            {{#each parserModes}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          <p class="age-npc-studio__help">{{labels.parserHint}}</p>
+        </aside>
+      </div>
+      {{/if}}
+
+      {{#if sourceBlank}}
+      <aside class="age-npc-studio__notice is-info">
+        <i class="fa-solid fa-pen-ruler" aria-hidden="true"></i><div><strong>{{labels.blankHeading}}</strong><p>{{labels.blankHint}}</p></div>
+      </aside>
+      {{/if}}
+
+      {{#if sourceClone}}
+      <section class="age-npc-studio__panel">
+        <div class="age-npc-studio__search-row">
+          <label for="npc-studio-actor-search"><strong>{{labels.actorSearch}}</strong><small>{{labels.actorSearchHint}}</small></label>
+          <span><input id="npc-studio-actor-search" type="search" value="{{actorQuery}}" data-source-field="actorQuery" autocomplete="off" {{#if busy}}disabled{{/if}}>
+          <button type="button" data-action="search-actors" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{labels.search}}</button></span>
+        </div>
+        {{#if hasActorResults}}
+        <div class="age-npc-studio__result-grid" role="list" aria-label="{{labels.actorResultsLabel}}">
+          {{#each actorResults}}
+          <button type="button" data-action="select-actor" data-uuid="{{uuid}}" role="listitem" aria-pressed="{{#if selected}}true{{else}}false{{/if}}" class="{{#if selected}}is-selected{{/if}}">
+            <img src="{{img}}" alt=""><span><strong>{{name}}</strong><small>{{displayType}}{{#if source}} · {{source}}{{/if}}</small></span>
+            {{#if selected}}<i class="fa-solid fa-circle-check" aria-hidden="true"></i>{{/if}}
+          </button>
+          {{/each}}
+        </div>
+        {{else}}
+        <p class="age-npc-studio__empty">{{labels.noActorResults}}</p>
+        {{/if}}
+        {{#if selectedActor}}<p class="age-npc-studio__selected"><strong>{{labels.selectedSource}}:</strong> {{selectedActor.name}}</p>{{/if}}
+        <p class="age-npc-studio__copy-notice"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{labels.cloneNotice}}</p>
+      </section>
+      {{/if}}
+    </section>
+    {{/if}}
+
+    {{#if stepIdentity}}
+    <section class="age-npc-studio__stage" aria-labelledby="npc-studio-identity-heading">
+      <header class="age-npc-studio__section-heading">
+        <div><span>{{labels.step}} 2</span><h2 id="npc-studio-identity-heading" data-npc-studio-heading="identity" tabindex="-1">{{labels.identityHeading}}</h2></div>
+        <p>{{labels.identityIntro}}</p>
+      </header>
+      <div class="age-npc-studio__field-grid">
+        <label class="is-wide" for="npc-studio-name"><span>{{labels.name}}</span><input id="npc-studio-name" value="{{draft.identity.name}}" data-draft-field="identity.name" required {{#if busy}}disabled{{/if}}></label>
+        <label for="npc-studio-kind"><span>{{labels.kind}}</span><select id="npc-studio-kind" data-draft-field="identity.kind" {{#if busy}}disabled{{/if}}>
+          <option value="adversary" {{#if (eq draft.identity.kind "adversary")}}selected{{/if}}>{{labels.adversary}}</option>
+          <option value="monster" {{#if (eq draft.identity.kind "monster")}}selected{{/if}}>{{labels.monster}}</option>
+          <option value="npc" {{#if (eq draft.identity.kind "npc")}}selected{{/if}}>{{labels.npc}}</option>
+          <option value="ally" {{#if (eq draft.identity.kind "ally")}}selected{{/if}}>{{labels.ally}}</option>
+        </select></label>
+        <label for="npc-studio-threat"><span>{{labels.threat}}</span><input id="npc-studio-threat" value="{{draft.identity.threat}}" data-draft-field="identity.threat" {{#if busy}}disabled{{/if}}></label>
+        <label for="npc-studio-level"><span>{{labels.level}}</span><input id="npc-studio-level" type="number" value="{{draft.identity.level}}" data-draft-field="identity.level" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+        <label for="npc-studio-ancestry"><span>{{profile.ancestryLabel}}</span><input id="npc-studio-ancestry" value="{{draft.identity.ancestry}}" data-draft-field="identity.ancestry" {{#if busy}}disabled{{/if}}></label>
+        <label for="npc-studio-profession"><span>{{profile.occupationLabel}}</span><input id="npc-studio-profession" value="{{draft.identity.profession}}" data-draft-field="identity.profession" {{#if busy}}disabled{{/if}}></label>
+        <label for="npc-studio-background"><span>{{labels.background}}</span><input id="npc-studio-background" value="{{draft.identity.background}}" data-draft-field="identity.background" {{#if busy}}disabled{{/if}}></label>
+        <label class="is-wide" for="npc-studio-portrait"><span>{{labels.portrait}}</span><input id="npc-studio-portrait" value="{{draft.identity.img}}" data-draft-field="identity.img" {{#if busy}}disabled{{/if}}></label>
+        <label class="age-npc-studio__check is-wide"><input id="npc-studio-compact" type="checkbox" data-draft-field="identity.compactSheet" {{checked draft.identity.compactSheet}} {{#if busy}}disabled{{/if}}><span>{{labels.compactSheet}}</span></label>
+      </div>
+    </section>
+    {{/if}}
+
+    {{#if stepStatistics}}
+    <section class="age-npc-studio__stage" aria-labelledby="npc-studio-statistics-heading">
+      <header class="age-npc-studio__section-heading">
+        <div><span>{{labels.step}} 3</span><h2 id="npc-studio-statistics-heading" data-npc-studio-heading="statistics" tabindex="-1">{{labels.statisticsHeading}}</h2></div>
+        <p>{{labels.statisticsIntro}}</p>
+      </header>
+      <section class="age-npc-studio__panel">
+        <h3>{{labels.abilities}}</h3>
+        <div class="age-npc-studio__stat-grid">
+          {{#each abilities}}
+          <label for="npc-studio-ability-{{id}}"><span>{{label}}</span><input id="npc-studio-ability-{{id}}" type="number" value="{{value}}" data-draft-field="abilities.{{id}}.value" data-dtype="Number" {{#if ../busy}}disabled{{/if}}></label>
+          {{#if supportsPrimary}}<label class="age-npc-studio__primary-ability" for="npc-studio-primary-{{id}}"><input id="npc-studio-primary-{{id}}" type="checkbox" data-draft-field="abilities.{{id}}.primary" {{checked primary}} {{#if ../busy}}disabled{{/if}}><span>{{../labels.primary}}</span></label>{{/if}}
+          {{/each}}
+        </div>
+      </section>
+      <section class="age-npc-studio__panel">
+        <h3>{{labels.derivedStatistics}}</h3>
+        <div class="age-npc-studio__stat-grid">
+          <label><span>{{profile.healthLabel}} {{labels.current}}</span><input type="number" value="{{draft.combat.healthValue}}" data-draft-field="combat.healthValue" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{profile.healthLabel}} {{labels.maximum}}</span><input type="number" value="{{draft.combat.healthSet}}" data-draft-field="combat.healthSet" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.defenseBase}}</span><input type="number" value="{{draft.combat.defenseBase}}" data-draft-field="combat.defenseBase" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.defenseModeBonus}}</span><input type="number" value="{{draft.combat.defenseGameModeBonus}}" data-draft-field="combat.defenseGameModeBonus" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.speedBase}}</span><input type="number" value="{{draft.combat.speedBase}}" data-draft-field="combat.speedBase" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          {{#if profile.showToughness}}<label><span>{{labels.toughnessModeBonus}}</span><input type="number" value="{{draft.combat.toughnessGameModeBonus}}" data-draft-field="combat.toughnessGameModeBonus" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>{{/if}}
+          <label><span>{{labels.impactArmor}}</span><input type="number" value="{{draft.combat.impactArmor}}" data-draft-field="combat.impactArmor" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          {{#if profile.showBallistic}}<label><span>{{labels.ballisticArmor}}</span><input type="number" value="{{draft.combat.ballisticArmor}}" data-draft-field="combat.ballisticArmor" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>{{/if}}
+          <label><span>{{labels.initiativeMod}}</span><input type="number" value="{{draft.combat.initiativeMod}}" data-draft-field="combat.initiativeMod" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.attackMod}}</span><input type="number" value="{{draft.combat.attackMod}}" data-draft-field="combat.attackMod" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.testMod}}</span><input type="number" value="{{draft.combat.testMod}}" data-draft-field="combat.testMod" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+          <label><span>{{labels.damageMod}}</span><input type="number" value="{{draft.combat.damageMod}}" data-draft-field="combat.damageMod" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>
+        </div>
+      </section>
+      <section class="age-npc-studio__panel">
+        <h3>{{labels.profileResources}}</h3>
+        <div class="age-npc-studio__stat-grid">
+          {{#if profile.showPowerPoints}}<label><span>{{profile.powerLabel}} {{labels.current}}</span><input type="number" value="{{draft.resources.powerPointsValue}}" data-draft-field="resources.powerPointsValue" data-dtype="Number" {{#if busy}}disabled{{/if}}></label><label><span>{{profile.powerLabel}} {{labels.maximum}}</span><input type="number" value="{{draft.resources.powerPointsSet}}" data-draft-field="resources.powerPointsSet" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>{{/if}}
+          {{#if profile.showConviction}}<label><span>{{labels.conviction}} {{labels.current}}</span><input type="number" value="{{draft.resources.convictionValue}}" data-draft-field="resources.convictionValue" data-dtype="Number" {{#if busy}}disabled{{/if}}></label><label><span>{{labels.conviction}} {{labels.maximum}}</span><input type="number" value="{{draft.resources.convictionSet}}" data-draft-field="resources.convictionSet" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>{{/if}}
+          {{#if profile.showFatigue}}<label><span>{{labels.fatigue}}</span><input type="number" value="{{draft.resources.fatigueEntered}}" data-draft-field="resources.fatigueEntered" data-dtype="Number" {{#if busy}}disabled{{/if}}></label>{{/if}}
+        </div>
+      </section>
+    </section>
+    {{/if}}
+
+    {{#if stepContent}}
+    <section class="age-npc-studio__stage" aria-labelledby="npc-studio-content-heading">
+      <header class="age-npc-studio__section-heading">
+        <div><span>{{labels.step}} 4</span><h2 id="npc-studio-content-heading" data-npc-studio-heading="content" tabindex="-1">{{labels.contentHeading}}</h2></div>
+        <p>{{labels.contentIntro}}</p>
+      </header>
+      <section class="age-npc-studio__panel">
+        <div class="age-npc-studio__search-row">
+          <label for="npc-studio-item-search"><strong>{{labels.itemSearch}}</strong><small>{{labels.libraryHint}}</small></label>
+          <span><input id="npc-studio-item-search" type="search" value="{{itemQuery}}" data-source-field="itemQuery" autocomplete="off" {{#if busy}}disabled{{/if}}>
+          <select aria-label="{{labels.itemType}}" data-source-field="itemType" {{#if busy}}disabled{{/if}}>
+            <option value="" {{#unless itemType}}selected{{/unless}}>{{labels.allItemTypes}}</option><option value="focus" {{#if (eq itemType "focus")}}selected{{/if}}>{{labels.focus}}</option><option value="weapon" {{#if (eq itemType "weapon")}}selected{{/if}}>{{labels.weapon}}</option><option value="power" {{#if (eq itemType "power")}}selected{{/if}}>{{labels.power}}</option><option value="talent" {{#if (eq itemType "talent")}}selected{{/if}}>{{labels.talent}} / {{labels.specialization}}</option><option value="stunts" {{#if (eq itemType "stunts")}}selected{{/if}}>{{labels.stunts}}</option><option value="equipment" {{#if (eq itemType "equipment")}}selected{{/if}}>{{labels.equipment}}</option><option value="relationship" {{#if (eq itemType "relationship")}}selected{{/if}}>{{labels.relationship}}</option><option value="membership" {{#if (eq itemType "membership")}}selected{{/if}}>{{labels.membership}}</option><option value="honorifics" {{#if (eq itemType "honorifics")}}selected{{/if}}>{{labels.honorific}}</option>
+          </select><button type="button" data-action="search-items" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{labels.search}}</button></span>
+        </div>
+        <div class="age-npc-studio__drop-zone" data-npc-studio-item-drop role="region" aria-label="{{labels.dropItems}}" aria-disabled="{{#if busy}}true{{else}}false{{/if}}">
+          <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
+          <span><strong>{{labels.dropItems}}</strong><small>{{labels.dropItemsHint}}</small></span>
+        </div>
+        {{#if hasItemResults}}
+        <div class="age-npc-studio__result-grid" role="list" aria-label="{{labels.itemResultsLabel}}">
+          {{#each itemResults}}
+          <button type="button" data-action="toggle-item" data-uuid="{{uuid}}" role="listitem" aria-pressed="{{#if selected}}true{{else}}false{{/if}}" class="{{#if selected}}is-selected{{/if}}">
+            <img src="{{img}}" alt=""><span><strong>{{name}}</strong><small>{{type}}{{#if source}} · {{source}}{{/if}}</small></span>
+            <i class="fa-solid {{#if selected}}fa-circle-check{{else}}fa-circle-plus{{/if}}" aria-hidden="true"></i>
+          </button>
+          {{/each}}
+        </div>
+        {{else}}<p class="age-npc-studio__empty">{{labels.noItemResults}}</p>{{/if}}
+      </section>
+
+      <section class="age-npc-studio__panel">
+        <div class="age-npc-studio__panel-heading"><h3>{{labels.customEntries}}</h3><small>{{labels.customRemaining}}: {{customRemaining}} · {{labels.itemRemaining}}: {{itemRemaining}}</small></div>
+        <div class="age-npc-studio__add-row">
+          {{#each customKinds}}<button type="button" data-action="add-custom" data-kind="{{id}}" {{#if ../customLimitReached}}disabled{{/if}}><i class="fa-solid fa-plus" aria-hidden="true"></i> {{label}}</button>{{/each}}
+        </div>
+      </section>
+
+      <section class="age-npc-studio__selected-content" aria-labelledby="npc-studio-selected-content">
+        <h3 id="npc-studio-selected-content">{{labels.selectedContent}}</h3>
+        {{#if hasSelectedItems}}
+        {{#each selectedItems}}
+        <article class="age-npc-studio__item-card">
+          <header><div><strong>{{name}}</strong><small>{{type}}{{#if source}} · {{source}}{{/if}}</small></div><button type="button" data-action="remove-entry" data-item-id="{{id}}" aria-label="{{../labels.remove}} {{name}}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></header>
+          {{#if hasMatch}}
+          <div class="age-npc-studio__field-grid">
+            <label class="is-wide"><span>{{../labels.resolutionChoice}}</span><select data-item-id="{{id}}" data-item-field="resolutionSource">{{#if resolutionPending}}<option value="" selected>{{../labels.chooseExactSource}}</option>{{/if}}{{#each resolutionAlternatives}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}<option value="custom" {{#if usesCustomChoice}}selected{{/if}}>{{../labels.createCustomInstead}}</option></select><small>{{../labels.exactMatchFound}}</small></label>
+          </div>
+          {{/if}}
+          {{#if noMatch}}<p class="age-npc-studio__help">{{../labels.noExactMatch}}</p>{{/if}}
+          {{#if isCustom}}
+          <div class="age-npc-studio__field-grid">
+            <label class="is-wide"><span>{{../labels.itemName}}</span><input value="{{name}}" data-item-id="{{id}}" data-item-field="name"></label>
+            {{#if isFocus}}<label><span>{{../labels.ability}}</span><select data-item-id="{{id}}" data-item-field="ability">{{#each abilityOptions}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label><label><span>{{../labels.bonus}}</span><input type="number" value="{{custom.bonus}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="bonus"></label>{{/if}}
+            {{#if isAttack}}<label><span>{{../labels.bonus}}</span><input type="number" value="{{custom.bonus}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="bonus"></label><label><span>{{../labels.damage}}</span><input value="{{custom.damageFormula}}" data-item-id="{{id}}" data-item-field="damageFormula"></label>{{#if showInjuryDamage}}<label><span>{{../labels.damageInjury}}</span><input type="number" min="1" max="40" value="{{custom.damageInjury}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="damageInjury"><small>{{../labels.injuryDamageHint}}</small></label><label class="age-npc-studio__check"><input type="checkbox" data-item-id="{{id}}" data-item-field="damageInjuryConfirmed" {{checked custom.damageInjuryConfirmed}}><span>{{../labels.injuryDamageConfirm}}</span></label>{{/if}}<label><span>{{../labels.damageSource}}</span><input value="{{custom.damageSource}}" data-item-id="{{id}}" data-item-field="damageSource"></label>{{/if}}
+            {{#if isPower}}<label><span>{{../labels.ability}}</span><select data-item-id="{{id}}" data-item-field="ability">{{#each abilityOptions}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label><label><span>{{../labels.focus}}</span><input value="{{custom.focus}}" data-item-id="{{id}}" data-item-field="focus"></label><label><span>{{../labels.targetNumber}}</span><input type="number" value="{{custom.targetNumber}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="targetNumber"></label><label><span>{{../labels.powerPointCost}}</span><input type="number" value="{{custom.powerPointCost}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="powerPointCost"></label>{{/if}}
+            {{#if isTalent}}<label><span>{{../labels.talentSubtype}}</span><select data-item-id="{{id}}" data-item-field="subtype"><option value="talent" {{#unless isSpecialization}}selected{{/unless}}>{{../labels.talent}}</option><option value="spec" {{#if isSpecialization}}selected{{/if}}>{{../labels.specialization}}</option></select></label><label><span>{{../labels.degree}}</span><select data-item-id="{{id}}" data-item-field="degree" data-dtype="Number">{{#each degreeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>{{/if}}
+            {{#if isStunt}}<label><span>{{../labels.stuntCost}}</span><input type="number" value="{{custom.stuntPoints}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="stuntPoints"></label>{{/if}}
+            {{#if isEquipment}}<label class="age-npc-studio__check"><input type="checkbox" data-item-id="{{id}}" data-item-field="equipped" {{checked custom.equipped}}><span>{{../labels.equipped}}</span></label>{{/if}}
+            {{#if isRelationship}}<label><span>{{../labels.intensity}}</span><input type="number" min="0" max="99" value="{{custom.intensity}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="intensity"></label>{{/if}}
+            {{#if isMembership}}<label><span>{{../labels.rank}}</span><input type="number" min="0" max="99" value="{{custom.rank}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="rank"></label>{{/if}}
+            <label class="is-wide"><span>{{../labels.description}}</span><textarea data-item-id="{{id}}" data-item-field="description">{{custom.description}}</textarea></label>
+          </div>
+          {{else}}
+            {{#if usesMatchedSource}}
+            <div class="age-npc-studio__field-grid">
+              {{#if isFocus}}<label><span>{{../labels.ability}}</span><select data-item-id="{{id}}" data-item-field="ability">{{#each abilityOptions}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label><label><span>{{../labels.bonus}}</span><input type="number" value="{{custom.bonus}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="bonus"></label>{{/if}}
+              {{#if isTalent}}<label><span>{{../labels.talentSubtype}}</span><output>{{#if isSpecialization}}{{../labels.specialization}}{{else}}{{../labels.talent}}{{/if}}</output></label><label><span>{{../labels.degree}}</span><select data-item-id="{{id}}" data-item-field="degree" data-dtype="Number">{{#each degreeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>{{/if}}
+              {{#if isRelationship}}<label><span>{{../labels.intensity}}</span><input type="number" min="0" max="99" value="{{custom.intensity}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="intensity"></label>{{/if}}
+              {{#if isMembership}}<label><span>{{../labels.rank}}</span><input type="number" min="0" max="99" value="{{custom.rank}}" data-dtype="Number" data-item-id="{{id}}" data-item-field="rank"></label>{{/if}}
+            </div>
+            {{/if}}
+            <p class="age-npc-studio__help">{{../labels.libraryCopyHint}}</p>
+          {{/if}}
+        </article>
+        {{/each}}
+        {{else}}<p class="age-npc-studio__empty">{{labels.noSelectedContent}}</p>{{/if}}
+      </section>
+
+      <section class="age-npc-studio__panel">
+        <h3>{{labels.notes}}</h3>
+        <div class="age-npc-studio__field-grid">
+          <label><span>{{labels.features}}</span><textarea data-draft-field="notes.features">{{draft.notes.features}}</textarea></label>
+          <label><span>{{labels.traits}}</span><textarea data-draft-field="notes.traits">{{draft.notes.traits}}</textarea></label>
+          <label><span>{{labels.goals}}</span><textarea data-draft-field="notes.goals">{{draft.notes.goals}}</textarea></label>
+          <label><span>{{labels.gmNotes}}</span><textarea data-draft-field="notes.gmNotes">{{draft.notes.gmNotes}}</textarea></label>
+        </div>
+      </section>
+    </section>
+    {{/if}}
+
+    {{#if stepReview}}
+    <section class="age-npc-studio__stage age-npc-studio__review" aria-labelledby="npc-studio-review-heading">
+      <header class="age-npc-studio__section-heading">
+        <div><span>{{labels.step}} 5</span><h2 id="npc-studio-review-heading" data-npc-studio-heading="review" tabindex="-1">{{labels.reviewHeading}}</h2></div>
+        <p>{{labels.reviewIntro}}</p>
+      </header>
+      <aside class="age-npc-studio__signature {{#if previewFresh}}is-fresh{{else}}is-stale{{/if}}">
+        <i class="fa-solid {{#if previewFresh}}fa-file-signature{{else}}fa-clock-rotate-left{{/if}}" aria-hidden="true"></i>
+        <div><strong>{{labels.signed}}</strong><span>{{#if previewFresh}}{{labels.fresh}}{{else}}{{labels.stale}}{{/if}}</span></div>
+        <code>{{preview.id}}</code>
+        <button type="button" data-action="refresh-preview" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-rotate" aria-hidden="true"></i> {{labels.refreshReview}}</button>
+      </aside>
+      {{#if hasBlockers}}<section class="age-npc-studio__issue-list is-error" aria-labelledby="npc-studio-blockers"><h3 id="npc-studio-blockers">{{labels.blockers}}</h3><ul>{{#each blockers}}<li>{{message}}</li>{{/each}}</ul></section>{{/if}}
+      {{#if hasWarnings}}<section class="age-npc-studio__issue-list is-warning" aria-labelledby="npc-studio-warnings"><h3 id="npc-studio-warnings">{{labels.warnings}}</h3><ul>{{#each warnings}}<li>{{message}}</li>{{/each}}</ul></section>{{/if}}
+      <section class="age-npc-studio__preview" aria-labelledby="npc-studio-changes">
+        <h3 id="npc-studio-changes">{{labels.changes}}</h3>
+        {{#if reviewSections.length}}
+        <div class="age-npc-studio__review-sections">
+          {{#each reviewSections}}
+          <section class="age-npc-studio__review-section" aria-labelledby="npc-studio-review-{{id}}">
+            <h4 id="npc-studio-review-{{id}}">{{label}}</h4>
+            <div class="age-npc-studio__change-list" role="list">
+              {{#each entries}}<article role="listitem"><strong>{{label}}</strong><span>{{value}}</span></article>{{/each}}
+            </div>
+          </section>
+          {{/each}}
+        </div>
+        {{else}}{{#if previewChanges.length}}
+        <div class="age-npc-studio__change-list" role="list">
+          {{#each previewChanges}}<article role="listitem"><strong>{{label}}</strong>{{#if before}}<span><small>{{../labels.before}}</small>{{before}}</span>{{/if}}{{#if after}}<span><small>{{../labels.after}}</small>{{after}}</span>{{/if}}</article>{{/each}}
+        </div>
+        {{else}}<p class="age-npc-studio__empty">{{labels.noChanges}}</p>{{/if}}{{/if}}
+      </section>
+      <aside class="age-npc-studio__commit-note"><i class="fa-solid fa-shield" aria-hidden="true"></i><p>{{labels.commitSafety}}</p></aside>
+    </section>
+    {{/if}}
+
+    {{#if stepResult}}
+    <section class="age-npc-studio__stage age-npc-studio__result" aria-labelledby="npc-studio-result-heading">
+      <div class="age-npc-studio__result-mark"><i class="fa-solid {{#if result.undone}}fa-rotate-left{{else}}fa-circle-check{{/if}}" aria-hidden="true"></i></div>
+      <header><h2 id="npc-studio-result-heading" data-npc-studio-heading="result" tabindex="-1">{{#if result.undone}}{{labels.undone}}{{else}}{{labels.resultHeading}}{{/if}}</h2><p>{{labels.resultIntro}}</p></header>
+      <article class="age-npc-studio__actor-result">
+        <img src="{{result.actor.img}}" alt=""><div><strong>{{result.actor.name}}</strong><code>{{result.actor.uuid}}</code></div>
+        {{#unless result.undone}}<button type="button" data-action="open-actor" data-uuid="{{result.actor.uuid}}"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i> {{labels.openActor}}</button>{{/unless}}
+      </article>
+      {{#if undoAllowed}}<aside class="age-npc-studio__undo"><div><strong>{{labels.undoAvailable}}</strong><p>{{labels.undoHint}}</p></div><button type="button" data-action="undo" class="is-danger"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> {{labels.undo}}</button></aside>{{/if}}
+      <button type="button" class="age-npc-studio__primary" data-action="create-another"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{labels.createAnother}}</button>
+    </section>
+    {{/if}}
+  </div>
+
+  <footer class="age-npc-studio__footer">
+    <div class="age-npc-studio__live" role="status" aria-live="polite" aria-atomic="true"><i class="fa-solid {{#if busy}}fa-spinner fa-spin{{else}}fa-circle-info{{/if}}" aria-hidden="true"></i><span>{{#if busy}}{{labels.working}}{{else}}{{announcement}}{{/if}}</span></div>
+    <div class="age-npc-studio__footer-actions">
+      {{#if stepSource}}<button type="button" data-action="close">{{labels.close}}</button>{{/if}}
+      {{#if canBack}}<button type="button" data-action="back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> {{labels.back}}</button>{{/if}}
+      {{#unless stepResult}}<button type="button" class="age-npc-studio__primary" data-action="{{#if stepReview}}commit{{else}}next{{/if}}" {{#if stepReview}}{{#unless canCommit}}disabled{{/unless}}{{else}}{{#unless canContinue}}disabled{{/unless}}{{/if}}>
+        {{#if stepReview}}<i class="fa-solid fa-user-plus" aria-hidden="true"></i> {{labels.createActor}}{{else}}{{labels.continue}} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>{{/if}}
+      </button>{{/unless}}
+    </div>
+  </footer>
+</section>

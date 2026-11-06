@@ -11,7 +11,8 @@ const ACTOR_HTML = Object.freeze({
     char: ["features", "traits", "goals", "secretNote", "gmNotes"],
     vehicle: ["description", "gmNotes"],
     spaceship: ["description", "gmNotes"],
-    organization: ["description", "notes", "gmNotes"]
+    organization: ["description", "notes", "gmNotes"],
+    force: ["description", "notes", "gmNotes"]
 });
 
 const ITEM_HTML = Object.freeze({
@@ -27,7 +28,12 @@ function cloneDefault(value) {
 }
 
 function templateInitial(documentName, type, name, fallback = undefined) {
-    const value = globalThis.game?.model?.[documentName]?.[type]?.[name] ?? fallback;
+    const configured = globalThis.game?.model?.[documentName]?.[type]?.[name];
+    // `null` is an intentional persisted default for fields such as a blank
+    // progression DefinitionV1. Only a genuinely absent model value should
+    // fall back; nullish coalescing would silently turn that null into an
+    // undefined AnyField initial value.
+    const value = configured === undefined ? fallback : configured;
     return value === undefined ? undefined : () => cloneDefault(value);
 }
 

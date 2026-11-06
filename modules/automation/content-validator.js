@@ -1,4 +1,6 @@
-const ACTOR_TYPES = Object.freeze(["char", "vehicle", "spaceship", "organization"]);
+import {classifyProgressionDefinition} from "../progression/definition-lifecycle.js";
+
+const ACTOR_TYPES = Object.freeze(["char", "vehicle", "spaceship", "organization", "force"]);
 const ITEM_TYPES = Object.freeze([
   "equipment",
   "focus",
@@ -10,8 +12,11 @@ const ITEM_TYPES = Object.freeze([
   "honorifics",
   "membership",
   "shipfeatures",
-  "class"
+  "class",
+  "progression"
 ]);
+
+const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 
 function getProperty(object, path) {
   if (globalThis.foundry?.utils?.getProperty) return foundry.utils.getProperty(object, path);
@@ -123,6 +128,10 @@ function validateActor(document, issues) {
     checkFinite(issues, document, "system.crew.current", {minimum: 0});
   } else if (document.type === "organization") {
     checkFinite(issues, document, "system.combat.stability.value", {minimum: 0});
+  } else if (document.type === "force") {
+    checkResource(issues, document, "system.troops");
+    checkFinite(issues, document, "system.primaryTroop.difficulty", {minimum: 1});
+    checkFinite(issues, document, "system.battle.successThreshold", {minimum: 1});
   }
 }
 
@@ -155,6 +164,35 @@ function validateItem(document, issues) {
     checkFinite(issues, document, "system.stuntPointsMax", {minimum: 0});
   } else if (document.type === "class") {
     checkFinite(issues, document, "system.level", {minimum: 0, maximum: 20});
+  } else if (document.type === "progression") {
+    const definition = getProperty(document, "system.definition");
+    const lifecycle = classifyProgressionDefinition(definition, {enabled: getProperty(document, "system.enabled") !== false});
+    if (lifecycle.state === "draft") {
+      addIssue(issues, document, {
+        severity: "warning",
+        code: "progression.draft",
+        path: "system.definition",
+        message: lifecycle.issues[0].message,
+      });
+      return;
+    }
+    for (const finding of lifecycle.issues) {
+      addIssue(issues, document, {
+        severity: "error",
+        code: `progression.${finding.code ?? "definition"}`,
+        path: finding.path === "$" ? "system.definition" : `system.definition${String(finding.path).slice(1)}`,
+        message: finding.message
+      });
+    }
+    const digest = getProperty(document, "system.digest");
+    if (lifecycle.valid && (typeof digest !== "string" || !SHA256_PATTERN.test(digest))) {
+      addIssue(issues, document, {
+        severity: "error",
+        code: "progression.digest",
+        path: "system.digest",
+        message: "system.digest must be a lowercase SHA-256 digest."
+      });
+    }
   }
 }
 

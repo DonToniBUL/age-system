@@ -1,11 +1,13 @@
 const LEGACY_WEAPON_CANONICAL_FIELDS = Object.freeze([
     "system.dmgSource",
     "system.minStr",
-    "system.reload"
+    "system.reload",
+    "system.useAbl"
 ]);
 const LEGACY_POWER_CANONICAL_FIELDS = Object.freeze([
     "system.dmgSource",
-    "system.castTime"
+    "system.castTime",
+    "system.useAbl"
 ]);
 
 function clone(value) {

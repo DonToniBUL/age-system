@@ -28,6 +28,10 @@
             {{#if classOwned}}
             <p class="class-info-banner"><i class="fa-solid fa-shield-check"></i> {{localize "age-system.CLASS.ownedDefinitionLocked"}}</p>
             {{#if classLegacyLevel}}<p class="class-info-banner legacy"><i class="fa-solid fa-clock-rotate-left"></i> {{localize "age-system.CLASS.legacyBaseline"}}: {{classLegacyLevel}}</p>{{/if}}
+            <div class="class-advancement-entry">
+                <div><strong>Ready to advance?</strong><span>Open the guided Advancement Center to see only the next rank, make required choices, review the changes, and apply them safely.</span></div>
+                <button type="button" class="class-level-change" data-action="add" {{#unless classLevelCanIncrease}}disabled{{/unless}}><i class="fa-solid fa-arrow-trend-up"></i> Open Advancement Center</button>
+            </div>
             {{else}}
                 {{#unless classValidation.valid}}
                 <div class="class-validation errors">

@@ -1,96 +1,152 @@
-<div class="flexrow conditions-workshop">
+<section class="age-utility-workflow__surface age-conditions-workshop conditions-workshop colorset-selection" aria-labelledby="age-conditions-workshop-title">
+  <header class="age-utility-workflow__header colorset-first-tier">
+    <div>
+      <span class="age-utility-workflow__kicker">{{localize "age-system.settings.options"}}</span>
+      <h1 id="age-conditions-workshop-title">{{localize "age-system.conditionsWorkshop"}}</h1>
+      <p>{{localize "age-system.customEffectsSet"}}</p>
+    </div>
+    <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+  </header>
 
-    <div class="column defenders">
-        <h2>{{localize "age-system.tokenEffects"}}</h2>
-        <div class="targets">
-            {{#each conditions as |condition i|}}
-            <div class="individual-effects flexrow feature-controls" data-condition-i="{{i}}">
-                <div class="effect-data flexcol">
-                    <div class="flexrow">
-                        <div class="order-control">
-                            <i class="fa fa-chevron-up change-order" data-direction="up" aria-hidden="true"></i>
-                            <i class="fas fa-trash delete-effect {{#if (eq condition.id "dead")}}inactive{{else}}active{{/if}}"></i>
-                            <i class="fa fa-chevron-down change-order" data-direction="down" aria-hidden="true"></i>
-                        </div>
-                        <img class="item-image user-entry" src="{{condition.img}}" data-field="img" title="{{condition.name}}"/>
-                        <div>
-                            {{#if (eq ../inUseConditions "custom")}}
-                            <h3><input type="text" class="user-entry" name="conditions.{{i}}.name" value="{{condition.name}}" data-dtype="Number" placeholder="{{localize "age-system.name"}}" data-field="name"/></h3>
-                            <div class="is-condition flexrow">
-                                <input type="checkbox" class="user-entry" {{#if condition.flags.age-system.isCondition}}checked{{/if}} name="conditions.{{i}}.flags.age-system.isCondition" data-field="isCondition">
-                                <label>Is Condition</label>
-                            </div>
-                            <textarea class="user-entry" name="conditions.{{i}}.flags.age-system.desc" data-field="desc" placeholder="{{localize "age-system.item.desc"}}" cols="30" rows="10">{{#with (lookup condition.flags "age-system")~}}{{desc}}{{/with}}</textarea>
-                            {{else}}
-                            <h3><input type="text" disabled class="user-entry" name="conditions.{{i}}.name" value="{{localize condition.name}}" data-dtype="Number" data-field="name"/></h3>
-                            <div class="is-condition flexrow">
-                                <input type="checkbox" disabled class="user-entry" {{#if condition.flags.age-system.isCondition}}checked{{/if}} name="conditions.{{i}}.flags.age-system.isCondition" data-field="isCondition">
-                                <label>Is Condition</label>
-                            </div>
-                            <textarea class="user-entry" disabled name="conditions.{{i}}.flags.age-system.desc" data-field="desc" cols="30" rows="10">{{#with (lookup condition.flags "age-system")~}}{{localize desc}}{{/with}}</textarea>
-                            {{/if}}
-                        </div>
-                    </div>
-                    <div class="effects">
-                        <header class="effect-change effects-header flexrow">
-                            <div class="key">{{ localize "EFFECT.ChangeKey" }}</div>
-                            <div class="mode">{{ localize "EFFECT.ChangeMode" }}</div>
-                            <div class="value">{{ localize "EFFECT.ChangeValue" }}</div>
-                            <div class="effect-controls">
-                                <a class="effect-control" data-action="add"><i class="far fa-plus-square"></i></a>
-                            </div>
-                        </header>
-                        <ol class="changes-list">
-                            {{#each condition.changes as |change i|}}
-                            <li class="effect-change flexrow" data-index="{{i}}">
-                                <div class="key">
-                                    <input type="text" class="user-entry" data-field="change-key" name="changes.{{i}}.key" value="{{change.key}}"/>
-                                </div>
-                                <div class="mode">
-                                    <select name="changes.{{i}}.type" class="user-entry" data-field="change-mode">
-                                        {{selectOptions ../../modes selected=change.type }}
-                                    </select>
-                                </div>
-                                <div class="value">
-                                    <input type="text" class="user-entry" name="changes.{{i}}.value" data-field="change-value" value="{{change.value}}"/>
-                                </div>
-                                <div class="effect-controls">
-                                    <a class="effect-control" data-action="delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                            {{/each}}
-                        </ol>
-                    </div>
-                </div>
-            </div>
-            {{#unless @last}}
-            <hr>
-            {{/unless}}
+  <main class="age-utility-workflow__scroll age-conditions-workshop__scroll">
+    {{#unless canConfigure}}
+    <p class="notification warning" role="alert">{{localize "age-system.WARNING.conditionsGMOnly"}}</p>
+    {{/unless}}
+    <section class="age-utility-workflow__panel age-condition-source-panel colorset-second-tier" aria-labelledby="age-condition-source-title">
+      <div class="age-utility-workflow__heading">
+        <h2 id="age-condition-source-title">{{localize "age-system.tokenEffects"}}</h2>
+        <span class="age-utility-workflow__badge">{{conditions.length}}</span>
+      </div>
+
+      <fieldset class="age-condition-source in-use-condition">
+        <legend>{{localize "age-system.conditionSet"}}</legend>
+        <label for="age-condition-source-expanse">
+          <input id="age-condition-source-expanse" type="radio" name="inUseConditions" value="expanse" {{checked expanseSelected}} {{#unless canConfigure}}disabled{{/unless}}>
+          <span>{{localize "age-system.conditionsExpanse"}}</span>
+        </label>
+        <label for="age-condition-source-custom">
+          <input id="age-condition-source-custom" type="radio" name="inUseConditions" value="custom" {{checked customSelected}} {{#unless canConfigure}}disabled{{/unless}}>
+          <span>{{localize "age-system.custom"}}</span>
+        </label>
+      </fieldset>
+
+      {{#if customSelected}}
+      <div class="age-utility-workflow__actions age-condition-source-actions" role="toolbar" aria-label="{{localize 'age-system.settings.options'}}">
+        <button type="button" class="default-button add-effect" data-action="addEffect" data-position="top" {{#unless canConfigure}}disabled{{/unless}}>
+          <i class="fa-solid fa-arrow-up" aria-hidden="true"></i> {{localize "age-system.addEffectTop"}}
+        </button>
+        <button type="button" class="default-button add-effect" data-action="addEffect" data-position="bottom" {{#unless canConfigure}}disabled{{/unless}}>
+          <i class="fa-solid fa-arrow-down" aria-hidden="true"></i> {{localize "age-system.addEffectBottom"}}
+        </button>
+        <button type="button" class="default-button copy-effects" data-action="copyExpanse" data-origin="expanse" {{#unless canConfigure}}disabled{{/unless}}>
+          <i class="fa-solid fa-copy" aria-hidden="true"></i> {{localize "age-system.copyEffectsExpanse"}}
+        </button>
+      </div>
+      {{/if}}
+    </section>
+
+    <ol class="age-utility-workflow__list age-condition-list targets">
+      {{#each conditions as |condition|}}
+      <li class="age-utility-workflow__panel age-condition-card individual-effects feature-controls" data-condition-index="{{condition.index}}" data-condition-i="{{condition.index}}">
+        <header class="age-utility-workflow__card-header age-condition-card__header">
+          <div class="age-condition-order" role="group" aria-label="{{localize 'age-system.conditionOrder' name=condition.displayName}}">
+            <button type="button" class="change-order" data-action="moveEffect" data-direction="up" title="{{localize 'age-system.moveConditionUp' name=condition.displayName}}" aria-label="{{localize 'age-system.moveConditionUp' name=condition.displayName}}" {{#unless condition.canMoveUp}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+              <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="change-order" data-action="moveEffect" data-direction="down" title="{{localize 'age-system.moveConditionDown' name=condition.displayName}}" aria-label="{{localize 'age-system.moveConditionDown' name=condition.displayName}}" {{#unless condition.canMoveDown}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+          </div>
+          <strong>{{#if condition.displayName}}{{condition.displayName}}{{else}}{{localize "age-system.custom"}}{{/if}}</strong>
+          <button type="button" class="delete-effect {{#if condition.canDelete}}active{{else}}inactive{{/if}} danger" data-action="deleteEffect" title="{{localize 'age-system.settings.delete'}}" aria-label="{{localize 'age-system.settings.delete'}} {{condition.displayName}}" {{#unless condition.canDelete}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <div class="age-condition-identity">
+          <button type="button" class="age-condition-image" data-action="pickImage" title="{{localize 'age-system.chooseConditionImage'}}" aria-label="{{localize 'age-system.chooseConditionImageFor' name=condition.displayName}}" {{#unless ../customSelected}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+            <img class="item-image" src="{{condition.img}}" alt="">
+            {{#if ../customSelected}}<span><i class="fa-solid fa-image" aria-hidden="true"></i></span>{{/if}}
+          </button>
+
+          <div class="age-condition-fields">
+            <label class="age-utility-workflow__field" for="age-condition-name-{{condition.index}}">
+              <span>{{localize "age-system.name"}}</span>
+              <input id="age-condition-name-{{condition.index}}" type="text" class="user-entry" name="conditions.{{condition.index}}.name" value="{{condition.displayName}}" data-field="name" {{#unless ../customSelected}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+            </label>
+            <label class="age-condition-checkbox" for="age-condition-toggle-{{condition.index}}">
+              <input id="age-condition-toggle-{{condition.index}}" type="checkbox" class="user-entry" name="conditions.{{condition.index}}.flags.age-system.isCondition" data-field="isCondition" {{checked condition.isCondition}} {{#unless ../customSelected}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+              <span>{{localize "age-system.isCondition"}}</span>
+            </label>
+            <label class="age-utility-workflow__field age-utility-workflow__field--wide" for="age-condition-description-{{condition.index}}">
+              <span>{{localize "age-system.item.desc"}}</span>
+              <textarea id="age-condition-description-{{condition.index}}" class="user-entry" name="conditions.{{condition.index}}.flags.age-system.desc" data-field="desc" rows="3" {{#unless ../customSelected}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>{{condition.description}}</textarea>
+            </label>
+            <label class="age-utility-workflow__field age-utility-workflow__field--wide" for="age-condition-image-path-{{condition.index}}">
+              <span>{{localize "age-system.conditionImagePath"}}</span>
+              <input id="age-condition-image-path-{{condition.index}}" type="text" class="user-entry" name="conditions.{{condition.index}}.img" value="{{condition.img}}" data-field="img" {{#unless ../customSelected}}disabled{{/unless}} {{#unless ../canConfigure}}disabled{{/unless}}>
+            </label>
+          </div>
+        </div>
+
+        <section class="age-condition-changes effects" aria-labelledby="age-condition-changes-{{condition.index}}">
+          <div class="age-utility-workflow__heading">
+            <h3 id="age-condition-changes-{{condition.index}}">{{localize "EFFECT.TabEffects"}}</h3>
+            {{#if ../customSelected}}
+            <button type="button" class="effect-control" data-action="addChange" data-operation="add" title="{{localize 'age-system.addEffectChange'}}" aria-label="{{localize 'age-system.addEffectChange'}}" {{#unless ../canConfigure}}disabled{{/unless}}>
+              <i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "age-system.add"}}
+            </button>
+            {{/if}}
+          </div>
+          <ol class="age-condition-change-list changes-list">
+            {{#each condition.changes as |change|}}
+            <li class="age-condition-change effect-change" data-index="{{change.index}}">
+              <label class="age-utility-workflow__field key" for="age-condition-key-{{condition.index}}-{{change.index}}">
+                <span>{{localize "EFFECT.ChangeKey"}}</span>
+                <input id="age-condition-key-{{condition.index}}-{{change.index}}" type="text" class="user-entry" data-field="change-key" name="conditions.{{condition.index}}.changes.{{change.index}}.key" value="{{change.key}}" {{#unless ../../customSelected}}disabled{{/unless}} {{#unless ../../canConfigure}}disabled{{/unless}}>
+              </label>
+              <label class="age-utility-workflow__field mode" for="age-condition-mode-{{condition.index}}-{{change.index}}">
+                <span>{{localize "EFFECT.ChangeMode"}}</span>
+                <select id="age-condition-mode-{{condition.index}}-{{change.index}}" class="user-entry" data-field="change-mode" name="conditions.{{condition.index}}.changes.{{change.index}}.type" {{#unless ../../customSelected}}disabled{{/unless}} {{#unless ../../canConfigure}}disabled{{/unless}}>
+                  {{selectOptions ../../modes selected=change.type}}
+                </select>
+              </label>
+              <label class="age-utility-workflow__field value" for="age-condition-value-{{condition.index}}-{{change.index}}">
+                <span>{{localize "EFFECT.ChangeValue"}}</span>
+                <input id="age-condition-value-{{condition.index}}-{{change.index}}" type="text" class="user-entry" data-field="change-value" name="conditions.{{condition.index}}.changes.{{change.index}}.value" value="{{change.value}}" {{#unless ../../customSelected}}disabled{{/unless}} {{#unless ../../canConfigure}}disabled{{/unless}}>
+              </label>
+              <button type="button" class="effect-control danger" data-action="deleteChange" data-operation="delete" title="{{localize 'age-system.deleteEffectChange'}}" aria-label="{{localize 'age-system.deleteEffectChange'}}" {{#unless ../../customSelected}}disabled{{/unless}} {{#unless ../../canConfigure}}disabled{{/unless}}>
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+              </button>
+            </li>
+            {{else}}
+            <li class="age-utility-workflow__empty"><p class="notes">{{localize "EFFECT.NoEffects"}}</p></li>
             {{/each}}
-        </div>
-    </div>
+          </ol>
+        </section>
+      </li>
+      {{else}}
+      <li class="age-utility-workflow__empty"><p class="notes">{{localize "EFFECT.NoEffects"}}</p></li>
+      {{/each}}
+    </ol>
+  </main>
 
-    <div class="column controls">
-        <h2>{{localize "age-system.settings.options"}}</h2>
-        <div>
-            <div class="in-use-condition flexcol">
-                {{radioBoxes radioB.name radioB.choices radioB.options}}
-            </div>
-            {{#if (eq inUseConditions 'custom')}}
-            <button class="default-button add-effect" data-position="top">{{localize "age-system.addEffectTop"}}</button>
-            <button class="default-button add-effect" data-position="bottom">{{localize "age-system.addEffectBottom"}}</button>
-            <button class="default-button copy-effects" data-origin="expanse" >{{localize "age-system.copyEffectsExpanse"}}</button>
-            {{/if}}
-            <hr>
-            <button class="default-button save-close">{{localize "age-system.saveClose"}}</button>
-            {{#if (eq inUseConditions 'custom')}}
-            <hr>
-            <div class="flexrow">
-                <button class="default-button export">{{localize "age-system.export"}}</button>
-                <button class="default-button import">{{localize "age-system.import"}}</button>
-            </div>
-            {{/if}}
-        </div>
+  <footer class="age-utility-workflow__footer age-condition-footer">
+    {{#if customSelected}}
+    <div class="age-utility-workflow__actions age-condition-portability" role="group" aria-label="{{localize 'age-system.customEffectsSet'}}">
+      <button type="button" class="export" data-action="exportEffects" {{#unless canConfigure}}disabled{{/unless}}>
+        <i class="fa-solid fa-file-export" aria-hidden="true"></i> {{localize "age-system.export"}}
+      </button>
+      <button type="button" class="import" data-action="importEffects" {{#unless canConfigure}}disabled{{/unless}}>
+        <i class="fa-solid fa-file-import" aria-hidden="true"></i> {{localize "age-system.import"}}
+      </button>
     </div>
-
-</div>
+    {{/if}}
+    <button type="button" data-action="cancel">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i> {{localize "age-system.cancel"}}
+    </button>
+    <button type="button" class="save-close" data-action="save" {{#unless canConfigure}}disabled{{/unless}}>
+      <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{localize "age-system.saveClose"}}
+    </button>
+  </footer>
+</section>

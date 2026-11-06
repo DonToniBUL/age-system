@@ -1,186 +1,76 @@
-<section class="age-compendium-search flexcol">
-<style>
-  #age-unified-library-search .window-content {
-    overflow: hidden;
-    padding: 0.6rem;
-  }
-  #age-unified-library-search .age-compendium-search {
-    box-sizing: border-box;
-    height: 100%;
-    min-height: 0;
-    gap: 0.45rem;
-    overflow: hidden;
-  }
-  #age-unified-library-search .age-compendium-search > * {
-    flex: 0 0 auto;
-  }
-  #age-unified-library-search .age-library-toolbar {
-    display: grid;
-    grid-template-columns: minmax(11rem, 1fr) minmax(10rem, 13rem) auto;
-    gap: 0.5rem;
-    align-items: end;
-    margin: 0;
-  }
-  #age-unified-library-search .age-library-field {
-    display: grid;
-    grid-template-rows: auto 2rem;
-    gap: 0.2rem;
-    min-width: 0;
-  }
-  #age-unified-library-search .age-library-field span {
-    font-weight: 600;
-  }
-  #age-unified-library-search .age-library-field input,
-  #age-unified-library-search .age-library-field select {
-    box-sizing: border-box;
-    width: 100%;
-    height: 2rem;
-  }
-  #age-unified-library-search .age-library-toolbar button {
-    width: auto;
-    min-width: 6.5rem;
-    height: 2rem;
-    margin: 0;
-    white-space: nowrap;
-  }
-  #age-unified-library-search .age-library-status {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    min-height: 2rem;
-    margin: 0;
-    padding: 0.25rem 0.4rem;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.2);
-  }
-  #age-unified-library-search .age-library-status button {
-    flex: 0 0 auto;
-    width: auto;
-    margin: 0;
-    white-space: nowrap;
-  }
-  #age-unified-library-search .age-library-results {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    border: 1px solid rgba(0, 0, 0, 0.22);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.16);
-  }
-  #age-unified-library-search .age-library-result {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr) auto;
-    gap: 0.55rem;
-    align-items: center;
-    padding: 0.38rem 0.45rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-  }
-  #age-unified-library-search .age-library-result:last-child {
-    border-bottom: 0;
-  }
-  #age-unified-library-search .age-library-icon {
-    box-sizing: border-box;
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.25);
-    border-radius: 3px;
-    background: rgba(0, 0, 0, 0.05);
-  }
-  #age-unified-library-search .age-library-icon img {
-    flex: none !important;
-    box-sizing: border-box;
-    width: 2rem !important;
-    min-width: 2rem !important;
-    max-width: 2rem !important;
-    height: 2rem !important;
-    min-height: 2rem !important;
-    max-height: 2rem !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    object-fit: contain;
-  }
-  #age-unified-library-search .age-library-result-copy {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  #age-unified-library-search .age-library-result-copy strong {
-    display: block;
-  }
-  #age-unified-library-search .age-library-source-id {
-    opacity: 0.72;
-    font-size: 0.72rem;
-  }
-  #age-unified-library-search .age-library-open {
-    width: auto;
-    min-width: 5.2rem;
-    margin: 0;
-    white-space: nowrap;
-  }
-  #age-unified-library-search .age-library-empty {
-    padding: 0.75rem;
-  }
-</style>
-  {{#unless automationEnabled}}
-  <p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>
-  {{/unless}}
-  <form class="age-library-toolbar">
-    <label class="age-library-field">
-      <span>{{localize "age-system.AUTOMATION.search"}}</span>
-      <input type="search" name="query" value="{{query}}" autofocus {{#unless automationEnabled}}disabled{{/unless}}>
-    </label>
-    <label class="age-library-field">
-      <span>{{localize "age-system.AUTOMATION.documentType"}}</span>
-      <select name="documentName" {{#unless automationEnabled}}disabled{{/unless}}>
-        {{#select documentName}}
-        <option value="">{{localize "age-system.AUTOMATION.allDocuments"}}</option>
-        <option value="Actor">{{localize "DOCUMENT.Actors"}}</option>
-        <option value="Item">{{localize "DOCUMENT.Items"}}</option>
-        <option value="JournalEntry">{{localize "DOCUMENT.JournalEntries"}}</option>
-        <option value="RollTable">{{localize "DOCUMENT.RollTables"}}</option>
-        {{/select}}
-      </select>
-    </label>
-    <button type="submit" {{#unless automationEnabled}}disabled{{/unless}}><i class="fa-solid fa-search"></i> {{localize "age-system.AUTOMATION.search"}}</button>
-  </form>
+<section class="age-utility-workflow__surface age-compendium-search colorset-selection" aria-labelledby="age-library-search-title">
+  <header class="age-utility-workflow__header colorset-first-tier">
+    <div>
+      <h1 id="age-library-search-title"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.librarySearch"}}</h1>
+      <p>{{localize "age-system.AUTOMATION.libraryIndexStatus" count=indexCount profile=profileLabel}}</p>
+    </div>
+  </header>
 
-  <div class="notes age-library-status">
-    <span>{{localize "age-system.AUTOMATION.libraryIndexStatus" count=indexCount profile=profileLabel}}</span>
-    {{#if automationEnabled}}
-    {{#if isGM}}
-    <button type="button" class="age-library-rebuild">
-      <i class="fa-solid fa-arrows-rotate"></i> {{localize "age-system.AUTOMATION.rebuildIndex"}}
-    </button>
+  <section class="age-utility-workflow__panel age-library-controls" aria-label="{{localize 'age-system.AUTOMATION.search'}}">
+    {{#unless automationEnabled}}
+    <p class="notification warning" role="alert">{{localize "age-system.AUTOMATION.disabled"}}</p>
+    {{/unless}}
+    {{#if operationError}}
+    <p class="notification error" role="alert">{{operationError}}</p>
     {{/if}}
+
+    <form class="age-library-toolbar age-utility-workflow__grid">
+      <label class="age-library-field age-utility-workflow__field">
+        <span>{{localize "age-system.AUTOMATION.search"}}</span>
+        <input type="search" name="query" value="{{query}}" autofocus {{#unless automationEnabled}}disabled{{/unless}} {{#if busy}}disabled{{/if}}>
+      </label>
+      <label class="age-library-field age-utility-workflow__field">
+        <span>{{localize "age-system.AUTOMATION.documentType"}}</span>
+        <select name="documentName" {{#unless automationEnabled}}disabled{{/unless}} {{#if busy}}disabled{{/if}}>
+          {{#select documentName}}
+          <option value="">{{localize "age-system.AUTOMATION.allDocuments"}}</option>
+          <option value="Actor">{{localize "DOCUMENT.Actors"}}</option>
+          <option value="Item">{{localize "DOCUMENT.Items"}}</option>
+          <option value="JournalEntry">{{localize "DOCUMENT.JournalEntries"}}</option>
+          <option value="RollTable">{{localize "DOCUMENT.RollTables"}}</option>
+          {{/select}}
+        </select>
+      </label>
+      <button type="button" data-action="search" class="age-library-search" {{#unless automationEnabled}}disabled{{/unless}} {{#if busy}}disabled{{/if}}>
+        <i class="fa-solid fa-search" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.search"}}
+      </button>
+    </form>
+  </section>
+
+  <div class="age-utility-workflow__scroll age-library-scroll">
+    {{#if indexErrors.length}}
+    <p class="notification warning" role="alert">{{localize "age-system.AUTOMATION.indexWarnings" count=indexErrors.length}}</p>
     {{/if}}
+
+    <section class="age-utility-workflow__panel age-library-results-panel">
+      <ol class="directory-list age-library-results age-utility-workflow__list" aria-live="polite">
+        {{#each results as |result|}}
+        <li class="directory-item age-library-result age-utility-workflow__row">
+          <div class="age-library-icon">
+            {{#if result.img}}<img src="{{result.img}}" alt="">{{else}}<i class="fa-solid fa-book" aria-hidden="true"></i>{{/if}}
+          </div>
+          <div class="age-library-result-copy">
+            <strong title="{{result.name}}">{{result.displayName}}</strong>
+            <div class="notes">{{result.documentName}} · {{result.type}} · {{result.packLabel}}</div>
+            <div class="notes age-library-source-id" title="{{result.uuid}}">{{result.pack}} · {{result.id}}</div>
+          </div>
+          <button type="button" class="age-library-open" data-action="openDocument" data-uuid="{{result.uuid}}" {{#if ../busy}}disabled{{/if}}>
+            <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.open"}}
+          </button>
+        </li>
+        {{else}}
+        <li class="directory-item age-library-empty age-utility-workflow__empty"><p class="notes">{{localize "age-system.AUTOMATION.noSearchResults"}}</p></li>
+        {{/each}}
+      </ol>
+    </section>
   </div>
 
-  {{#if indexErrors.length}}
-  <p class="notification warning">{{localize "age-system.AUTOMATION.indexWarnings" count=indexErrors.length}}</p>
-  {{/if}}
-
-  <ol class="directory-list age-library-results">
-    {{#each results as |result|}}
-    <li class="directory-item age-library-result">
-      <div class="age-library-icon">
-        {{#if result.img}}<img src="{{result.img}}" alt="">{{else}}<i class="fa-solid fa-book"></i>{{/if}}
-      </div>
-      <div class="age-library-result-copy">
-        <strong title="{{result.name}}">{{result.displayName}}</strong>
-        <div class="notes">{{result.documentName}} · {{result.type}} · {{result.packLabel}}</div>
-        <div class="notes age-library-source-id" title="{{result.uuid}}">{{result.pack}} · {{result.id}}</div>
-      </div>
-      <button type="button" class="age-library-open" data-uuid="{{result.uuid}}">
-        <i class="fa-solid fa-up-right-from-square"></i> {{localize "age-system.AUTOMATION.open"}}
-      </button>
-    </li>
-    {{else}}
-    <li class="directory-item age-library-empty"><p class="notes">{{localize "age-system.AUTOMATION.noSearchResults"}}</p></li>
-    {{/each}}
-  </ol>
+  <footer class="age-utility-workflow__footer age-library-status">
+    <span class="notes">{{localize "age-system.AUTOMATION.libraryIndexStatus" count=indexCount profile=profileLabel}}</span>
+    {{#if automationEnabled}}{{#if isGM}}
+    <button type="button" class="age-library-rebuild" data-action="rebuild" {{#if busy}}disabled{{/if}}>
+      <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.rebuildIndex"}}
+    </button>
+    {{/if}}{{/if}}
+  </footer>
 </section>

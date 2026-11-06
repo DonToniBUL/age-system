@@ -1,7 +1,27 @@
 import {ageSystem} from "../config.js";
 import * as Dice from "../dice.js";
 import {normalizeDamageSource} from "../damage-utils.js";
-import {normalizeImportedTitle, splitImportedList} from "../automation/import-normalization.js";
+import {suggestInjuryDamageFromFormula} from "../injury-damage.js";
+import {normalizeImportedTitle, normalizePdfClipboardText, splitImportedList} from "../automation/import-normalization.js";
+
+const CANONICAL_MAIN_ABILITY_NAMES = Object.freeze({
+  acc: "Accuracy",
+  comm: "Communication",
+  cons: "Constitution",
+  dex: "Dexterity",
+  fight: "Fighting",
+  int: "Intelligence",
+  per: "Perception",
+  str: "Strength",
+  will: "Willpower",
+});
+
+const IMPORTED_DEGREES = Object.freeze(new Map([
+  ["novice", 0], ["apprentice", 0], ["journeyman", 1], ["expert", 1],
+  ["master", 2], ["grandmaster", 3], ["apex", 4],
+]));
+const IMPORTED_DEGREE_LABEL = "novice|apprentice|journeyman|expert|master|grandmaster|apex";
+const DERIVED_VALUE_LINE_LIMIT = 4;
 
 /**
  * Parser for importing NPCs from AGE System books
@@ -12,10 +32,19 @@ export class NpcParser {
     this._mode = ageSetting;
     this.mode = ageSetting;
     this._modeSelected = ageSetting;
-    this._text = String(text ?? "").trim();
+    this.normalization = normalizePdfClipboardText(text);
+    this._text = this.normalization.text;
     this.text = this._text;
     this.textLC = foundry.utils.deepClone(this.text.toLowerCase());
     this.options = options;
+    // Older integrations construct NpcParser directly and omit profileId. Freeze
+    // the active profile at construction so Injury behavior cannot be bypassed or
+    // changed by a later settings mutation while an import is in flight.
+    let activeProfile = options?.profileId ?? options?.profile ?? null;
+    if (!activeProfile) {
+      try { activeProfile = game.settings.get("age-system", "activeRuleProfile"); } catch (_error) { /* Optional legacy context. */ }
+    }
+    this._profileId = String(activeProfile ?? "");
     this._parsed = false;
 
     // Object containing actor and item data parsed
@@ -59,6 +88,12 @@ export class NpcParser {
     return this._createActor();
   }
 
+  _usesMasteryInjuryProfile() {
+    return this._profileId === "mage-mastery-injury"
+      || (!Object.hasOwn(this, "_profileId")
+        && [this.options?.profileId, this.options?.profile].includes("mage-mastery-injury"));
+  }
+
   _getThreat() {
     const textLC = this.textLC;
     const threatLabels = [...new Set([this._localize('age-system.threat', 'Threat'), 'Threat'])];
@@ -91,13 +126,39 @@ export class NpcParser {
       this._localize('age-system.specialFeatures', 'Special Features'),
       'Special Qualities',
       'Special Features',
-    ])].map(caption => `\n${caption}`);
-    const captionMatch = captions
-      .map(caption => ({caption, index: this.textLC.indexOf(caption.toLowerCase())}))
-      .filter(entry => entry.index >= 0)
-      .sort((left, right) => left.index - right.index)[0];
-    const qltCaption = captionMatch?.caption ?? "";
-    const spcQltIndex = captionMatch?.index ?? -1;
+    ])].filter(Boolean);
+    const decoration = String.raw`(?:[\u2022*#]+\s*|-{1,3}\s+)?`;
+    const captionPattern = captions.map(caption => this._escapeRegExp(caption).replace(/\s+/gu, "\\s+"));
+    const captionRegex = new RegExp(`^\\s*${decoration}(?:${captionPattern.join("|")})\\s*(?:-{1,3})?\\s*:?[ \\t]*$`, "imu");
+    const captionMatch = this.text.match(captionRegex);
+    const qltCaption = captionMatch?.[0] ?? "";
+    let spcQltIndex = captionMatch?.index ?? -1;
+    let includeFallbackHeading = false;
+
+    // Some stat blocks omit the umbrella Special Qualities caption and begin
+    // directly with a bounded content heading. Keep the heading in the section
+    // so the normal feature parser can classify it.
+    if (spcQltIndex < 0) {
+      const contentHeadings = [
+        this._localize("age-system.equipment", "Equipment"),
+        this._localize("age-system.talentPlural", "Talents"),
+        this._localize("age-system.favoredStunts", "Favored Stunts"),
+        this._localize("age-system.item.spec", "Specializations"),
+        this._localize("age-system.relationship", "Relationship"),
+        this._localize("age-system.membership", "Membership"),
+        this._localize("age-system.honorifics", "Honorifics"),
+        "Equipment", "Talents", "Favored Stunts", "Specializations",
+        "Relationships", "Relationship", "Memberships", "Membership", "Honorifics",
+      ].filter(Boolean);
+      const headingPattern = [...new Set(contentHeadings)]
+        .map(heading => this._escapeRegExp(heading).replace(/\s+/gu, "\\s+"));
+      const fallbackRegex = new RegExp(`^\\s*${decoration}(?:${headingPattern.join("|")})\\s*:[ \\t]*`, "imu");
+      const fallback = this.text.match(fallbackRegex);
+      if (fallback) {
+        spcQltIndex = fallback.index;
+        includeFallbackHeading = true;
+      }
+    }
 
     keys.specialQualities = {
       index: spcQltIndex,
@@ -111,7 +172,7 @@ export class NpcParser {
       sections.specialQualities = "";
     } else {
       sections.abilityPlusDerived = this.text.substring(0, spcQltIndex);
-      sections.specialQualities = this.text.substring(spcQltIndex + qltCaption.length);
+      sections.specialQualities = this.text.substring(spcQltIndex + (includeFallbackHeading ? 0 : qltCaption.length));
     }
 
     this.keys = keys;
@@ -131,6 +192,51 @@ export class NpcParser {
     return block
   }
 
+  _findDerivedHeader(lines, aliases) {
+    const normalizedAliases = Object.fromEntries(Object.entries(aliases).map(([key, values]) => [
+      key,
+      [...new Set(values.filter(Boolean).map(value => String(value).toLocaleLowerCase()))]
+        .sort((left, right) => right.length - left.length),
+    ]));
+    const aliasIndex = (text, values) => values.map(value => text.indexOf(value)).filter(index => index >= 0).sort((a, b) => a - b)[0] ?? -1;
+    for (let start = 0; start < lines.length; start++) {
+      let joined = "";
+      for (let end = start; end < Math.min(lines.length, start + 3); end++) {
+        if (!lines[end]?.trim()) break;
+        joined = `${joined} ${lines[end]}`.trim().toLocaleLowerCase();
+        if (/\d/u.test(joined)) break;
+        const speed = aliasIndex(joined, normalizedAliases.speed);
+        const health = aliasIndex(joined, normalizedAliases.health);
+        const defense = aliasIndex(joined, normalizedAliases.defense);
+        if (speed >= 0 && health > speed && defense > health) return {start, end};
+      }
+    }
+    return null;
+  }
+
+  _derivedRowComplete(value, mode) {
+    const tokens = String(value ?? "").replace(/\+\s+/gu, "+").trim().split(/\s+/u).filter(Boolean);
+    const number = token => /^[+-]?\d+(?:\.\d+)?$/u.test(String(token ?? ""));
+    const armor = token => /^[+-]?\d+(?:\.\d+)?(?:[ib])?(?:\/[+-]?\d+(?:\.\d+)?(?:[ib])?)?$/iu.test(String(token ?? ""));
+    if (["mageL", "mageM"].includes(mode)) {
+      return tokens.length >= 11 && number(tokens[0]) && tokens.slice(-10, -1).every(number) && armor(tokens.at(-1));
+    }
+    return tokens.length >= 4 && number(tokens[0]) && number(tokens.at(-3)) && number(tokens.at(-2)) && armor(tokens.at(-1));
+  }
+
+  _collectDerivedValueRow(lines, start, mode) {
+    const valueLines = [];
+    for (let index = start; index < lines.length && valueLines.length < DERIVED_VALUE_LINE_LIMIT; index++) {
+      const line = lines[index]?.trim();
+      if (!line) continue;
+      valueLines.push(line);
+      const candidate = valueLines.join(" ");
+      if (this._derivedRowComplete(candidate, mode)) return candidate;
+    }
+    const count = valueLines.join(" ").split(/\s+/u).filter(Boolean).length;
+    throw new Error(`Could not read a complete Speed / Health / Defense / Armor values row (${count} token(s) found).`);
+  }
+
   /**
    * Select which set of Abilities will be parsed and populate actor data, including Focuses
    * @param {Array} block Array contained data to be parsed
@@ -140,7 +246,7 @@ export class NpcParser {
     // Identify which Setting the Ability block belongs
     const mode = this._modeSelected
     const ablType = ['expanse', 'mageL', 'mageM', 'fage', 'fage2e'].includes(mode) ? 'main' : (mode === 'dage' ? 'dage' : null);
-    
+
     // Initialize focus as empty array to prevent errors
     const focus = [];
     
@@ -232,137 +338,67 @@ export class NpcParser {
   }
 
   /**
-   * Parse abilities for Fantasy AGE 2e format (comma-separated)
+   * Parse Fantasy AGE 2e abilities from both official value-first stat blocks
+   * and community/name-first blocks. Entries may be separated by newlines,
+   * commas, semicolons, or simple PDF column whitespace.
    * @param {Object} abls Localized ability names
    * @param {Object} abilities Object to populate with ability values
    * @param {Array} focus Array to populate with focus data
    */
   _parseFantasyAge2eAbilities(abls, abilities, focus) {
-    const text = this.sections.abilityPlusDerived.toLowerCase();
-    
-    // Find the abilities section - it comes after "ABILITIES (FOCUSES)" header
-    const abilityLabel = this._escapeRegExp(game.i18n.localize("age-system.abl"));
-    const focusLabel = this._escapeRegExp(game.i18n.localize("age-system.focus"));
-    const abilityHeaderRegexes = [
-      /abilities?\s*\(\s*focus(?:es)?\s*\)/iu,
-      new RegExp(`${abilityLabel}s?\\s*\\(\\s*${focusLabel}(?:es|s)?\\s*\\)`, "iu"),
-    ];
-    const abilityHeaderMatch = abilityHeaderRegexes.map(regex => text.match(regex)).find(Boolean);
-    if (!abilityHeaderMatch) return;
-    
-    const abilityStartIndex = abilityHeaderMatch.index + abilityHeaderMatch[0].length;
-    
-    // Find where abilities section ends (before SPEED, HEALTH, DEFENSE line)
-    const speed = this._escapeRegExp(game.i18n.localize("age-system.speed"));
-    const health = this._escapeRegExp(game.i18n.localize("age-system.health"));
-    const defense = this._escapeRegExp(game.i18n.localize("age-system.defense"));
-    const speedHealthDefenseRegex = new RegExp(`(?:speed\\s+health\\s+defense|${speed}\\s+${health}\\s+${defense})`, "iu");
-    const speedHealthDefenseMatch = text.match(speedHealthDefenseRegex);
-    const abilityEndIndex = speedHealthDefenseMatch ? speedHealthDefenseMatch.index : text.length;
-    
-    // Extract the abilities text
-    const abilitiesText = text.substring(abilityStartIndex, abilityEndIndex).trim();
-    
-    // Split by commas, but be careful about commas inside parentheses
-    const abilityEntries = this._splitRespectingParentheses(abilitiesText);
-    
-    // Process each ability entry
-    for (const entry of abilityEntries) {
-      const trimmedEntry = entry.trim();
-      if (!trimmedEntry) continue;
-      
-      // Parse each ability entry
-      this._parseFantasyAge2eAbilityEntry(trimmedEntry, abls, abilities, focus);
-    }
-  }
+    const section = String(this.sections.abilityPlusDerived ?? "")
+      .replace(/[\u2010-\u2014\u2212]/gu, "-")
+      .replace(/[\u00a0\u2007\u202f]/gu, " ");
+    const lines = section.split(/\r?\n/u);
+    const headerAliases = {
+      speed: [...new Set([this._localize("age-system.speed", "Speed"), "Speed"])],
+      health: [...new Set([this._localize("age-system.health", "Health"), "Health"])],
+      defense: [...new Set([this._localize("age-system.defense", "Defense"), "Defense"])],
+    };
+    const derivedHeader = this._findDerivedHeader(lines, headerAliases);
+    const abilitiesText = lines.slice(0, derivedHeader?.start ?? lines.length).join("\n");
+    const seen = new Set();
 
-  /**
-   * Split text by commas while respecting parentheses
-   * @param {String} text Text to split
-   * @returns {Array} Array of split entries
-   */
-  _splitRespectingParentheses(text) {
-    text = text.replaceAll('–', '-'); // Replace en-dash with hyphen
-    const entries = [];
-    let current = '';
-    let parenthesesDepth = 0;
-    
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      
-      if (char === '(') {
-        parenthesesDepth++;
-      } else if (char === ')') {
-        parenthesesDepth--;
-      } else if (char === ',' && parenthesesDepth === 0) {
-        entries.push(current.trim());
-        current = '';
-        continue;
-      }
-      
-      current += char;
-    }
-    
-    if (current.trim()) {
-      entries.push(current.trim());
-    }
-    
-    return entries;
-  }
-
-  /**
-   * Parse a single ability entry for Fantasy AGE 2e format
-   * @param {String} entry Single ability entry (e.g., "Accuracy 2 (Light Blades, Bows)")
-   * @param {Object} abls Localized ability names
-   * @param {Object} abilities Object to populate with ability values
-   * @param {Array} focus Array to populate with focus data
-   */
-  _parseFantasyAge2eAbilityEntry(entry, abls, abilities, focus) {
-    // Pattern: Ability Name Number (Focus1, Focus2, etc.)
-    const abilityPattern = /^(.+?)\s+(-?\d+)(?:\s*\(([^)]+)\))?/u;
-    const match = entry.match(abilityPattern);
-    
-    if (!match) return;
-    
-    const abilityName = match[1].trim().toLowerCase();
-    const abilityValue = parseInt(match[2]);
-    const focusString = match[3];
-    
-    // Find the matching ability key
-    let abilityKey = null;
     for (const [key, localizedName] of Object.entries(abls)) {
-      if (localizedName.toLowerCase() === abilityName) {
-        abilityKey = key;
-        break;
-      }
+      const aliases = [...new Set([localizedName, CANONICAL_MAIN_ABILITY_NAMES[key]].filter(Boolean))]
+        .sort((left, right) => right.length - left.length)
+        .map(alias => this._escapeRegExp(alias));
+      const aliasPattern = `(?:${aliases.join("|")})`;
+      const leadingBoundary = `(?:^|[^\\p{L}\\p{N}_])`;
+      const trailingBoundary = `(?![\\p{L}\\p{N}_])`;
+      const valueFirst = new RegExp(`${leadingBoundary}([+-]?\\d+)\\s+${aliasPattern}${trailingBoundary}(?:\\s*\\(([^)]*)\\))?`, "iu");
+      const nameFirst = new RegExp(`${leadingBoundary}${aliasPattern}${trailingBoundary}\\s*[:=]?\\s+([+-]?\\d+)(?:\\s*\\(([^)]*)\\))?`, "iu");
+      const matches = [abilitiesText.match(valueFirst), abilitiesText.match(nameFirst)].filter(Boolean)
+        .sort((left, right) => (left.index ?? 0) - (right.index ?? 0));
+      const match = matches[0];
+      if (!match) continue;
+      const abilityValue = Number(match[1]);
+      if (!Number.isFinite(abilityValue)) continue;
+      abilities[key] = {value: abilityValue};
+      seen.add(key);
+      this._addFantasyAge2eFocuses(match[2], key, focus);
     }
-    
-    if (!abilityKey) return;
-    
-    // Set ability value
-    abilities[abilityKey] = { value: abilityValue };
-    
-    // Parse focuses if present
-    if (focusString) {
-      const fociArr = focusString.split(',');
-      for (const f of fociArr) {
-        const focusName = f.trim();
-        if (focusName) {
-          // Check if focus has a modifier (like +3)
-          const modMatch = focusName.match(/(.+?)\s*\+(\d+)$/);
-          const focusValue = modMatch ? parseInt(modMatch[2]) : 2;
-          const focusNameClean = modMatch ? modMatch[1].trim() : focusName;
-          
-          focus.push({
-            name: this.normalizeCase(focusNameClean),
-            type: 'focus',
-            system: {
-              initialValue: focusValue,
-              useAbl: abilityKey
-            }
-          });
-        }
-      }
+
+    const missing = Object.keys(abls).filter(key => !seen.has(key));
+    if (missing.length) {
+      const names = missing.map(key => CANONICAL_MAIN_ABILITY_NAMES[key] ?? abls[key] ?? key).join(", ");
+      throw new Error(`Could not read every Fantasy AGE 2e ability. Missing: ${names}. Check that the pasted block includes all ability scores before the Speed / Health / Defense heading.`);
+    }
+  }
+
+  _addFantasyAge2eFocuses(focusString, abilityKey, focus) {
+    for (const rawFocus of splitImportedList(focusString)) {
+      const modifier = rawFocus.match(/^(.+?)\s*\+\s*(\d+)$/u);
+      const name = (modifier?.[1] ?? rawFocus).trim();
+      if (!name) continue;
+      focus.push({
+        name: this.normalizeCase(name),
+        type: "focus",
+        system: {
+          initialValue: modifier ? Number(modifier[2]) : 2,
+          useAbl: abilityKey,
+        },
+      });
     }
   }
 
@@ -381,13 +417,9 @@ export class NpcParser {
       health: [header.health, mode === "expanse" ? "Fortune" : "Health"],
       defense: [header.defense, "Defense"],
     };
-    const includesAlias = (line, values) => values.filter(Boolean).some(value => line.toLocaleLowerCase().includes(value.toLocaleLowerCase()));
-    const headerIndex = lines.findIndex(line => includesAlias(line, aliases.speed)
-      && includesAlias(line, aliases.health)
-      && includesAlias(line, aliases.defense));
-    if (headerIndex < 0) throw new Error("Could not find the Speed / Health / Defense heading in the NPC text.");
-    let protoText = lines.slice(headerIndex + 1).find(line => line.trim())?.trim() ?? "";
-    if (!protoText) throw new Error("The NPC derived-stat heading is not followed by a values row.");
+    const derivedHeader = this._findDerivedHeader(lines, aliases);
+    if (!derivedHeader) throw new Error("Could not find the Speed / Health / Defense heading in the NPC text.");
+    let protoText = this._collectDerivedValueRow(lines, derivedHeader.end + 1, mode);
     protoText = protoText.replaceAll("+ ", "+");
     
     // Logic to ensure "+" has a white space on its left and none to its right
@@ -502,11 +534,28 @@ export class NpcParser {
 
     // Go through attksTable and identify attacks
     for (let a = 0; a < attksTable.length; a++) {
-      const str = attksTable[a].replaceAll('–','-').trim();
+      let str = attksTable[a].replaceAll('–','-').trim();
       if (!str) continue;
-      const atkData = str.match(/(?:^|\s)([+-]\d+|0|-)(?=\s|$)/u);
+      let atkData = str.match(/(?:^|\s)([+-]\d+|0|-)(?=\s|$)/u);
+      if (!atkData && a + 1 < attksTable.length && str.length <= 80 && !/[\d:]/u.test(str)) {
+        const continuation = attksTable[a + 1].replaceAll('–', '-').trim();
+        const continuationAttack = continuation.match(/(?:^|\s)([+-]\d+|0|-)(?=\s|$)/u);
+        if (continuationAttack) {
+          str = `${str} ${continuation}`;
+          atkData = str.match(/(?:^|\s)([+-]\d+|0|-)(?=\s|$)/u);
+          a++;
+        }
+      }
       if (!atkData) continue;
-      const dmgStr = this.removeLineBreake(str.substring(atkData.index + atkData[0].length));
+      let dmgStr = this.removeLineBreake(str.substring(atkData.index + atkData[0].length));
+      if ((!dmgStr || /[+\-*/]$/u.test(dmgStr)) && a + 1 < attksTable.length) {
+        const continuation = attksTable[a + 1].replaceAll('–', '-').trim();
+        if (/^(?:\d*d\d+|[+-]?\d+)/iu.test(continuation)
+          && !/(?:^|\s)(?:[+-]\d+|0|-)(?=\s|$)/u.test(continuation)) {
+          dmgStr = `${dmgStr} ${continuation}`.trim();
+          a++;
+        }
+      }
       const formulaEval = Dice.resumeFormula(dmgStr, {});
       let dmg;
       if (formulaEval === null) {
@@ -516,12 +565,18 @@ export class NpcParser {
       }
       const atkName = this.removeLineBreake(str.substring(0, atkData.index));
       if (!atkName) continue;
-      attacks.push({
+      const damageInjurySuggestion = ["mageL", "mageM"].includes(mode)
+        ? suggestInjuryDamageFromFormula(dmg)
+        : null;
+      const attack = {
         name: this.normalizeCase(atkName),
         toHit: atkData[1],
         dmg: formulaEval ? dmg : `0[${game.i18n.localize("age-system.seeDescription")}]`,
-        longDesc: formulaEval ? "" :  `<p><strong>${game.i18n.format("age-system.attkNote", {attack: this.normalizeCase(atkName)})}:</strong> ${this.normalizeCase(dmgStr)}</p>`
-      })
+        longDesc: formulaEval ? "" :  `<p><strong>${game.i18n.format("age-system.attkNote", {attack: this.normalizeCase(atkName)})}:</strong> ${this.normalizeCase(dmgStr)}</p>`,
+      };
+      if (["mageL", "mageM"].includes(mode)) attack.damageInjurySuggestion = damageInjurySuggestion;
+      if (this._usesMasteryInjuryProfile() && damageInjurySuggestion !== null) attack.damageInjury = damageInjurySuggestion;
+      attacks.push(attack);
     }
     
     this.data.attacks = attacks;
@@ -544,7 +599,8 @@ export class NpcParser {
       const pos2 = (i < featArr.length-1) ? rawFeaturesLC.indexOf(featArr[i+1].toLowerCase()) : Infinity;
       features.push({
         name: this.normalizeCase(this.removeLineBreake(f.substring(0, f.length-1))),
-        desc: this.removeLineBreake(rawFeatures.substring(pos1 + size, pos2))
+        desc: this.removeLineBreake(rawFeatures.substring(pos1 + size, pos2)
+          .replace(/\n\s*(?:-{1,3})\s+/gu, "\n\u2022 "))
       });
     }
     this.data.features = features;
@@ -572,7 +628,7 @@ export class NpcParser {
       name: this.normalizeCase(data.name),
       type: type,
       flags: {
-        core: {sheetClass: "age-system.ageSystemSheetCharStatBlock"}
+        core: {sheetClass: "age-system.ageSystemSheetCharStatBlockV2"}
       },
       system: {
         threat: data.threat,
@@ -587,8 +643,22 @@ export class NpcParser {
     const actors = await game.actors.documentClass.createDocuments([actorData]);
     const actor = actors?.[0];
     if (!actor) throw new Error("Foundry did not create the imported NPC Actor.");
-    await this._createItems(actor);
-    return actor;
+    this.options?.onCreatedDocument?.(actor);
+    try {
+      await this._createItems(actor);
+      return actor;
+    } catch (error) {
+      try {
+        await actor.delete();
+        this.options?.onDeletedDocument?.(actor);
+      } catch (cleanupError) {
+        const failure = new Error(`NPC import failed and the incomplete Actor could not be removed: ${cleanupError?.message ?? cleanupError}`);
+        failure.code = "AGE_IMPORT_NPC_CLEANUP_FAILED";
+        failure.cause = error;
+        throw failure;
+      }
+      throw error;
+    }
   }
 
   async _createItems(actor) {
@@ -598,10 +668,57 @@ export class NpcParser {
     // Ensure focus is an array to prevent errors
     const focusItems = this.data.focus || [];
     const items = this.data.items || [];
-    
+    const attacks = this.data.attacks || [];
+
+    // Resolve and validate every attack before any embedded Item is written.
+    // A reviewed world/compendium source keeps its explicit Injury value; only
+    // a custom parsed fallback receives the safe formula suggestion.
+    const resolvedAttacks = [];
+    for (const attack of attacks) {
+      const explicitInjuryDamage = Number.isInteger(attack.damageInjury) ? attack.damageInjury : null;
+      const suggestedInjuryDamage = Number.isInteger(attack.damageInjurySuggestion)
+        ? attack.damageInjurySuggestion
+        : suggestInjuryDamageFromFormula(attack.dmg);
+      const injuryDamage = explicitInjuryDamage ?? suggestedInjuryDamage;
+      const parsedAttack = {
+        name: attack.name,
+        type: 'weapon',
+        system: {
+          longDesc: attack.longDesc === "" ? "" : attack.longDesc,
+          favorite: true,
+          equiped: true,
+          useAbl: 'no-abl',
+          useFocus: '',
+          dmgType: "wound",
+          dmgSource: normalizeDamageSource("impact", ageSystem.healthSys),
+          dmgAbl: "no-abl",
+          damageFormula: `${attack.dmg}`
+        }
+      };
+      if (this._usesMasteryInjuryProfile() && injuryDamage !== null) {
+        parsedAttack.system.damageInjury = injuryDamage;
+      }
+      const attackData = await this._resolveItemData(parsedAttack);
+      attackData.system ??= {};
+      if (this._usesMasteryInjuryProfile()
+          && (!Number.isInteger(attackData.system.damageInjury)
+            || attackData.system.damageInjury < 1 || attackData.system.damageInjury > 40)) {
+        const formula = String(attack.dmg ?? "").trim() || "unknown";
+        const error = new Error(`Cannot safely derive Modern AGE Injury damage for imported attack "${attack.name}" from "${formula}".`);
+        error.code = "AGE_IMPORT_INJURY_DAMAGE_UNSUPPORTED";
+        throw error;
+      }
+      attackData.system.favorite = true;
+      attackData.system.equiped = true;
+      resolvedAttacks.push({attack, data: attackData});
+    }
+
     const resolvedItems = [];
     for (const item of focusItems.concat(items)) resolvedItems.push(await this._resolveItemData(item));
-    await actor.createEmbeddedDocuments('Item', resolvedItems);
+    if (resolvedItems.length) {
+      const createdItems = await actor.createEmbeddedDocuments('Item', resolvedItems);
+      if (createdItems?.length !== resolvedItems.length) throw new Error("Foundry did not create every imported NPC Item.");
+    }
 
     // Add Armor
     const armor = await actor.createEmbeddedDocuments('Item', [{
@@ -615,32 +732,10 @@ export class NpcParser {
     await armor[0]._newModifier({type: 'ballisticArmor', formula: String(Number(this.data.armor.ballisticArmor) || 0)});
 
     // Create Weapons from "Attacks"
-    const attks = this.data.attacks;
-    for (let a = 0; a < attks.length; a++) {
-      const attk = attks[a];
-      const parsedAttack = {
-        name: attk.name,
-        type: 'weapon',
-        system: {
-          longDesc: attk.longDesc === "" ? "" : attk.longDesc,
-          favorite: true,
-          equiped: true,
-          useAbl: 'no-abl',
-          useFocus: '',
-          dmgType: "wound",
-          dmgSource: normalizeDamageSource("impact", ageSystem.healthSys),
-          dmgAbl: "no-abl",
-          damageInjury: 1, // TODO - elaborate formula to fill in this data
-          damageFormula: `${attk.dmg}`
-        }
-      };
-      const attackData = await this._resolveItemData(parsedAttack);
-      attackData.system ??= {};
-      attackData.system.favorite = true;
-      attackData.system.equiped = true;
-      const newAttk = await actor.createEmbeddedDocuments('Item', [attackData]);
-      if (!newAttk?.[0]) throw new Error(`Foundry did not create the imported attack "${attk.name}".`);
-      await newAttk[0]._newModifier({type: 'itemActivation', formula: attk.toHit, flavor: 'To Hit'});
+    for (const resolvedAttack of resolvedAttacks) {
+      const newAttk = await actor.createEmbeddedDocuments('Item', [resolvedAttack.data]);
+      if (!newAttk?.[0]) throw new Error(`Foundry did not create the imported attack "${resolvedAttack.attack.name}".`);
+      await newAttk[0]._newModifier({type: 'itemActivation', formula: resolvedAttack.attack.toHit, flavor: 'To Hit'});
     }
     await actor.sheet.render(true);
     return actor;
@@ -653,38 +748,76 @@ export class NpcParser {
       const resolved = await this.options.resolveItem(fallback, {destination: 'actor', parser: this});
       return foundry.utils.deepClone(resolved?.data ?? fallback);
     } catch (error) {
+      if (this.options?.strictResolution) throw error;
       console.warn(`AGE System | Unable to resolve imported Item "${parsed?.name ?? 'unknown'}".`, error);
       return fallback;
     }
   }
 
   _getItems() {
-    // Localized names
-    const equipLocal = this._localize("age-system.equipment", "Equipment").toLowerCase();
-    const talentLocal = this._localize("age-system.talentPlural", "Talents").toLowerCase();
-    const favoredStuntLocal = this._localize("age-system.favoredStunts", "Favored Stunts").toLowerCase();
-
-    // Item Type definition
     const feats = this.data.features ?? [];
-    const items = {};
     const toRemove = [];
-    
-    // Save Equipment, Talent and Stunt on separate arrays
+    const categories = [
+      {
+        aliases: [this._localize("age-system.equipment", "Equipment"), "Equipment"],
+        itemType: "equipment",
+      },
+      {
+        aliases: [this._localize("age-system.talentPlural", "Talents"), "Talents", "Talent"],
+        itemType: "talent",
+        subtype: "talent",
+      },
+      {
+        aliases: [this._localize("age-system.item.spec", "Specializations"), "Specializations", "Specialization"],
+        itemType: "talent",
+        subtype: "spec",
+      },
+      {
+        aliases: [this._localize("age-system.favoredStunts", "Favored Stunts"), "Favored Stunts", "Stunts"],
+        itemType: "stunts",
+      },
+      {
+        aliases: [this._localize("age-system.relationship", "Relationship"), "Relationships", "Relationship"],
+        itemType: "relationship",
+        system: {favorite: true, intensity: 1, intensityMax: 1},
+      },
+      {
+        aliases: [this._localize("age-system.membership", "Membership"), "Memberships", "Membership"],
+        itemType: "membership",
+        system: {favorite: true, rank: 1},
+      },
+      {
+        aliases: [this._localize("age-system.honorifics", "Honorifics"), "Honorifics"],
+        itemType: "honorifics",
+        system: {favorite: true},
+      },
+    ].map(category => ({
+      ...category,
+      aliases: new Set(category.aliases.filter(Boolean).map(alias => normalizeImportedTitle(alias).toLocaleLowerCase())),
+    }));
+
+    // Save recognized content headings as typed Items. Talent and
+    // specialization ranks are metadata, never part of the library-match name.
     for (let f = 0; f < feats.length; f++) {
       const ft = feats[f];
-      const title = ft.name.toLowerCase()
-      if (title === equipLocal || title === talentLocal || title === favoredStuntLocal) {
-        toRemove.push(f);
-        switch (title) {
-          case equipLocal: items.equipment = splitImportedList(ft.desc);
-            break;
-          
-          case talentLocal: items.talent = splitImportedList(ft.desc);
-            break;
-  
-          case favoredStuntLocal: items.stunts = splitImportedList(ft.desc);
-            break;
+      const title = normalizeImportedTitle(ft.name).toLocaleLowerCase();
+      const category = categories.find(entry => entry.aliases.has(title));
+      if (!category) continue;
+      toRemove.push(f);
+      for (const rawName of splitImportedList(ft.desc)) {
+        const ranked = category.itemType === "talent" ? this._parseImportedDegree(rawName) : {name: rawName.trim()};
+        if (!ranked.name) continue;
+        const system = category.system ? {...category.system} : {favorite: true, equiped: true, activate: true};
+        if (category.itemType === "talent") {
+          system.type = category.subtype;
+          system.degree = ranked.degree;
         }
+        this.data.items.push({
+          name: normalizeImportedTitle(ranked.name),
+          type: category.itemType,
+          img: ageSystem.itemIcons[category.itemType],
+          system,
+        });
       }
     }
 
@@ -718,25 +851,18 @@ export class NpcParser {
     }
     if (power.length) this.data.items.push(...power);
 
-    // Create Array with data to create Items on Actor
-    for (const key in items) {
-      if (Object.hasOwnProperty.call(items, key)) {
-        const e = items[key];
-        for (let i = 0; i < e.length; i++) {
-          e[i] = {
-            name: e[i].trim(),
-            type: key,
-            img: ageSystem.itemIcons[key],
-            system: {
-              favorite: true,
-              equiped: true,
-              activate: true
-            }
-          };
-        }
-        this.data.items.push(...e)
-      }
-    }
+  }
+
+  _parseImportedDegree(value) {
+    const original = String(value ?? "").trim();
+    if (!original) return {name: "", degree: 0};
+    const labeled = new RegExp(`^(.*?)(?:\\s*[([{]\\s*|\\s+(?:-|:)?\\s*)(?:rank\\s+|degree\\s+)?(${IMPORTED_DEGREE_LABEL}|[1-5])\\s*[)\\]}]?\\s*$`, "iu");
+    const match = original.match(labeled);
+    if (!match?.[1]?.trim()) return {name: original, degree: 0};
+    const rank = match[2].toLocaleLowerCase();
+    const degree = /^\d$/u.test(rank) ? Number(rank) - 1 : IMPORTED_DEGREES.get(rank);
+    if (!Number.isInteger(degree) || degree < 0 || degree > 4) return {name: original, degree: 0};
+    return {name: match[1].trim().replace(/[\s,:-]+$/u, ""), degree};
   }
 
   /**

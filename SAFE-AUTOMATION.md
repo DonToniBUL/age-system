@@ -1,6 +1,6 @@
-# AGE System 4.5.0 Safe Automation
+# AGE System Safe Automation
 
-This stable release promotes the Foundry-verified 4.5.0-rc.1 automation without replacing or restyling Actor or Item sheets.
+AGE System 5.4.1-rc.2 hardens Power Point authority, condition processing, rich-text privacy, and Stunt reversal while retaining API 1.4.0 and the existing progression contracts. No new document migration is introduced. The candidate has targeted copied-world and real player-client evidence; the full live harness rerun completed with 54 passes, five warnings, and only the unchanged 5.4.0 version-gate failure.
 
 ## Integration safeguards
 
@@ -53,7 +53,7 @@ Weapon groups remain user-managed because their exact list depends on the enable
 
 ## Reversible actions
 
-Supported system actions record before/after values in the initiating user's AGE history:
+Supported system actions record before/after values in AGE history. Most use the initiating user's history; authoritative Power Point changes use the executing GM's history:
 
 - Damage and direct Health changes
 - Healing
@@ -63,7 +63,7 @@ Supported system actions record before/after values in the initiating user's AGE
 - Stunt Point ledger spends
 - Automatic or confirmed combat-state expiration
 
-Use **AGE Toolbox → Undo Last AGE Action**. Undo resolves every affected document and verifies that its current value still equals the recorded result. If another action changed that value, undo stops with a conflict instead of overwriting newer play.
+Use **AGE Toolbox → Undo Last AGE Action** for supported field transactions. Undo resolves every affected document and verifies that its current value still equals the recorded result. If another action changed that value, undo stops with a conflict instead of overwriting newer play. Stunt spends require **Stunt Assistant → Undo last spend**, which can also reverse their effects. General Undo of a PP payment runs on the elected GM through the same per-Actor queue as casting and receipt rollback.
 
 The history is per user and retains the latest 20 actions by default. It is not a replacement for world backups.
 
@@ -84,15 +84,23 @@ Place a line containing only `---`, `===`, or `***` between multiple NPC or Tale
 
 ## Power Point safeguards
 
-Automatic Power Point spending now derives the owned Power's cost even when a macro or HUD calls the public roll service without a sheet-created cost object. It uses the final cost from the roll-options dialog and re-reads the Actor's current points immediately before spending. Concurrent duplicate activation is blocked. If the roll's Chat Message cannot be created, the resource change is rolled back when no conflicting later change exists.
+In 5.4.1-rc.2, all paid casting is serialized on the elected active GM, including requests by other GMs. With no active GM it fails closed. Public `api.actions.execute()` remains usable from GM and owning-player clients and retains its rollback/transaction interface; a remote wrapper reconstructs the local facade from a plain authenticated receipt. Insufficient funds are explicitly confirmed by the caster. A returned payment can be rolled back only by its requester (or a GM), in the executing GM session, while its tracked balance remains unchanged. Session receipts expire after fifteen minutes and retain the latest 500 payments. General Undo records for those payments reside on the executing GM; that Undo acquires the same Actor queue and marks the payment refunded. Never blindly retry a timed-out request: inspect the Actor balance and GM diagnostics first.
+
+
+Automatic Power Point spending derives the owned Power's cost even when a macro or HUD calls the public roll service without a sheet-created cost object. It uses the final cost from the roll-options dialog and re-reads the Actor's current points inside the authority queue immediately before spending. If the roll's Chat Message cannot be created, the resource change is rolled back when no conflicting later change exists.
+
+Live evidence in the copied Foundry 14.366 world confirmed two real player clients casting simultaneously from 6 PP: one 4-PP payment succeeded, the other required confirmation, and cancelling left 2 PP. A later request with no active GM was refused without changing that balance. These checks complement 37 offline regression scenarios and four passing targeted live checks; they do not certify all manual-edit races or GM failover.
 
 ## Stunt Assistant
 
+5.4.1-rc.2 keeps Stay Aware manual. Reverse point spends through the Stunt Assistant: General Undo refuses these transactions because field-only undo cannot recreate/delete their effects. New effect snapshots support compensation when a ledger or history write fails. Edited or missing effects, older spends without effect snapshots, and bonus damage already used in a roll require GM review instead of an automatic refund.
+
+
 When a successful AGE roll generates Stunt Points, its chat card receives a **Stunt Assistant** button. The separate window searches the rolling Actor's owned Stunts and, when enabled, indexed Stunt compendia. Roll-appropriate categories sort first without hiding other choices.
 
-Fixed and variable costs are validated against the Item definition and the message's remaining points. A duplicate click cannot spend the same pool concurrently, overspending is rejected, and **Undo last spend** reverses the most recent ledger entry. Supported spends also enter reversible AGE action history.
+Fixed and variable costs are validated against the Item definition and the message's remaining points. The originating client blocks an in-flight duplicate click, and **Undo last spend** reverses the most recent safe ledger entry together with its effect. Supported spends also enter AGE action history; General Undo directs them to Stunt Assistant.
 
-Seven canonical Stunts have conservative execution descriptors. Mighty Blow, Vicious Blow, and Lethal Blow queue their extra damage dice for the originating attack's next damage roll. Knock Prone asks which successful target receives the condition. Stay Aware, Duck and Weave, and Defensive Stance create visible Defense effects which expire at the start of the Actor's next turn. Stunts whose movement, weapon choice, ally choice, or narrative outcome cannot be inferred remain ledger-only.
+Six canonical Stunts have conservative execution descriptors. Mighty Blow, Vicious Blow, and Lethal Blow queue their extra damage dice for the originating attack's next damage roll. Knock Prone asks which successful target receives the condition. Duck and Weave and Defensive Stance create visible Defense effects which expire at the start of the Actor's next turn. Stay Aware remains manual pending its Perception-test workflow. Stunts whose movement, weapon choice, ally choice, or narrative outcome cannot be inferred remain ledger-only.
 
 ## Multi-target attacks and Argon
 
@@ -145,23 +153,27 @@ All 115 protected files must remain byte-identical to the accepted 4.2.7 baselin
 
 ## Foundry acceptance test
 
-Use a copied world on Foundry 14.365.
+Use a copied world on Foundry 14.366 for the 5.2.2 candidate.
 
-1. Open Full and Block Character sheets; verify tabs, buttons, minimization, dimensions, positions, and colour switching.
-2. Open AGE Rule Profiles, preview each profile, apply one, reload when prompted, and restore the prior settings.
-3. Spend Power Points normally, with an adjusted cost, and while short on points; verify cancel and proceed paths.
-4. Apply damage/healing to one Actor and to several Actors; use Undo Last AGE Action and verify all affected values restore together.
-5. Run a Breather on several selected Characters and undo it.
-6. Search the Unified AGE Library for one Actor, Item, Journal, and Roll Table from the enabled private modules.
-7. Preview one valid and one malformed import block separated by `---`; create the valid block only.
-8. Import the same Talent twice and confirm the second import reuses the existing Item.
-9. Roll from Full sheet, Block sheet, macros, Argon Combat HUD, and Ammo Belt; verify one resource deduction and no console errors.
-10. Exercise Item Piles transfer and purchase flows and confirm existing currency behavior is unchanged.
-11. Select targets with different Defenses, roll one Weapon attack from a sheet and from Argon 1.0.3, and verify separate hit/miss margins plus hit-only damage recipients.
-12. Activate a test-enabled damaging Power against two targets, roll one successful and one failed resistance, then verify full and resisted damage open with the correct recipients.
-13. Generate Stunt Points, spend fixed and variable-cost Stunts, attempt to overspend, undo the last spend, and reopen the originating card to confirm its ledger persisted.
-14. In combat, leave each supported maneuver active across a round. Verify the default reminder and its button, then test automatic mode and Undo Last AGE Action. Confirm unflagged Active Effects are untouched.
-15. Create Advanced and Opposed trackers, add manual progress, undo it, add a successful roll's Stunt Die from chat, close the tracker, and remove it.
-16. Open Operations & Diagnostics and confirm API 1.1.0, action schema 1, 11 handlers, 12 templates, and no pending actions after rolls settle.
-17. Run the content audit, export diagnostics, and verify the window produces no new AppV1 deprecation warning.
-18. With one GM and one player connected, request an owned action and verify it completes; request an action against an unowned Actor and verify the GM refuses it.
+1. Open a populated Full Character sheet at normal and reduced heights. Visit every tab, verify overflowing content scrolls while the header/navigation remain visible, then rerender and confirm the active tab's scroll position is retained.
+2. Open the same Character's Stat Block and verify Power descriptions, formatted content, and permitted document links appear without opening a Power Item. Repeat as an observer and confirm secret content remains hidden and no Power source changes.
+3. Cycle every bundled colour scheme across representative Character, Item, Stat Block, Vehicle, and Spaceship sheets; verify labels, values, disabled controls, rich text, and links remain readable.
+4. Open a Vehicle which already has formatted description text. Confirm the old text is visible immediately in a large editor, edit and save it, close/reopen the sheet, and verify the change persists.
+5. Open AGE Rule Profiles, preview each profile, apply one, reload when prompted, and restore the prior settings.
+6. Spend Power Points normally, with an adjusted cost, and while short on points; verify cancel and proceed paths.
+7. Apply damage/healing to one Actor and to several Actors; use Undo Last AGE Action and verify all affected values restore together.
+8. Run a Breather on several selected Characters and undo it.
+9. Search the Unified AGE Library for one Actor, Item, Journal, and Roll Table from the enabled private modules.
+10. Preview one valid and one malformed import block separated by `---`; create the valid block only.
+11. Import the same Talent twice and confirm the second import reuses the existing Item.
+12. Roll from Full sheet, Block sheet, macros, Argon Combat HUD, and Ammo Belt; verify one resource deduction and no console errors.
+13. Exercise Item Piles transfer and purchase flows and confirm existing currency behavior is unchanged.
+14. Select targets with different Defenses, roll one Weapon attack from a sheet and from Argon 1.0.3, and verify separate hit/miss margins plus hit-only damage recipients.
+15. Activate a test-enabled damaging Power against two targets, roll one successful and one failed resistance, then verify full and resisted damage open with the correct recipients.
+16. Generate Stunt Points, spend fixed and variable-cost Stunts, attempt to overspend, undo the last spend, and reopen the originating card to confirm its ledger persisted.
+17. In combat, leave each supported maneuver active across a round. Verify the default reminder and its button, then test automatic mode and Undo Last AGE Action. Confirm unflagged Active Effects are untouched.
+18. Create Advanced and Opposed trackers, add manual progress, undo it, add a successful roll's Stunt Die from chat, close the tracker, and remove it.
+19. Open Operations & Diagnostics and confirm API 1.4.0, progression capability 2 with DefinitionV1/DefinitionV2 support, action schema 1, 11 handlers, 12 templates, and no pending actions after rolls settle.
+20. Run the content audit, export diagnostics, and verify the window produces no new AppV1 deprecation warning.
+21. With one GM and one player connected, request an owned action and verify it completes; request an action against an unowned Actor and verify the GM refuses it.
+22. With AGE Progression Profiles 0.3.0 active, run one DAGE, FAGE1, FAGE2, and MAGE guided creation path, advance each Character, preview undo, and confirm explicit manual-review notices are never auto-resolved. For FAGE1, verify DefinitionV2 creation hands off to the retained DefinitionV1/Class-v3 advancement route.

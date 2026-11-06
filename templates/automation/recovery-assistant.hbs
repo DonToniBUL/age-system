@@ -1,12 +1,32 @@
-<section class="age-recovery-assistant flexcol" style="height:100%;min-height:0;gap:.55rem;padding:.35rem">
-  <form class="age-recovery-form flexcol" style="height:100%;min-height:0;gap:.55rem">
+<form class="age-utility-workflow__surface age-recovery-assistant age-recovery-form colorset-selection" aria-labelledby="age-recovery-assistant-title">
+  <header class="age-utility-workflow__header colorset-first-tier">
+    <div><h1 id="age-recovery-assistant-title">{{localize "age-system.AUTOMATION.recoveryAssistant"}}</h1></div>
+    <i class="fa-solid fa-bed" aria-hidden="true"></i>
+  </header>
+
+  <main class="age-utility-workflow__scroll">
     <p class="notification info">{{localize "age-system.AUTOMATION.recoveryProfile" mode=gameMode}}</p>
-    <div class="form-group"><label>{{localize "age-system.AUTOMATION.recoveryType"}}</label><select name="kind"><option value="breather">{{localize "age-system.AUTOMATION.recovery.breather"}}</option><option value="sleep">{{localize "age-system.AUTOMATION.recovery.sleep"}}</option></select></div>
-    {{#if isGritty}}<label><input type="checkbox" name="grittyWoundDamage"> {{localize "age-system.AUTOMATION.grittyWoundDamage"}}</label>{{/if}}
-    {{#if isCinematic}}<label><input type="checkbox" name="cinematicOnlyStun"> {{localize "age-system.AUTOMATION.cinematicOnlyStun"}}</label>{{/if}}
-    <ol class="directory-list" style="flex:1;min-height:0;overflow:auto;border:1px solid rgba(0,0,0,.2)">
-      {{#each actors as |actor|}}<li class="directory-item flexrow" style="align-items:center;gap:.5rem;padding:.35rem .45rem"><input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}} style="flex:0 0 auto"><img src="{{actor.img}}" width="32" height="32"><div style="min-width:0;flex:1"><strong>{{actor.name}}</strong><div class="notes">{{actor.health}} / {{actor.maxHealth}} HP</div></div></li>{{/each}}
+
+    <section class="age-utility-workflow__panel age-utility-workflow__grid age-utility-workflow__grid--two age-recovery-options colorset-second-tier">
+      <label class="age-utility-workflow__field"><span>{{localize "age-system.AUTOMATION.recoveryType"}}</span><select name="kind"><option value="breather">{{localize "age-system.AUTOMATION.recovery.breather"}}</option><option value="sleep">{{localize "age-system.AUTOMATION.recovery.sleep"}}</option></select></label>
+      {{#if isGritty}}<label class="age-recovery-option"><input type="checkbox" name="grittyWoundDamage"> {{localize "age-system.AUTOMATION.grittyWoundDamage"}}</label>{{/if}}
+      {{#if isCinematic}}<label class="age-recovery-option"><input type="checkbox" name="cinematicOnlyStun"> {{localize "age-system.AUTOMATION.cinematicOnlyStun"}}</label>{{/if}}
+    </section>
+
+    <ol class="directory-list age-utility-workflow__list age-recovery-actors">
+      {{#each actors as |actor|}}
+        <li class="directory-item age-utility-workflow__row age-recovery-actor">
+          <label class="age-utility-workflow__actions">
+            <input type="checkbox" name="actorUuid" value="{{actor.uuid}}" {{checked actor.selected}} aria-label="{{actor.name}}">
+            <img src="{{actor.img}}" alt="" width="32" height="32">
+            <span class="age-recovery-actor-copy"><strong>{{actor.name}}</strong><span class="notes">{{actor.health}} / {{actor.maxHealth}} HP</span></span>
+          </label>
+        </li>
+      {{/each}}
     </ol>
-    <button type="submit"><i class="fa-solid fa-briefcase-medical"></i> {{localize "age-system.AUTOMATION.applyRecovery"}}</button>
-  </form>
-</section>
+  </main>
+
+  <footer class="age-utility-workflow__footer age-recovery-footer">
+    <button type="button" data-action="apply"><i class="fa-solid fa-briefcase-medical" aria-hidden="true"></i> {{localize "age-system.AUTOMATION.applyRecovery"}}</button>
+  </footer>
+</form>

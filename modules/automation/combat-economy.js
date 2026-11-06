@@ -1,7 +1,15 @@
 import {automationFeatureEnabled} from "./mode.js";
+import {applyColorSchemeToElement} from "../color-scheme.js";
 
 const SYSTEM_ID = "age-system";
 const ECONOMY_PATH = `flags.${SYSTEM_ID}.automation.economy`;
+// Foundry v14 always supplies the AppV2 branch. The fallbacks keep isolated
+// service tests able to evaluate this module without constructing a browser.
+const ApplicationV2 = globalThis.foundry?.applications?.api?.ApplicationV2
+  ?? globalThis.foundry?.appv1?.api?.FormApplication
+  ?? class {};
+const HandlebarsApplicationMixin = globalThis.foundry?.applications?.api?.HandlebarsApplicationMixin
+  ?? (Base => Base);
 
 const clone = value => foundry.utils.deepClone(value);
 
@@ -134,29 +142,49 @@ export class CombatEconomyService {
 
   static open() {
     if (!this.enabled) return false;
-    return new CombatEconomyTracker().render(true);
+    const application = new CombatEconomyTracker();
+    const renderResult = application.render({force: true});
+    if (renderResult?.then instanceof Function) {
+      void renderResult.catch(error => console.error("AGE System | Combat Economy tracker failed to open.", error));
+    }
+    return application;
   }
 }
 
-export class CombatEconomyTracker extends foundry.appv1.api.FormApplication {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "age-combat-economy",
-      template: "systems/age-system/templates/automation/combat-economy.hbs",
-      classes: ["age-system", "dialog"],
-      title: game.i18n.localize("age-system.AUTOMATION.combatEconomy"),
-      width: 560,
-      height: "auto",
+export class CombatEconomyTracker extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "age-combat-economy",
+    classes: ["age-system", "age-v5-parity-sheet", "age-utility-workflow", "age-combat-economy-v2"],
+    position: {width: 620, height: 620},
+    window: {
+      title: "age-system.AUTOMATION.combatEconomy",
+      icon: "fa-solid fa-hourglass-half",
       resizable: true,
       minimizable: true
-    });
+    },
+    actions: {
+      record: CombatEconomyTracker._record,
+      undo: CombatEconomyTracker._undo
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/age-system/templates/automation/combat-economy.hbs",
+      scrollable: [".age-utility-workflow__scroll"]
+    }
+  };
+
+  /** Preserve the boolean render signature used by the automation service. */
+  render(options = {}) {
+    if (typeof options === "boolean") options = {force: options};
+    return super.render(options ?? {});
   }
 
-  getData() {
+  _buildContext() {
     const actor = game.combat?.combatant?.actor ?? null;
     const state = actor ? CombatEconomyService.state(actor) : null;
     return {
-      ...super.getData(),
       actor,
       state,
       evaluation: state ? evaluateEconomy(state) : null,
@@ -164,22 +192,44 @@ export class CombatEconomyTracker extends foundry.appv1.api.FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    html.find("[data-economy-type]").on("click", async event => {
-      const actor = game.combat?.combatant?.actor;
-      if (!actor) return;
-      await CombatEconomyService.record(actor, event.currentTarget.dataset.economyType, {label: event.currentTarget.dataset.label});
-      this.render(false);
-    });
-    html.find(".age-economy-undo").on("click", async () => {
-      const actor = game.combat?.combatant?.actor;
-      if (actor) await CombatEconomyService.undo(actor);
-      this.render(false);
-    });
+  /** Kept for integrations which inspected the former FormApplication data. */
+  getData() {
+    const base = typeof super.getData === "function" ? super.getData() : {};
+    return {...base, ...this._buildContext()};
   }
 
-  _updateObject() {}
+  async _prepareContext(options) {
+    const context = typeof super._prepareContext === "function"
+      ? await super._prepareContext(options)
+      : {};
+    return Object.assign(context, this._buildContext());
+  }
+
+  async _onRender(context, options) {
+    if (typeof super._onRender === "function") await super._onRender(context, options);
+    applyColorSchemeToElement(this.element);
+    applyColorSchemeToElement(this.element?.querySelector?.(".colorset-selection"));
+  }
+
+  static async _record(event, target) {
+    event.preventDefault();
+    const actor = game.combat?.combatant?.actor;
+    if (!actor) return false;
+    const result = await CombatEconomyService.record(actor, target?.dataset?.economyType, {
+      label: target?.dataset?.label
+    });
+    await this.render({force: true});
+    return result;
+  }
+
+  static async _undo(event) {
+    event.preventDefault();
+    const actor = game.combat?.combatant?.actor;
+    if (!actor) return false;
+    const result = await CombatEconomyService.undo(actor);
+    await this.render({force: true});
+    return result;
+  }
 }
 
 export default CombatEconomyService;

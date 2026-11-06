@@ -1,15 +1,15 @@
 {
   "namespace": "age-system",
   "id": "age-system-5",
-  "title": "AGE System 5 Quick Tour",
-  "description": "A short guide to the AGE 5 AppV2 defaults, legacy fallback, automation tools, diagnostics, and safe data preview.",
+  "title": "AGE System 5.3 Quick Tour",
+  "description": "A short guide to AppV2 defaults, NPC Studio, user-authored progression, preview-first creation and advancement, diagnostics, and safe data review.",
   "display": true,
   "canBeResumed": true,
   "steps": [
     {
       "id": "welcome",
-      "title": "AGE System 5",
-      "content": "<p>AGE 5 uses native AppV2 sheets by default and keeps the verified legacy sheets available as an explicit fallback. Existing automation and the versioned integration API remain intact.</p>"
+      "title": "AGE System 5.3",
+      "content": "<p>AGE 5.3 includes the profile-aware NPC Studio, hardened NPC and Talent import, provider-neutral progression, Character Builder, Advancement Center, and Progression Definition Items. Native AppV2 sheets remain the default, verified legacy sheets remain available as an explicit fallback, and existing automation remains intact.</p>"
     },
     {
       "id": "sheets",
@@ -19,18 +19,40 @@
     {
       "id": "toolbox",
       "title": "AGE Toolbox",
-      "content": "<p>Open the AGE Toolbox from the Token Controls tool group for requested rolls, recovery, Advanced Tests, and Operations &amp; Diagnostics.</p>"
+      "content": "<p>Open the AGE Toolbox from the Token Controls tool group for NPC Studio, the Character Builder, requested rolls, recovery, Advanced Tests, and Operations &amp; Diagnostics. The Toolbox does not show redundant generic 1d6, 2d6, 3d6, d66, or d666 actions; Foundry's normal dice roller remains available.</p>"
+    },
+    {
+      "id": "npc-studio",
+      "title": "NPC Studio",
+      "content": "<p>Game Masters can create a new adversary from a Blank NPC, a pasted compatible stat block, or a safe copy of a visible Actor. Work through Identity, Statistics, Content, and signed Review before creating anything. Clone never changes the original, and exact undo refuses after the new Actor is edited.</p>",
+      "restricted": true
+    },
+    {
+      "id": "progression-definitions",
+      "title": "Progression Definitions",
+      "content": "<p>A GM can create a top-level Progression Definition Item and choose a guided starting point for Character creation, Class advancement, or classless Actor advancement. AGE generates an unsaved rank timeline, while the profile selector and readiness checklist guide review. Use Advanced JSON only when necessary; it is validated by the same contract.</p>",
+      "restricted": true
+    },
+    {
+      "id": "character-builder",
+      "title": "Character Builder",
+      "content": "<p>Open Character Builder from AGE Toolbox and follow its three visible steps: Name and path, Choices and abilities, then Review and create. Technical source and formula details are available without obscuring normal choices. Committing creates the Character once; reversal remains separate and explicitly confirmed.</p>"
+    },
+    {
+      "id": "advancement-center",
+      "title": "Advancement Center",
+      "content": "<p>Open Advancement Center from the Character sheet, the prominent owned-Class action, or a compatible Progression Definition. Follow Choose the path, Make rank choices, and Review and apply. Technical formula details stay available in a collapsed section, and receipts support conflict-aware undo.</p>"
     },
     {
       "id": "diagnostics",
       "title": "Audit before migration",
-      "content": "<p>Operations &amp; Diagnostics can audit content and preview typed-data migration. Preview is read-only: it never changes world or compendium documents.</p>",
+      "content": "<p>Operations &amp; Diagnostics can audit content—including Progression Definition Items—and preview typed-data migration. Preview is read-only: it never changes world or compendium documents.</p>",
       "restricted": true
     },
     {
       "id": "finish",
       "title": "Safe rollout",
-      "content": "<p>Back up a world before upgrading. If an integration needs more time, select the clearly labelled legacy AppV1 fallback for that Actor or Item; no document data is converted merely by changing sheets.</p>"
+      "content": "<p>Back up a world before upgrading. Definitions from the world, compendia, imports, and optional content modules use one contract; no FAGE, DAGE, MAGE, or other content module is required by the core engine. If an integration needs more time, select the clearly labelled legacy AppV1 fallback for that Actor or Item; no document data is converted merely by changing sheets.</p>"
     }
   ]
 }

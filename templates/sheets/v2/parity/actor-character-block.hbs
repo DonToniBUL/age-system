@@ -1,6 +1,12 @@
 {{!-- Colorset defined in the Actor Sheet Class --}}
 <section class="actor-sheet {{cssClass}} {{colorScheme}} colorset-selection flexcol" autocomplete="off">
     <input name="name" class="item-card-title colorset-first-tier" type="text" value="{{actor.name}}" placeholder="{{localize "age-system.item.name"}}"/>
+    {{#if actor.isOwner}}
+    <button type="button" class="open-advancement-center advancement-sheet-control advancement-sheet-control--stat-block advancement-sheet-control--{{progressionSummary.state}} colorset-first-tier" title="{{progressionSummary.message}}" data-progression-state="{{progressionSummary.state}}">
+        <i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>
+        <span>{{#if progressionSummary.available}}{{progressionSummary.label}}{{else}}{{localize "age-system.advancement"}}{{/if}}</span>
+    </button>
+    {{/if}}
     
     <div class="block-section flexrow">
 

@@ -13,6 +13,12 @@ export const COLOR_SCHEMES = Object.freeze([
   "never-dead"
 ]);
 
+export const COLOR_SCHEME_USER_FLAG = "colorScheme";
+export const COLOR_SCHEME_WORLD_DEFAULT_SETTING = "worldColorScheme";
+export const COLOR_SCHEME_CLIENT_MIGRATION_SETTING = "colorSchemePreferenceMigrated";
+
+let synchronizingClientPreference = false;
+
 const COLOR_CLASS_PREFIX = "colorset-";
 const NON_SCHEME_COLOR_CLASSES = new Set([
   "colorset-selection",
@@ -23,6 +29,29 @@ const NON_SCHEME_COLOR_CLASSES = new Set([
 
 export function normalizeColorScheme(value) {
   return COLOR_SCHEMES.includes(value) ? value : "fantasy-blue";
+}
+
+export function isColorScheme(value) {
+  return COLOR_SCHEMES.includes(value);
+}
+
+/**
+ * Resolve one user's palette inside one world. Existing user flags win. The
+ * first world opened after this change adopts the old client preference once;
+ * later worlds begin from their GM's world default instead of inheriting the
+ * most recently visited world's palette.
+ */
+export function resolveColorSchemePreference({
+  userPreference,
+  legacyClientPreference,
+  worldDefault,
+  clientPreferenceMigrated = false
+} = {}) {
+  if (isColorScheme(userPreference)) return {value: userPreference, source: "user"};
+  if (!clientPreferenceMigrated && isColorScheme(legacyClientPreference)) {
+    return {value: legacyClientPreference, source: "legacy-client"};
+  }
+  return {value: normalizeColorScheme(worldDefault), source: "world-default"};
 }
 
 export function colorSchemeClass(value = ageSystem.colorScheme) {
@@ -63,4 +92,48 @@ export function applyColorScheme(value, {root = globalThis.document} = {}) {
   ]);
   for (const element of elements) applyColorSchemeToElement(element, normalized);
   return normalized;
+}
+
+/** Persist a settings-panel palette change on the current world's User. */
+export async function persistCurrentWorldColorScheme(value) {
+  const normalized = applyColorScheme(value);
+  if (synchronizingClientPreference || !globalThis.game?.user?.setFlag) return normalized;
+  await game.user.setFlag("age-system", COLOR_SCHEME_USER_FLAG, normalized);
+  return normalized;
+}
+
+/**
+ * Hydrate the client-facing settings control from the current world's User
+ * flag. This intentionally updates local storage so legacy callers of
+ * game.settings.get("age-system", "colorScheme") continue to receive the
+ * resolved concrete palette, while the world User flag remains authoritative.
+ */
+export async function initializeWorldColorSchemePreference() {
+  const userPreference = game.user?.getFlag?.("age-system", COLOR_SCHEME_USER_FLAG);
+  const legacyClientPreference = game.settings.get("age-system", "colorScheme");
+  const worldDefault = game.settings.get("age-system", COLOR_SCHEME_WORLD_DEFAULT_SETTING);
+  const clientPreferenceMigrated = game.settings.get("age-system", COLOR_SCHEME_CLIENT_MIGRATION_SETTING) === true;
+  const resolved = resolveColorSchemePreference({
+    userPreference,
+    legacyClientPreference,
+    worldDefault,
+    clientPreferenceMigrated
+  });
+
+  if (!isColorScheme(userPreference)) {
+    await game.user?.setFlag?.("age-system", COLOR_SCHEME_USER_FLAG, resolved.value);
+  }
+  if (!clientPreferenceMigrated) {
+    await game.settings.set("age-system", COLOR_SCHEME_CLIENT_MIGRATION_SETTING, true);
+  }
+  if (legacyClientPreference !== resolved.value) {
+    synchronizingClientPreference = true;
+    try {
+      await game.settings.set("age-system", "colorScheme", resolved.value);
+    } finally {
+      synchronizingClientPreference = false;
+    }
+  }
+  applyColorScheme(resolved.value);
+  return resolved;
 }

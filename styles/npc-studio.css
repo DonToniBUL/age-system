@@ -1,0 +1,812 @@
+.application.age-system.age-npc-studio .window-content {
+  container: age-npc-studio / inline-size;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-text-primary, #17252a);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--age-v5-accent, #0b5964) 5%, transparent), transparent 42%),
+    var(--color-bg, #f4f0e5);
+}
+
+.age-npc-studio__surface {
+  --npc-accent: var(--age-v5-accent, var(--color-border-highlight, #0b6670));
+  --npc-accent-strong: color-mix(in srgb, var(--npc-accent) 78%, black);
+  --npc-gold: var(--age-v5-gold, #d8a726);
+  --npc-bg: var(--color-bg, #f5f1e7);
+  --npc-panel: var(--color-bg-option, rgba(255, 255, 255, 0.72));
+  --npc-input: var(--color-bg-input, rgba(255, 255, 255, 0.88));
+  --npc-text: var(--color-text-primary, #17252a);
+  --npc-muted: var(--color-text-secondary, #53656a);
+  --npc-border: color-mix(in srgb, var(--npc-accent) 24%, var(--color-border-light-primary, #b8b7ae));
+  --npc-shadow: 0 2px 8px color-mix(in srgb, black 16%, transparent);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  block-size: 100%;
+  color: var(--npc-text);
+  background: var(--npc-bg);
+}
+
+.age-npc-studio__surface *,
+.age-npc-studio__surface *::before,
+.age-npc-studio__surface *::after {
+  box-sizing: border-box;
+}
+
+.age-npc-studio__surface button,
+.age-npc-studio__surface input,
+.age-npc-studio__surface select,
+.age-npc-studio__surface textarea {
+  color: var(--npc-text);
+  border: 1px solid var(--npc-border);
+  background: var(--npc-input);
+}
+
+.age-npc-studio__surface button {
+  min-block-size: 2.25rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+
+.age-npc-studio__surface button:hover:not(:disabled),
+.age-npc-studio__surface button:focus-visible {
+  border-color: var(--npc-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--npc-accent) 24%, transparent);
+}
+
+.age-npc-studio__surface button:disabled,
+.age-npc-studio__surface input:disabled,
+.age-npc-studio__surface select:disabled,
+.age-npc-studio__surface textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.age-npc-studio__surface input,
+.age-npc-studio__surface select {
+  block-size: 2.25rem;
+  padding-inline: 0.65rem;
+  border-radius: 0.3rem;
+}
+
+.age-npc-studio__surface textarea {
+  display: block;
+  inline-size: 100%;
+  min-block-size: 6.5rem;
+  padding: 0.65rem;
+  border-radius: 0.35rem;
+  resize: vertical;
+}
+
+.age-npc-studio__surface :focus-visible {
+  outline: 2px solid var(--npc-gold);
+  outline-offset: 2px;
+}
+
+.age-npc-studio__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  color: var(--color-light-1, #fff);
+  border-block-end: 3px solid var(--npc-gold);
+  background: linear-gradient(115deg, var(--npc-accent-strong), var(--npc-accent));
+}
+
+.age-npc-studio__header h1,
+.age-npc-studio__header p,
+.age-npc-studio__header small,
+.age-npc-studio__header strong {
+  margin: 0;
+  color: inherit;
+}
+
+.age-npc-studio__header h1 {
+  font-size: 1.65rem;
+  line-height: 1.1;
+}
+
+.age-npc-studio__header p {
+  margin-block-start: 0.25rem;
+  opacity: 0.84;
+}
+
+.age-npc-studio__kicker,
+.age-npc-studio__section-heading span,
+.age-npc-studio__profile > span {
+  display: block;
+  margin-block-end: 0.15rem;
+  color: var(--npc-gold);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.age-npc-studio__profile {
+  display: grid;
+  align-content: center;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid color-mix(in srgb, white 38%, transparent);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, black 15%, transparent);
+}
+
+.age-npc-studio__profile small {
+  opacity: 0.72;
+}
+
+.age-npc-studio__steps {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  border-block-end: 1px solid var(--npc-border);
+  background: var(--npc-border);
+}
+
+.age-npc-studio__steps button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.3rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--npc-panel);
+}
+
+.age-npc-studio__steps button b {
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--npc-muted);
+  background: color-mix(in srgb, var(--npc-muted) 12%, transparent);
+}
+
+.age-npc-studio__steps button.is-current {
+  color: var(--color-light-1, #fff);
+  background: var(--npc-accent);
+}
+
+.age-npc-studio__steps button.is-current b,
+.age-npc-studio__steps button.is-complete b {
+  color: var(--npc-accent-strong);
+  background: var(--npc-gold);
+}
+
+.age-npc-studio__scroll {
+  min-block-size: 0;
+  padding: 1rem;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.age-npc-studio__stage {
+  display: grid;
+  gap: 0.85rem;
+  max-inline-size: 78rem;
+  margin-inline: auto;
+}
+
+.age-npc-studio__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block-end: 0.65rem;
+  border-block-end: 1px solid var(--npc-border);
+}
+
+.age-npc-studio__section-heading h2,
+.age-npc-studio__section-heading p {
+  margin: 0;
+}
+
+.age-npc-studio__section-heading p {
+  max-inline-size: 34rem;
+  color: var(--npc-muted);
+  text-align: end;
+}
+
+.age-npc-studio__source-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.age-npc-studio__source-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--npc-border);
+  border-radius: 0.55rem;
+  background: var(--npc-panel);
+  box-shadow: var(--npc-shadow);
+  cursor: pointer;
+}
+
+.age-npc-studio__source-card:focus-within,
+.age-npc-studio__source-card.is-selected {
+  border-color: var(--npc-gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--npc-gold) 24%, transparent);
+}
+
+.age-npc-studio__source-card input {
+  position: absolute;
+  inset-inline-start: 0.45rem;
+  inset-block-start: 0.45rem;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.age-npc-studio__source-card > span:last-child {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.age-npc-studio__source-card small {
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__source-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.65rem;
+  block-size: 2.65rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--npc-accent);
+  background: color-mix(in srgb, var(--npc-accent) 12%, transparent);
+  font-size: 1.15rem;
+}
+
+.age-npc-studio__source-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.85rem;
+}
+
+.age-npc-studio__panel,
+.age-npc-studio__selected-content,
+.age-npc-studio__preview,
+.age-npc-studio__signature,
+.age-npc-studio__actor-result,
+.age-npc-studio__undo {
+  padding: 0.85rem;
+  border: 1px solid var(--npc-border);
+  border-radius: 0.55rem;
+  color: var(--npc-text);
+  background: var(--npc-panel);
+  box-shadow: var(--npc-shadow);
+}
+
+.age-npc-studio__panel h3,
+.age-npc-studio__selected-content > h3,
+.age-npc-studio__preview > h3 {
+  margin: 0 0 0.6rem;
+}
+
+.age-npc-studio__panel label,
+.age-npc-studio__field-grid label,
+.age-npc-studio__stat-grid label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.age-npc-studio__stat-grid .age-npc-studio__primary-ability {
+  display: flex;
+  justify-content: end;
+  gap: 0.35rem;
+  color: var(--npc-muted);
+  background: transparent;
+}
+
+.age-npc-studio__primary-ability input {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.age-npc-studio__field-meta,
+.age-npc-studio__panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-start: 0.35rem;
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__panel-heading h3 {
+  margin: 0;
+}
+
+.age-npc-studio__help,
+.age-npc-studio__empty {
+  margin-block: 0.5rem 0;
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__empty {
+  padding: 1rem;
+  border: 1px dashed var(--npc-border);
+  border-radius: 0.4rem;
+  text-align: center;
+}
+
+.age-npc-studio__notice,
+.age-npc-studio__commit-note {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--npc-accent) 38%, transparent);
+  border-radius: 0.45rem;
+  color: var(--npc-text);
+  background: color-mix(in srgb, var(--npc-accent) 10%, var(--npc-panel));
+}
+
+.age-npc-studio__notice p,
+.age-npc-studio__commit-note p {
+  margin: 0.15rem 0 0;
+}
+
+.age-npc-studio__notice.is-error,
+.age-npc-studio__issue-list.is-error {
+  border-color: color-mix(in srgb, var(--color-level-error, #a32720) 65%, transparent);
+  background: color-mix(in srgb, var(--color-level-error, #a32720) 12%, var(--npc-panel));
+}
+
+.age-npc-studio__field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.age-npc-studio__field-grid .is-wide {
+  grid-column: 1 / -1;
+}
+
+.age-npc-studio__check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.age-npc-studio__check input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: 0 0 auto;
+}
+
+.age-npc-studio__stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: 0.6rem;
+}
+
+.age-npc-studio__stat-grid label {
+  grid-template-columns: minmax(0, 1fr) 4rem;
+  align-items: center;
+  padding: 0.45rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--npc-accent) 6%, transparent);
+}
+
+.age-npc-studio__stat-grid input {
+  inline-size: 100%;
+  text-align: center;
+}
+
+.age-npc-studio__search-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(0, 2fr);
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.age-npc-studio__search-row label {
+  display: grid;
+}
+
+.age-npc-studio__search-row label small {
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__search-row > span {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.age-npc-studio__search-row input {
+  flex: 1 1 auto;
+}
+
+.age-npc-studio__drop-zone {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-block-start: 0.7rem;
+  padding: 0.7rem;
+  color: var(--npc-muted);
+  background: color-mix(in srgb, var(--npc-accent) 5%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--npc-accent) 55%, var(--npc-line));
+  border-radius: 0.45rem;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.age-npc-studio__drop-zone > i {
+  color: var(--npc-accent);
+  font-size: 1.25rem;
+}
+
+.age-npc-studio__drop-zone strong,
+.age-npc-studio__drop-zone small {
+  display: block;
+}
+
+.age-npc-studio__drop-zone.is-dragover {
+  color: var(--npc-ink);
+  background: color-mix(in srgb, var(--npc-gold) 18%, var(--npc-input));
+  border-color: var(--npc-gold);
+}
+
+.age-npc-studio__drop-zone[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.age-npc-studio__result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 0.55rem;
+  margin-block-start: 0.75rem;
+}
+
+.age-npc-studio__result-grid button {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem;
+  text-align: start;
+}
+
+.age-npc-studio__result-grid button.is-selected {
+  border-color: var(--npc-gold);
+  background: color-mix(in srgb, var(--npc-gold) 15%, var(--npc-input));
+}
+
+.age-npc-studio__result-grid img,
+.age-npc-studio__actor-result img {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border: 0;
+  border-radius: 0.35rem;
+  object-fit: cover;
+}
+
+.age-npc-studio__result-grid span,
+.age-npc-studio__result-grid small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.age-npc-studio__selected,
+.age-npc-studio__copy-notice {
+  margin-block: 0.65rem 0;
+}
+
+.age-npc-studio__copy-notice {
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.age-npc-studio__item-card {
+  margin-block-start: 0.65rem;
+  padding: 0.7rem;
+  border-inline-start: 3px solid var(--npc-accent);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--npc-accent) 6%, transparent);
+}
+
+.age-npc-studio__item-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-block-end: 0.55rem;
+}
+
+.age-npc-studio__item-card > header div,
+.age-npc-studio__item-card > header small {
+  display: block;
+}
+
+.age-npc-studio__item-card > header small {
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__signature {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-inline-start: 4px solid var(--npc-gold);
+}
+
+.age-npc-studio__signature.is-stale {
+  border-inline-start-color: var(--color-level-error, #a32720);
+}
+
+.age-npc-studio__signature > i {
+  color: var(--npc-accent);
+  font-size: 1.5rem;
+}
+
+.age-npc-studio__signature div span,
+.age-npc-studio__signature code {
+  display: block;
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__signature code {
+  overflow-wrap: anywhere;
+}
+
+.age-npc-studio__issue-list {
+  padding: 0.75rem;
+  border: 1px solid var(--npc-border);
+  border-radius: 0.45rem;
+}
+
+.age-npc-studio__issue-list.is-warning {
+  border-color: color-mix(in srgb, var(--npc-gold) 70%, transparent);
+  background: color-mix(in srgb, var(--npc-gold) 12%, var(--npc-panel));
+}
+
+.age-npc-studio__issue-list h3,
+.age-npc-studio__issue-list ul {
+  margin-block: 0 0.4rem;
+}
+
+.age-npc-studio__change-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.age-npc-studio__review-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 0.75rem;
+}
+
+.age-npc-studio__review-section {
+  min-inline-size: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--npc-border);
+  border-radius: 0.4rem;
+}
+
+.age-npc-studio__review-section h4 {
+  margin: 0 0 0.45rem;
+}
+
+.age-npc-studio__change-list article {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  padding: 0.55rem;
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--npc-accent) 6%, transparent);
+}
+
+.age-npc-studio__review-section .age-npc-studio__change-list article {
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr);
+}
+
+.age-npc-studio__change-list span,
+.age-npc-studio__change-list small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.age-npc-studio__change-list small {
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__result {
+  place-items: center;
+  align-content: center;
+  min-block-size: 100%;
+  text-align: center;
+}
+
+.age-npc-studio__result-mark {
+  display: grid;
+  place-items: center;
+  inline-size: 4rem;
+  block-size: 4rem;
+  border-radius: 50%;
+  color: var(--color-light-1, #fff);
+  background: var(--npc-accent);
+  font-size: 2rem;
+}
+
+.age-npc-studio__result h2,
+.age-npc-studio__result p {
+  margin: 0.25rem;
+}
+
+.age-npc-studio__actor-result,
+.age-npc-studio__undo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  inline-size: min(100%, 40rem);
+  text-align: start;
+}
+
+.age-npc-studio__actor-result div,
+.age-npc-studio__undo div {
+  flex: 1 1 auto;
+}
+
+.age-npc-studio__actor-result code {
+  display: block;
+  color: var(--npc-muted);
+  overflow-wrap: anywhere;
+}
+
+.age-npc-studio__surface .age-npc-studio__primary {
+  color: var(--color-light-1, #fff);
+  border-color: var(--npc-accent-strong);
+  background: var(--npc-accent);
+}
+
+.age-npc-studio__surface .is-danger {
+  color: var(--color-light-1, #fff);
+  border-color: var(--color-level-error, #8f201a);
+  background: var(--color-level-error, #8f201a);
+}
+
+.age-npc-studio__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-block-start: 1px solid var(--npc-border);
+  background: color-mix(in srgb, var(--npc-bg) 88%, var(--npc-accent));
+  box-shadow: 0 -2px 8px color-mix(in srgb, black 10%, transparent);
+}
+
+.age-npc-studio__live,
+.age-npc-studio__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.age-npc-studio__live {
+  min-inline-size: 0;
+  color: var(--npc-muted);
+}
+
+.age-npc-studio__live span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.age-npc-studio__surface .sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@container age-npc-studio (max-width: 760px) {
+  .age-npc-studio__header,
+  .age-npc-studio__section-heading,
+  .age-npc-studio__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .age-npc-studio__section-heading p {
+    max-inline-size: none;
+    text-align: start;
+  }
+
+  .age-npc-studio__steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .age-npc-studio__source-workspace,
+  .age-npc-studio__field-grid,
+  .age-npc-studio__search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .age-npc-studio__field-grid .is-wide {
+    grid-column: auto;
+  }
+
+  .age-npc-studio__signature {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .age-npc-studio__signature code,
+  .age-npc-studio__signature button {
+    grid-column: 1 / -1;
+  }
+
+  .age-npc-studio__change-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .age-npc-studio__review-section .age-npc-studio__change-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .age-npc-studio__footer-actions {
+    justify-content: end;
+  }
+}
+
+@container age-npc-studio (max-width: 480px) {
+  .age-npc-studio__header,
+  .age-npc-studio__scroll {
+    padding: 0.7rem;
+  }
+
+  .age-npc-studio__steps button span {
+    font-size: 0.72rem;
+  }
+
+  .age-npc-studio__source-choices {
+    grid-template-columns: 1fr;
+  }
+
+  .age-npc-studio__search-row > span,
+  .age-npc-studio__actor-result,
+  .age-npc-studio__undo,
+  .age-npc-studio__footer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .age-npc-studio__result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .age-npc-studio__surface *,
+  .age-npc-studio__surface *::before,
+  .age-npc-studio__surface *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

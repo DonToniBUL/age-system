@@ -2,7 +2,8 @@ export const AGE_ACTOR_SOURCE_FIELDS = Object.freeze({
     char: ["advancement", "level", "xp", "threat", "dmgMod", "testMod", "attackMod", "statBlockView", "features", "traits", "goals", "age", "height", "weight", "language", "background", "secretNote", "gmNotes", "socialClass", "ancestry", "profession", "drive", "speed", "wgroups", "defense", "armor", "injury", "resources", "gp", "sp", "cp", "currency", "fear", "horror", "aim", "defend", "guardUp", "allOutAttack", "initiativeMod", "abilities", "gameMode", "health", "powerPoints", "fatigue", "conviction", "advTestThreshold", "conditions", "classBonuses", "classProgression"],
     vehicle: ["handling", "capacity", "velocity", "ramDmg", "hull", "cost", "description", "gmNotes", "coverRating", "armorRating", "partHealth", "conductor", "passengers", "customSideswipeDmg", "customCollisionDmg"],
     spaceship: ["size", "hull", "drive", "description", "gmNotes", "passengers", "crew", "weapons", "systems", "losses", "takenOut"],
-    organization: ["description", "abilities", "combat", "scope", "notes", "gmNotes"]
+    organization: ["description", "abilities", "combat", "scope", "notes", "gmNotes"],
+    force: ["description", "profile", "commander", "troops", "primaryTroop", "specialists", "battle", "notes", "gmNotes"]
 });
 
 export const AGE_ITEM_SOURCE_FIELDS = Object.freeze({
@@ -16,14 +17,16 @@ export const AGE_ITEM_SOURCE_FIELDS = Object.freeze({
     honorifics: ["shortDesc", "longDesc", "favorite", "reference"],
     membership: ["shortDesc", "longDesc", "favorite", "reference", "rank"],
     shipfeatures: ["shortDesc", "longDesc", "favorite", "reference", "weight", "cost", "quantity", "equiped", "dmgType", "dmgSource", "nrDice", "diceType", "extraValue", "dmgAbl", "damageInjury", "damageFormula", "type", "damage", "sensorMod", "maneuverSizeStep", "juiceMod", "hullPlating", "hullMod", "useFocus", "useAbl", "quality", "isActive"],
-    class: ["description", "modifiers", "itemMods", "level", "primaryAbl", "wgroups", "advancements", "advancementVersion", "progression"]
+    class: ["description", "modifiers", "itemMods", "level", "primaryAbl", "wgroups", "advancements", "advancementVersion", "progression"],
+    progression: ["definition", "digest", "enabled", "provenance"]
 });
 
 export const AGE_ACTOR_DERIVED_FIELDS = Object.freeze({
     char: ["useResources", "useIncome", "useCurrency", "useCoins", "useConviction", "useFatigue", "usePowerPoints", "initiative", "ownedMods", "itemMods"],
     vehicle: ["useResources", "useIncome", "useCurrency", "useCoins", "defenseTotal", "pob"],
     spaceship: ["useResources", "useIncome", "useCurrency", "useCoins", "pob", "sizeNumeric", "crewPenalty", "itemMods"],
-    organization: ["useResources", "useIncome", "useCurrency", "useCoins"]
+    organization: ["useResources", "useIncome", "useCurrency", "useCoins"],
+    force: ["useResources", "useIncome", "useCurrency", "useCoins"]
 });
 
 const ITEM_COMMON_DERIVED_FIELDS = ["colorScheme", "nameLowerCase", "modifiersByType"];
@@ -43,5 +46,6 @@ export const AGE_ITEM_DERIVED_FIELDS = Object.freeze({
     honorifics: ITEM_COMMON_DERIVED_FIELDS,
     membership: ITEM_COMMON_DERIVED_FIELDS,
     shipfeatures: ITEM_COMMON_DERIVED_FIELDS,
-    class: [...ITEM_COMMON_DERIVED_FIELDS, "advArrIndex", "advPerLvl", "definitionErrors"]
+    class: [...ITEM_COMMON_DERIVED_FIELDS, "advArrIndex", "advPerLvl", "definitionErrors"],
+    progression: []
 });

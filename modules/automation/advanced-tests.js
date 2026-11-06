@@ -1,9 +1,16 @@
 import {showConfirmDialog, showFormDialog} from "../dialogs.js";
+import {applyColorSchemeToElement} from "../color-scheme.js";
 import {automationFeatureEnabled} from "./mode.js";
 
 const SYSTEM_ID = "age-system";
 const SETTING_KEY = "advancedTestState";
 const TRACKER_TYPES = ["advanced", "opposed", "breaching", "chase", "investigation", "social", "exploration", "custom"];
+// Foundry v14 always takes the native AppV2 branch. The final fallback keeps
+// service-only test fixtures from failing during module evaluation.
+const ApplicationV2 = globalThis.foundry?.applications?.api?.ApplicationV2
+  ?? globalThis.foundry?.appv1?.api?.FormApplication
+  ?? class {};
+const HandlebarsApplicationMixin = globalThis.foundry?.applications?.api?.HandlebarsApplicationMixin ?? (Base => Base);
 let settingQueue = Promise.resolve();
 let activeTrackerWindow = null;
 
@@ -62,11 +69,39 @@ function trackerLabel(tracker) {
   });
 }
 
+function trackerWindowCanRefresh(application) {
+  if (!application) return false;
+  const states = application.constructor?.RENDER_STATES ?? {};
+  const state = application.state ?? application._state;
+  const terminalStates = [states.CLOSING, states.CLOSED, states.ERROR].filter(value => value !== undefined);
+  if (terminalStates.includes(state)) return false;
+  const liveStates = [states.RENDERING, states.RENDERED].filter(value => value !== undefined);
+  if (liveStates.includes(state)) return true;
+  return application.rendered === true || application.element?.isConnected === true;
+}
+
+function reportTrackerRefreshFailure(application, error) {
+  const states = application?.constructor?.RENDER_STATES ?? {};
+  const closingStates = [states.CLOSING, states.CLOSED].filter(value => value !== undefined);
+  const state = application?.state ?? application?._state;
+  if (activeTrackerWindow !== application || closingStates.includes(state)) return;
+  console.error("AGE System | Advanced Test tracker refresh failed.", error);
+}
+
 function refreshAdvancedTestInterfaces() {
   // Tracker activation changes whether controls belong on already-rendered
   // chat cards. Progress added from chat must also refresh the open tracker.
   globalThis.ui?.chat?.render?.(true);
-  if (activeTrackerWindow?.rendered) activeTrackerWindow.render(false);
+  const application = activeTrackerWindow;
+  if (!trackerWindowCanRefresh(application)) return;
+  try {
+    const renderResult = application.render({force: true});
+    if (renderResult?.then instanceof Function) {
+      void renderResult.catch(error => reportTrackerRefreshFailure(application, error));
+    }
+  } catch (error) {
+    reportTrackerRefreshFailure(application, error);
+  }
 }
 
 export class AdvancedTestService {
@@ -219,7 +254,12 @@ export class AdvancedTestService {
 
   static open() {
     if (!this.enabled) return false;
-    return new AdvancedTestTracker().render(true);
+    const application = new AdvancedTestTracker();
+    const renderResult = application.render({force: true});
+    if (renderResult?.then instanceof Function) {
+      void renderResult.catch(error => console.error("AGE System | Advanced Test tracker failed to open.", error));
+    }
+    return application;
   }
 
   static decorate(message, html) {
@@ -228,41 +268,65 @@ export class AdvancedTestService {
     if (!root || root.querySelector(".age-advanced-test-add")) return;
     const section = document.createElement("section");
     section.className = "chat-buttons age-advanced-test-controls";
-    section.style.cssText = "margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(0,0,0,.25)";
     section.innerHTML = `<button type="button" class="age-button age-advanced-test-add"><i class="fa-solid fa-bars-progress"></i> ${escape(game.i18n.format("age-system.AUTOMATION.addProgressAmount", {amount: this.suggestedProgress(message)}))}</button>`;
     root.append(section);
   }
 }
 
-export class AdvancedTestTracker extends foundry.appv1.api.FormApplication {
-  constructor(...args) {
-    super(...args);
+export class AdvancedTestTracker extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "age-advanced-test-tracker",
+    classes: ["age-system", "age-v5-parity-sheet", "age-roll-workflow", "age-advanced-test-tracker-v2"],
+    position: {width: 760, height: 640},
+    window: {
+      title: "age-system.AUTOMATION.advancedTests",
+      icon: "fa-solid fa-bars-progress",
+      resizable: true,
+      minimizable: true
+    },
+    actions: {
+      create: AdvancedTestTracker._create,
+      adjust: AdvancedTestTracker._adjust,
+      undo: AdvancedTestTracker._undo,
+      closeTracker: AdvancedTestTracker._closeTracker,
+      remove: AdvancedTestTracker._remove
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/age-system/templates/automation/advanced-test-tracker.hbs",
+      scrollable: [".age-roll-workflow__scroll"]
+    }
+  };
+
+  constructor(options = {}) {
+    super(options);
     activeTrackerWindow = this;
   }
 
-  async close(options = {}) {
-    if (activeTrackerWindow === this) activeTrackerWindow = null;
-    return super.close(options);
+  /** Preserve the boolean render signature used by the public automation API. */
+  render(options = {}) {
+    if (typeof options === "boolean") options = {force: options};
+    return super.render(options ?? {});
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "age-advanced-test-tracker",
-      template: "systems/age-system/templates/automation/advanced-test-tracker.hbs",
-      classes: ["age-system", "dialog"],
-      title: game.i18n.localize("age-system.AUTOMATION.advancedTests"),
-      width: 760,
-      height: 640,
-      resizable: true,
-      minimizable: true,
-      closeOnSubmit: false
-    });
-  }
-
+  /** Kept for integrations which inspected the former FormApplication data. */
   getData() {
+    const base = typeof super.getData === "function" ? super.getData() : {};
+    return {...base, ...this._buildContext()};
+  }
+
+  async _prepareContext(options) {
+    const context = typeof super._prepareContext === "function"
+      ? await super._prepareContext(options)
+      : {};
+    return Object.assign(context, this._buildContext());
+  }
+
+  _buildContext() {
     const state = AdvancedTestService.state();
     return {
-      ...super.getData(),
       enabled: AdvancedTestService.enabled,
       isGM: game.user?.isGM,
       trackers: state.trackers.map(tracker => ({
@@ -271,6 +335,24 @@ export class AdvancedTestTracker extends foundry.appv1.api.FormApplication {
         partyPercent: Math.min(100, Math.round(100 * tracker.progress / tracker.threshold)),
         oppositionPercent: Math.min(100, Math.round(100 * tracker.oppositionProgress / tracker.oppositionThreshold)),
         hasHistory: tracker.history.length > 0,
+        historyCount: tracker.history.length,
+        historyEntries: tracker.history.slice(-10).reverse().map(entry => {
+          const before = finite(entry?.before, 0);
+          const after = finite(entry?.after, before);
+          const delta = Math.trunc(finite(entry?.delta, after - before));
+          const timestamp = finite(entry?.timestamp, 0);
+          return {
+            id: entry?.id ?? "",
+            sideLabel: game.i18n.localize(entry?.field === "oppositionProgress"
+              ? "age-system.AUTOMATION.opposition"
+              : "age-system.AUTOMATION.party"),
+            before,
+            after,
+            deltaLabel: delta >= 0 ? `+${delta}` : String(delta),
+            sourceLabel: String(entry?.source?.label ?? ""),
+            timestampLabel: timestamp > 0 ? new Date(timestamp).toLocaleString() : ""
+          };
+        }),
         isActive: tracker.status === "active",
         opposed: tracker.type === "opposed" || tracker.oppositionProgress > 0
       })),
@@ -278,39 +360,60 @@ export class AdvancedTestTracker extends foundry.appv1.api.FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    html.find(".age-advanced-create").on("submit", async event => {
-      event.preventDefault();
-      const data = new foundry.applications.ux.FormDataExtended(event.currentTarget).object;
-      await AdvancedTestService.create(data);
-      event.currentTarget.reset();
-      this.render(false);
-    });
-    html.find(".age-advanced-adjust").on("click", async event => {
-      const row = event.currentTarget.closest("[data-tracker-id]");
-      const amount = row?.querySelector("input[name='amount']")?.value ?? 1;
-      await AdvancedTestService.advance(row?.dataset?.trackerId, {amount: event.currentTarget.dataset.direction === "minus" ? -finite(amount, 1) : finite(amount, 1), side: event.currentTarget.dataset.side});
-      this.render(false);
-    });
-    html.find(".age-advanced-undo").on("click", async event => {
-      await AdvancedTestService.undo(event.currentTarget.closest("[data-tracker-id]")?.dataset?.trackerId);
-      this.render(false);
-    });
-    html.find(".age-advanced-close").on("click", async event => {
-      await AdvancedTestService.close(event.currentTarget.closest("[data-tracker-id]")?.dataset?.trackerId);
-      this.render(false);
-    });
-    html.find(".age-advanced-remove").on("click", async event => {
-      const id = event.currentTarget.closest("[data-tracker-id]")?.dataset?.trackerId;
-      const confirmed = await showConfirmDialog({title: game.i18n.localize("age-system.AUTOMATION.removeAdvancedTest"), content: `<p>${escape(game.i18n.localize("age-system.AUTOMATION.removeAdvancedTestHint"))}</p>`});
-      if (!confirmed) return;
-      await AdvancedTestService.remove(id);
-      this.render(false);
+  async _onRender(context, options) {
+    if (typeof super._onRender === "function") await super._onRender(context, options);
+    applyColorSchemeToElement(this.element);
+    applyColorSchemeToElement(this.element?.querySelector?.(".colorset-selection"));
+  }
+
+  async _onClose(options) {
+    if (activeTrackerWindow === this) activeTrackerWindow = null;
+    if (typeof super._onClose === "function") await super._onClose(options);
+  }
+
+  static async _create(event, target) {
+    event.preventDefault();
+    const form = target?.closest?.(".age-advanced-create");
+    if (!form || !game.user?.isGM) return false;
+    if (form.checkValidity?.() === false) {
+      form.reportValidity?.();
+      return false;
+    }
+    const data = new foundry.applications.ux.FormDataExtended(form).object;
+    return AdvancedTestService.create(data);
+  }
+
+  static async _adjust(event, target) {
+    event.preventDefault();
+    const row = target?.closest?.("[data-tracker-id]");
+    const amount = row?.querySelector?.("[data-advanced-test-amount]")?.value ?? 1;
+    const direction = target?.dataset?.direction === "minus" ? -1 : 1;
+    return AdvancedTestService.advance(row?.dataset?.trackerId, {
+      amount: direction * finite(amount, 1),
+      side: target?.dataset?.side
     });
   }
 
-  _updateObject() {}
+  static async _undo(event, target) {
+    event.preventDefault();
+    return AdvancedTestService.undo(target?.closest?.("[data-tracker-id]")?.dataset?.trackerId);
+  }
+
+  static async _closeTracker(event, target) {
+    event.preventDefault();
+    return AdvancedTestService.close(target?.closest?.("[data-tracker-id]")?.dataset?.trackerId);
+  }
+
+  static async _remove(event, target) {
+    event.preventDefault();
+    const id = target?.closest?.("[data-tracker-id]")?.dataset?.trackerId;
+    const confirmed = await showConfirmDialog({
+      title: game.i18n.localize("age-system.AUTOMATION.removeAdvancedTest"),
+      content: `<p>${escape(game.i18n.localize("age-system.AUTOMATION.removeAdvancedTestHint"))}</p>`
+    });
+    if (!confirmed) return false;
+    return AdvancedTestService.remove(id);
+  }
 }
 
 export default AdvancedTestService;

@@ -4,10 +4,16 @@ import {ageCompendiumIndex} from "./compendium-index.js";
 import {ConditionLifecycleService} from "./condition-lifecycle.js";
 import {automationFeatureEnabled} from "./mode.js";
 import {showFormDialog} from "../dialogs.js";
+import {applyColorSchemeToElement} from "../color-scheme.js";
 
 const SYSTEM_ID = "age-system";
 const locks = new Set();
 const metadataCache = new Map();
+const ApplicationV2 = globalThis.foundry?.applications?.api?.ApplicationV2
+  ?? globalThis.foundry?.appv1?.api?.FormApplication
+  ?? class {};
+const HandlebarsApplicationMixin = globalThis.foundry?.applications?.api?.HandlebarsApplicationMixin
+  ?? (Base => Base);
 
 function clone(value) {
   return foundry.utils.deepClone(value);
@@ -65,7 +71,6 @@ export function stuntExecutionFor(name) {
   if (damageDice.has(key)) return {kind: "damage", damageDice: damageDice.get(key)};
   if (key === "knock prone") return {kind: "condition", statusId: "prone", requiresHitTarget: true};
   const defense = new Map([
-    ["stay aware", 1],
     ["duck and weave", 1],
     ["defensive stance", 2]
   ]);
@@ -129,13 +134,76 @@ async function resolveActorForStunt(uuid) {
   return document?.actor ?? document ?? null;
 }
 
+function effectSource(effect) {
+  if (!effect) return null;
+  const source = clone(effect._source ?? effect.toObject?.(true));
+  if (!source || typeof source !== "object") throw new Error("The Stunt effect source is unavailable.");
+  source._id ??= effect.id;
+  return source;
+}
+
+function stableEffectSource(source) {
+  const stable = clone(source);
+  if (stable) delete stable._stats;
+  return stable;
+}
+
+function equal(left, right) {
+  return foundry.utils.equals(left, right);
+}
+
+async function captureStuntExecution(execution, {verify = false} = {}) {
+  if (execution?.kind === "damage" && execution.status === "applied") {
+    throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntDamageAlreadyApplied"));
+  }
+  if ((!execution?.created && !execution?.reactivated) || !execution.effectUuid) return null;
+  const actor = await resolveActorForStunt(execution.actorUuid);
+  const effect = values(actor?.effects).find(entry => entry.uuid === execution.effectUuid);
+  if (!effect) throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
+  const source = effectSource(effect);
+  if (verify && (!execution.effectSnapshot
+    || !equal(stableEffectSource(source), stableEffectSource(execution.effectSnapshot)))) {
+    throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
+  }
+  return {actor, effect, source};
+}
+
+async function restoreStuntExecution(snapshot) {
+  if (!snapshot) return;
+  const {actor, source} = snapshot;
+  const existing = values(actor.effects).find(effect => effect.id === source._id);
+  if (existing) {
+    const current = effectSource(existing);
+    if (equal(stableEffectSource(current), stableEffectSource(source))) return;
+    // Reversing an existing disabled condition changes only this field.
+    if (!equal(stableEffectSource({...current, disabled: source.disabled}), stableEffectSource(source))) {
+      throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
+    }
+    await existing.update({disabled: source.disabled}, {ageAutomation: true});
+  } else {
+    await actor.createEmbeddedDocuments("ActiveEffect", [clone(source)], {keepId: true, ageAutomation: true});
+  }
+  const restored = values(actor.effects).find(effect => effect.id === source._id);
+  if (!restored || !equal(stableEffectSource(effectSource(restored)), stableEffectSource(source))) {
+    throw new Error("The Stunt effect could not be restored exactly.");
+  }
+}
+
+async function recoverStuntLedger(transaction, message, before, attempted) {
+  const current = ledger(message);
+  if (!equal(current, before) && !equal(current, attempted)) {
+    throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
+  }
+  await transaction.rollback({removeHistory: true, strict: true});
+}
+
 async function reverseStuntExecution(execution) {
   if ((!execution?.created && !execution?.reactivated) || !execution.effectUuid || !execution.actorUuid) return false;
   const actor = await resolveActorForStunt(execution.actorUuid);
-  if (!actor) return false;
+  if (!actor) throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
   if (execution.created) return ConditionLifecycleService.removeEffect(actor, execution.effectUuid);
   const effect = values(actor.effects).find(entry => entry.uuid === execution.effectUuid || entry.id === execution.effectUuid);
-  if (!effect?.update) return false;
+  if (!effect?.update) throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUndoConflict"));
   await effect.update({disabled: true}, {ageAutomation: true});
   return true;
 }
@@ -239,6 +307,7 @@ export class StuntAssistantService {
       const actor = await resolveActorForStunt(target.tokenUuid ?? target.actorUuid);
       if (!actor) throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntTargetUnavailable"));
       const existing = ConditionLifecycleService.statusEffect(actor, descriptor.statusId);
+      const wasDisabled = existing?.disabled === true;
       const effect = await ConditionLifecycleService.applyStatus(actor, descriptor.statusId, {
         sourceUuid: candidate.uuid,
         label: candidate.name
@@ -249,7 +318,8 @@ export class StuntAssistantService {
         actorUuid: actor.uuid,
         effectUuid: effect?.uuid ?? null,
         created: !existing,
-        reactivated: existing?.disabled === true,
+        reactivated: wasDisabled,
+        effectSnapshot: effectSource(effect),
         statusId: descriptor.statusId
       };
     }
@@ -269,6 +339,7 @@ export class StuntAssistantService {
         actorUuid: actor.uuid,
         effectUuid: effect?.uuid ?? null,
         created: true,
+        effectSnapshot: effectSource(effect),
         timing: descriptor.timing ?? "startOfTurn"
       };
     }
@@ -340,8 +411,10 @@ export class StuntAssistantService {
         label: game.i18n.format("age-system.AUTOMATION.stuntSpent", {stunt: candidate.name, cost: finalCost}),
         type: ageAction?.type ?? "stunt-points",
         sourceUuid: stuntUuid,
-        metadata: {messageId: message.id ?? message._id, cost: finalCost, actionSchemaVersion: ageAction?.schemaVersion ?? null}
+        metadata: {messageId: message.id ?? message._id, cost: finalCost,
+          undoPolicy: "stunt-assistant", actionSchemaVersion: ageAction?.schemaVersion ?? null}
       }).track(message, `flags.${SYSTEM_ID}.automation.stunts`);
+      const before = clone(state);
       const appliedExecution = await this._execute(message, state, candidate);
       if (appliedExecution === null) return false;
       state.spends.push({
@@ -359,8 +432,10 @@ export class StuntAssistantService {
         await message.update({[`flags.${SYSTEM_ID}.automation.stunts`]: state});
         await transaction.commit();
       } catch (error) {
-        await reverseStuntExecution(appliedExecution);
-        await transaction.rollback({removeHistory: true});
+        const failures = [error];
+        try { await reverseStuntExecution(appliedExecution); } catch (recoveryError) { failures.push(recoveryError); }
+        try { await recoverStuntLedger(transaction, message, before, state); } catch (recoveryError) { failures.push(recoveryError); }
+        if (failures.length > 1) throw new AggregateError(failures, "Stunt spend recovery was incomplete.");
         throw error;
       }
       return clone(state);
@@ -394,17 +469,23 @@ export class StuntAssistantService {
         id: ageAction?.id ?? null,
         label: game.i18n.localize("age-system.AUTOMATION.undoStuntSpend"),
         type: ageAction?.type ?? "stunt-points",
-        metadata: {messageId: message.id ?? message._id, actionSchemaVersion: ageAction?.schemaVersion ?? null}
+        metadata: {messageId: message.id ?? message._id,
+          undoPolicy: "stunt-assistant", actionSchemaVersion: ageAction?.schemaVersion ?? null}
       }).track(message, `flags.${SYSTEM_ID}.automation.stunts`);
+      const before = clone(state);
       const removed = state.spends.pop();
-      await reverseStuntExecution(removed?.execution);
+      const effectSnapshot = await captureStuntExecution(removed?.execution, {verify: true});
       state.remaining = Math.max(0, state.total - state.spends.reduce((sum, entry) => sum + finiteCost(entry.cost, 0), 0));
       state.revision = finiteCost(state.revision, 0) + 1;
       try {
+        await reverseStuntExecution(removed?.execution);
         await message.update({[`flags.${SYSTEM_ID}.automation.stunts`]: state});
         await transaction.commit();
       } catch (error) {
-        await transaction.rollback({removeHistory: true});
+        const failures = [error];
+        try { await recoverStuntLedger(transaction, message, before, state); } catch (recoveryError) { failures.push(recoveryError); }
+        try { await restoreStuntExecution(effectSnapshot); } catch (recoveryError) { failures.push(recoveryError); }
+        if (failures.length > 1) throw new AggregateError(failures, "Stunt undo recovery was incomplete.");
         throw error;
       }
       return clone(state);
@@ -416,7 +497,16 @@ export class StuntAssistantService {
   static open(messageOrId) {
     const message = messageDocument(messageOrId);
     if (!message || !ledger(message) || !this.enabled) return false;
-    return new StuntAssistant(message.id ?? message._id).render(true);
+    const application = new StuntAssistant(message.id ?? message._id);
+    try {
+      const renderResult = application.render({force: true});
+      if (renderResult?.then instanceof Function) {
+        void renderResult.catch(error => console.error("AGE System | Stunt Assistant failed to open.", error));
+      }
+    } catch (error) {
+      console.error("AGE System | Stunt Assistant failed to open.", error);
+    }
+    return application;
   }
 
   static decorate(message, html) {
@@ -436,31 +526,46 @@ export class StuntAssistantService {
   }
 }
 
-export class StuntAssistant extends foundry.appv1.api.FormApplication {
+export class StuntAssistant extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "age-stunt-assistant",
+    classes: ["age-system", "age-v5-parity-sheet", "age-utility-workflow", "age-stunt-assistant-v2"],
+    position: {width: 720, height: 650},
+    window: {
+      title: "age-system.AUTOMATION.stuntAssistant",
+      icon: "fa-solid fa-wand-sparkles",
+      resizable: true,
+      minimizable: true
+    },
+    actions: {
+      spend: StuntAssistant._spend,
+      openStunt: StuntAssistant._openStunt,
+      undo: StuntAssistant._undo
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/age-system/templates/automation/stunt-assistant.hbs",
+      scrollable: [".age-utility-workflow__scroll"]
+    }
+  };
+
   constructor(messageId, options = {}) {
-    super({messageId}, options);
+    super(options);
     this.messageId = messageId;
     this.query = "";
     this.category = "";
     this.showUnaffordable = true;
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "age-stunt-assistant",
-      template: "systems/age-system/templates/automation/stunt-assistant.hbs",
-      classes: ["age-system", "dialog"],
-      title: game.i18n.localize("age-system.AUTOMATION.stuntAssistant"),
-      width: 720,
-      height: 650,
-      resizable: true,
-      minimizable: true,
-      closeOnSubmit: false,
-      submitOnChange: false
-    });
+  /** Preserve the boolean render signature used by the automation service. */
+  render(options = {}) {
+    if (typeof options === "boolean") options = {force: options};
+    return super.render(options ?? {});
   }
 
-  async getData() {
+  async _buildContext() {
     const message = messageDocument(this.messageId);
     const state = ledger(message);
     let actor = state?.actorUuid ? await foundry.utils.fromUuid(state.actorUuid) : null;
@@ -478,7 +583,6 @@ export class StuntAssistant extends foundry.appv1.api.FormApplication {
       }))
       .filter(candidate => this.showUnaffordable || candidate.affordable);
     return {
-      ...super.getData(),
       enabled: StuntAssistantService.enabled,
       messageAvailable: Boolean(message && state),
       state,
@@ -491,42 +595,81 @@ export class StuntAssistant extends foundry.appv1.api.FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    html.find(".age-stunt-spend").on("click", async event => {
-      const row = event.currentTarget.closest("[data-stunt-uuid]");
-      const cost = row?.querySelector("input[name='stuntCost']")?.value;
-      event.currentTarget.disabled = true;
-      try {
-        await StuntAssistantService.spend(this.messageId, {stuntUuid: row?.dataset?.stuntUuid, cost});
-        this.render(false);
-      } catch (error) {
-        ui.notifications.warn(error.message);
-        event.currentTarget.disabled = false;
-      }
-    });
-    html.find(".age-stunt-open").on("click", async event => {
-      const uuid = event.currentTarget.closest("[data-stunt-uuid]")?.dataset?.stuntUuid;
-      const document = uuid ? await foundry.utils.fromUuid(uuid) : null;
-      document?.sheet?.render?.(true);
-    });
-    html.find(".age-stunt-undo").on("click", async event => {
-      event.currentTarget.disabled = true;
-      try {
-        await StuntAssistantService.undoSpend(this.messageId);
-        this.render(false);
-      } catch (error) {
-        ui.notifications.warn(error.message);
-        event.currentTarget.disabled = false;
-      }
+  async getData() {
+    const base = typeof super.getData === "function" ? await super.getData() : {};
+    return {...base, ...await this._buildContext()};
+  }
+
+  async _prepareContext(options) {
+    const context = typeof super._prepareContext === "function"
+      ? await super._prepareContext(options)
+      : {};
+    return Object.assign(context, await this._buildContext());
+  }
+
+  async _onFirstRender(context, options) {
+    if (typeof super._onFirstRender === "function") await super._onFirstRender(context, options);
+    this.element?.addEventListener("submit", event => {
+      if (!event.target?.matches?.(".age-stunt-filter")) return;
+      void this._onFilterSubmit(event);
     });
   }
 
-  _updateObject(_event, formData) {
+  async _onRender(context, options) {
+    if (typeof super._onRender === "function") await super._onRender(context, options);
+    applyColorSchemeToElement(this.element);
+    applyColorSchemeToElement(this.element?.querySelector?.(".colorset-selection"));
+  }
+
+  async _onFilterSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget?.matches?.(".age-stunt-filter") ? event.currentTarget : event.target;
+    const formData = new foundry.applications.ux.FormDataExtended(form).object;
     this.query = formData.query ?? "";
     this.category = formData.category ?? "";
     this.showUnaffordable = formData.showUnaffordable === true || formData.showUnaffordable === "true" || formData.showUnaffordable === "on";
-    this.render(false);
+    return this.render({force: true});
+  }
+
+  static async _spend(event, target) {
+    event.preventDefault();
+    const row = target?.closest?.("[data-stunt-uuid]");
+    const cost = row?.querySelector?.("input[name='stuntCost']")?.value;
+    if (!row) return false;
+    target.disabled = true;
+    try {
+      const result = await StuntAssistantService.spend(this.messageId, {
+        stuntUuid: row.dataset.stuntUuid,
+        cost
+      });
+      await this.render({force: true});
+      return result;
+    } catch (error) {
+      ui.notifications.warn(error?.message ?? String(error));
+      target.disabled = false;
+      return false;
+    }
+  }
+
+  static async _openStunt(event, target) {
+    event.preventDefault();
+    const uuid = target?.closest?.("[data-stunt-uuid]")?.dataset?.stuntUuid;
+    const document = uuid ? await foundry.utils.fromUuid(uuid) : null;
+    return document?.sheet?.render?.(true) ?? false;
+  }
+
+  static async _undo(event, target) {
+    event.preventDefault();
+    target.disabled = true;
+    try {
+      const result = await StuntAssistantService.undoSpend(this.messageId);
+      await this.render({force: true});
+      return result;
+    } catch (error) {
+      ui.notifications.warn(error?.message ?? String(error));
+      target.disabled = false;
+      return false;
+    }
   }
 }
 

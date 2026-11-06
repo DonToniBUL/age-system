@@ -1,47 +1,154 @@
-<section class="age-advanced-tests flexcol">
-<style>
-  #age-advanced-test-tracker .window-content { overflow: hidden; padding: .6rem; }
-  #age-advanced-test-tracker .age-advanced-tests { height: 100%; min-height: 0; gap: .5rem; overflow: hidden; }
-  #age-advanced-test-tracker .age-advanced-create { display: grid; grid-template-columns: minmax(10rem,1fr) 10rem 7rem 7rem auto; gap: .4rem; align-items: end; }
-  #age-advanced-test-tracker .age-advanced-create label { display: grid; gap: .15rem; }
-  #age-advanced-test-tracker .age-advanced-create input, #age-advanced-test-tracker .age-advanced-create select, #age-advanced-test-tracker button { height: 2rem; margin: 0; }
-  #age-advanced-test-tracker .age-advanced-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: .5rem; }
-  #age-advanced-test-tracker .age-advanced-card { padding: .55rem; border: 1px solid rgba(0,0,0,.24); border-radius: 4px; background: rgba(255,255,255,.14); }
-  #age-advanced-test-tracker .age-advanced-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .5rem; align-items: center; }
-  #age-advanced-test-tracker .age-advanced-heading h3 { margin: 0; overflow-wrap: anywhere; }
-  #age-advanced-test-tracker .age-advanced-bar { position: relative; height: 1.7rem; margin-top: .35rem; border: 1px solid rgba(0,0,0,.3); border-radius: 3px; overflow: hidden; }
-  #age-advanced-test-tracker .age-advanced-fill { position: absolute; inset: 0 auto 0 0; background: rgba(35,110,65,.38); }
-  #age-advanced-test-tracker .age-advanced-fill.opposition { background: rgba(145,45,45,.38); }
-  #age-advanced-test-tracker .age-advanced-bar span { position: relative; z-index: 1; display: grid; height: 100%; place-items: center; font-weight: 600; }
-  #age-advanced-test-tracker .age-advanced-controls { display: grid; grid-template-columns: auto auto 4.2rem auto auto auto; gap: .35rem; margin-top: .4rem; }
-  #age-advanced-test-tracker .age-advanced-controls input { height: 2rem; text-align: center; }
-</style>
-  {{#unless enabled}}<p class="notification warning">{{localize "age-system.AUTOMATION.disabled"}}</p>{{/unless}}
+<section class="age-roll-workflow__surface age-advanced-tests colorset-selection" aria-labelledby="age-advanced-tests-title">
+  <header class="age-roll-workflow__header colorset-first-tier">
+    <div>
+      <span class="age-roll-workflow__kicker">{{localize "age-system.AUTOMATION.advancedTest"}}</span>
+      <h1 id="age-advanced-tests-title">{{localize "age-system.AUTOMATION.advancedTests"}}</h1>
+    </div>
+    <i class="fa-solid fa-bars-progress" aria-hidden="true"></i>
+  </header>
+
+  {{#unless enabled}}
+  <p class="age-roll-workflow__notice notification warning" role="alert">
+    {{localize "age-system.AUTOMATION.disabled"}}
+  </p>
+  {{/unless}}
+
   {{#if isGM}}
-  <form class="age-advanced-create">
-    <label><span>{{localize "age-system.AUTOMATION.name"}}</span><input name="name" required></label>
-    <label><span>{{localize "age-system.AUTOMATION.type"}}</span><select name="type">{{#each types as |type|}}<option value="{{type.value}}">{{type.label}}</option>{{/each}}</select></label>
-    <label><span>{{localize "age-system.AUTOMATION.threshold"}}</span><input name="threshold" type="number" min="1" value="10"></label>
-    <label><span>{{localize "age-system.AUTOMATION.opposition"}}</span><input name="oppositionThreshold" type="number" min="1" value="10"></label>
-    <button type="submit"><i class="fa-solid fa-plus"></i> {{localize "age-system.AUTOMATION.create"}}</button>
-  </form>
+  <section class="age-roll-workflow__panel age-advanced-create-panel colorset-second-tier" aria-labelledby="age-advanced-create-title">
+    <div class="age-roll-workflow__heading">
+      <h2 id="age-advanced-create-title">{{localize "age-system.AUTOMATION.create"}} {{localize "age-system.AUTOMATION.advancedTest"}}</h2>
+    </div>
+    <form class="age-roll-workflow__grid age-advanced-create" autocomplete="off">
+      <label class="age-roll-workflow__field age-roll-workflow__field--wide">
+        <span>{{localize "age-system.AUTOMATION.name"}}</span>
+        <input name="name" type="text" required maxlength="120">
+      </label>
+      <label class="age-roll-workflow__field">
+        <span>{{localize "age-system.AUTOMATION.type"}}</span>
+        <select name="type">
+          {{#each types as |type|}}
+          <option value="{{type.value}}">{{type.label}}</option>
+          {{/each}}
+        </select>
+      </label>
+      <label class="age-roll-workflow__field">
+        <span>{{localize "age-system.AUTOMATION.threshold"}}</span>
+        <input name="threshold" type="number" min="1" step="1" value="10">
+      </label>
+      <label class="age-roll-workflow__field">
+        <span>{{localize "age-system.AUTOMATION.opposition"}}</span>
+        <input name="oppositionThreshold" type="number" min="1" step="1" value="10">
+      </label>
+      <button type="submit" class="age-roll-workflow__primary" data-action="create" {{#unless enabled}}disabled{{/unless}}>
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        {{localize "age-system.AUTOMATION.create"}}
+      </button>
+    </form>
+  </section>
   {{/if}}
 
-  <div class="age-advanced-list">
-    {{#each trackers as |tracker|}}
-    <article class="age-advanced-card" data-tracker-id="{{tracker.id}}">
-      <header class="age-advanced-heading"><h3>{{tracker.name}}</h3><span class="notes">{{tracker.typeLabel}} · {{tracker.status}}</span></header>
-      <div class="age-advanced-bar"><div class="age-advanced-fill" style="width:{{tracker.partyPercent}}%"></div><span>{{localize "age-system.AUTOMATION.party"}}: {{tracker.progress}} / {{tracker.threshold}}</span></div>
-      {{#if tracker.opposed}}<div class="age-advanced-bar"><div class="age-advanced-fill opposition" style="width:{{tracker.oppositionPercent}}%"></div><span>{{localize "age-system.AUTOMATION.opposition"}}: {{tracker.oppositionProgress}} / {{tracker.oppositionThreshold}}</span></div>{{/if}}
-      {{#if ../isGM}}<div class="age-advanced-controls">
-        <button type="button" class="age-advanced-adjust" data-side="party" data-direction="minus" title="{{localize 'age-system.AUTOMATION.subtract'}}"><i class="fa-solid fa-minus"></i></button>
-        <button type="button" class="age-advanced-adjust" data-side="party" data-direction="plus" title="{{localize 'age-system.AUTOMATION.add'}}"><i class="fa-solid fa-plus"></i></button>
-        <input type="number" name="amount" min="1" value="1">
-        <button type="button" class="age-advanced-adjust" data-side="opposition" data-direction="plus" title="{{localize 'age-system.AUTOMATION.addOpposition'}}"><i class="fa-solid fa-flag"></i></button>
-        <button type="button" class="age-advanced-undo" {{#unless tracker.hasHistory}}disabled{{/unless}}><i class="fa-solid fa-rotate-left"></i> {{localize "age-system.AUTOMATION.undo"}}</button>
-        {{#if tracker.isActive}}<button type="button" class="age-advanced-close"><i class="fa-solid fa-check"></i> {{localize "age-system.AUTOMATION.close"}}</button>{{else}}<button type="button" class="age-advanced-remove"><i class="fa-solid fa-trash"></i> {{localize "age-system.AUTOMATION.remove"}}</button>{{/if}}
-      </div>{{/if}}
-    </article>
-    {{else}}<p class="notes">{{localize "age-system.AUTOMATION.noAdvancedTests"}}</p>{{/each}}
-  </div>
+  <section class="age-roll-workflow__panel age-advanced-tracker-panel colorset-second-tier" aria-labelledby="age-advanced-list-title">
+    <div class="age-roll-workflow__heading">
+      <h2 id="age-advanced-list-title">{{localize "age-system.AUTOMATION.advancedTests"}}</h2>
+      <span class="age-roll-workflow__badge" aria-label="{{localize 'age-system.AUTOMATION.advancedTests'}}">{{trackers.length}}</span>
+    </div>
+
+    <div class="age-roll-workflow__scroll age-advanced-list" role="list">
+      {{#each trackers as |tracker|}}
+      <article class="age-roll-workflow__card age-advanced-card {{#unless tracker.isActive}}is-closed{{/unless}}" data-tracker-id="{{tracker.id}}" role="listitem">
+        <header class="age-roll-workflow__card-header age-advanced-heading">
+          <div>
+            <span class="age-roll-workflow__kicker">{{tracker.typeLabel}}</span>
+            <h3>{{tracker.name}}</h3>
+          </div>
+          <span class="age-roll-workflow__badge age-advanced-status">{{tracker.status}}</span>
+        </header>
+
+        <div class="age-advanced-progress-grid">
+          <div class="age-roll-workflow__progress age-advanced-progress">
+            <div>
+              <span>{{localize "age-system.AUTOMATION.party"}}</span>
+              <strong>{{tracker.progress}} / {{tracker.threshold}}</strong>
+            </div>
+            <progress value="{{tracker.progress}}" max="{{tracker.threshold}}" aria-label="{{localize 'age-system.AUTOMATION.party'}}: {{tracker.progress}} / {{tracker.threshold}}"></progress>
+          </div>
+          {{#if tracker.opposed}}
+          <div class="age-roll-workflow__progress age-advanced-progress age-advanced-progress--opposition">
+            <div>
+              <span>{{localize "age-system.AUTOMATION.opposition"}}</span>
+              <strong>{{tracker.oppositionProgress}} / {{tracker.oppositionThreshold}}</strong>
+            </div>
+            <progress value="{{tracker.oppositionProgress}}" max="{{tracker.oppositionThreshold}}" aria-label="{{localize 'age-system.AUTOMATION.opposition'}}: {{tracker.oppositionProgress}} / {{tracker.oppositionThreshold}}"></progress>
+          </div>
+          {{/if}}
+        </div>
+
+        {{#if ../isGM}}
+        <div class="age-advanced-adjustments">
+          <div class="age-advanced-side-actions" role="group" aria-label="{{localize 'age-system.AUTOMATION.party'}}">
+            <span>{{localize "age-system.AUTOMATION.party"}}</span>
+            <button type="button" data-action="adjust" data-side="party" data-direction="minus" title="{{localize 'age-system.AUTOMATION.subtract'}}" aria-label="{{localize 'age-system.AUTOMATION.subtract'}}" {{#unless tracker.isActive}}disabled{{/unless}}>
+              <i class="fa-solid fa-minus" aria-hidden="true"></i>
+            </button>
+            <button type="button" data-action="adjust" data-side="party" data-direction="plus" title="{{localize 'age-system.AUTOMATION.add'}}" aria-label="{{localize 'age-system.AUTOMATION.add'}}" {{#unless tracker.isActive}}disabled{{/unless}}>
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            </button>
+          </div>
+          <label class="age-roll-workflow__field age-advanced-amount">
+            <span>{{localize "age-system.AUTOMATION.addProgress"}}</span>
+            <input type="number" min="1" step="1" value="1" data-advanced-test-amount {{#unless tracker.isActive}}disabled{{/unless}}>
+          </label>
+          <div class="age-advanced-side-actions" role="group" aria-label="{{localize 'age-system.AUTOMATION.opposition'}}">
+            <span>{{localize "age-system.AUTOMATION.opposition"}}</span>
+            <button type="button" data-action="adjust" data-side="opposition" data-direction="minus" title="{{localize 'age-system.AUTOMATION.subtract'}}" aria-label="{{localize 'age-system.AUTOMATION.subtract'}}" {{#unless tracker.isActive}}disabled{{/unless}}>
+              <i class="fa-solid fa-minus" aria-hidden="true"></i>
+            </button>
+            <button type="button" data-action="adjust" data-side="opposition" data-direction="plus" title="{{localize 'age-system.AUTOMATION.addOpposition'}}" aria-label="{{localize 'age-system.AUTOMATION.addOpposition'}}" {{#unless tracker.isActive}}disabled{{/unless}}>
+              <i class="fa-solid fa-flag" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <footer class="age-roll-workflow__actions age-advanced-actions">
+          <button type="button" data-action="undo" {{#unless tracker.hasHistory}}disabled{{/unless}}>
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+            {{localize "age-system.AUTOMATION.undo"}}
+          </button>
+          {{#if tracker.isActive}}
+          <button type="button" data-action="closeTracker">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            {{localize "age-system.AUTOMATION.close"}}
+          </button>
+          {{else}}
+          <button type="button" class="danger" data-action="remove">
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            {{localize "age-system.AUTOMATION.remove"}}
+          </button>
+          {{/if}}
+        </footer>
+        {{/if}}
+
+        {{#if tracker.hasHistory}}
+        <details class="age-advanced-history">
+          <summary>
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+            {{localize "age-system.AUTOMATION.recentActionDiagnostics"}} ({{tracker.historyCount}})
+          </summary>
+          <ol>
+            {{#each tracker.historyEntries as |entry|}}
+            <li>
+              <strong>{{entry.sideLabel}}</strong>
+              <span>{{entry.before}} → {{entry.after}} ({{entry.deltaLabel}})</span>
+              {{#if entry.timestampLabel}}<small>{{entry.timestampLabel}}{{#if entry.sourceLabel}} · {{entry.sourceLabel}}{{/if}}</small>{{/if}}
+            </li>
+            {{/each}}
+          </ol>
+        </details>
+        {{/if}}
+      </article>
+      {{else}}
+      <p class="age-roll-workflow__empty notes" role="status">{{localize "age-system.AUTOMATION.noAdvancedTests"}}</p>
+      {{/each}}
+    </div>
+  </section>
 </section>

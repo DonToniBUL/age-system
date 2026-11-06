@@ -4,6 +4,7 @@ const DEFAULT_HISTORY_LIMIT = 20;
 export const ACTION_HISTORY_SCHEMA_VERSION = 2;
 let historyQueue = Promise.resolve();
 const operationQueue = new Map();
+const undoCoordinators = new Map();
 
 const clone = value => foundry.utils.deepClone(value);
 const getProperty = (object, path) => foundry.utils.getProperty(object, path);
@@ -237,6 +238,14 @@ export class AgeTransactionService {
     return new AgeActionTransaction(metadata);
   }
 
+  /** Domain queues must be acquired before the shared history lock. */
+  static registerUndoCoordinator(type, coordinator) {
+    if (typeof type !== "string" || typeof coordinator !== "function") {
+      throw new TypeError("An AGE undo coordinator requires a type and function.");
+    }
+    undoCoordinators.set(type, coordinator);
+  }
+
   /**
    * Validate and coalesce a list of document updates without mutating any
    * document. This is the common preflight contract for future AGE Actions.
@@ -408,16 +417,33 @@ export class AgeTransactionService {
     if (this._undoLock) throw new Error("An AGE undo operation is already running.");
     this._undoLock = true;
     try {
-      return withHistoryLock(async () => {
+      const expected = await withHistoryLock(async () => {
         const history = await readHistory();
         const index = history.findLastIndex(entry => !entry.undone && Array.isArray(entry.operations) && entry.operations.length);
-        if (index < 0) return null;
+        return index < 0 ? null : clone(history[index]);
+      });
+      if (!expected) return null;
+      const restore = validate => withHistoryLock(async () => {
+        const history = await readHistory();
+        const index = history.findLastIndex(entry => !entry.undone && Array.isArray(entry.operations) && entry.operations.length);
         const entry = history[index];
+        if (!entry || !equal(entry, expected)) {
+          throw new Error("AGE transaction history changed while Undo was waiting. Review the latest action and retry.");
+        }
+        // Field-only history cannot recreate or delete a Stunt's ActiveEffect,
+        // nor undo damage already rolled from its spend. Use the domain undo.
+        if (entry.metadata?.undoPolicy === "stunt-assistant"
+          || ["stunt-points", "stunt.spend", "stunt.undo"].includes(entry.type)) {
+          throw new Error(game.i18n.localize("age-system.AUTOMATION.stuntUseAssistantUndo"));
+        }
+        if (validate) validate();
         await this.restoreOperations(entry.operations, {direction: "before", strict: true});
         history[index] = {...entry, undone: true, undoneAt: Date.now(), undoneBy: game.user?.id ?? null};
         await writeHistory(history);
         return clone(history[index]);
       });
+      const coordinator = undoCoordinators.get(expected.type);
+      return await (coordinator ? coordinator({entry: expected, restore}) : restore());
     } finally {
       this._undoLock = false;
     }

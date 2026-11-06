@@ -185,7 +185,8 @@ ageSystem.itemIcons = {
     "weapon": `${itemIconPath}fist.svg`,
     "focus": `${itemIconPath}gift-of-knowledge.svg`,
     "shipfeatures": `${itemIconPath}processor.svg`,
-    "class": `${itemIconPath}achievement.svg`
+    "class": `${itemIconPath}achievement.svg`,
+    "progression": "icons/svg/book.svg"
 };
 
 const actorIconPath = "systems/age-system/resources/imgs/actor-icon/";
@@ -193,7 +194,8 @@ ageSystem.actorIcons = {
     "vehicle": `${actorIconPath}chariot.svg`,
     "char": `${actorIconPath}sensousness.svg`,
     "spaceship": `${actorIconPath}rocket.svg`,
-    "organization": `${actorIconPath}barracks-tent.svg`
+    "organization": `${actorIconPath}barracks-tent.svg`,
+    "force": `${actorIconPath}barracks-tent.svg`
 }
 
 const uiElementsPath = "systems/age-system/resources/imgs/ui-elements/";
